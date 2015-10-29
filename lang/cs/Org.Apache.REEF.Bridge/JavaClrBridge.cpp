@@ -95,11 +95,11 @@ JNIEXPORT void JNICALL Java_org_apache_reef_javabridge_NativeInterop_loadClrAsse
 }
 
 /*
- * Class:     org_apache_reef_javabridge_NativeInterop
- * Method:    callClrSystemOnStartHandler
- * Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/apache/reef/javabridge/EvaluatorRequestorBridge;)[J
- */
-JNIEXPORT jlongArray JNICALL Java_org_apache_reef_javabridge_NativeInterop_callClrSystemOnStartHandler
+* Class:     org_apache_reef_javabridge_NativeInterop
+* Method:    callClrSystemOnStartHandler
+* Signature: (Ljava/lang/String;Ljava/lang/String;Lorg/apache/reef/javabridge/EvaluatorRequestorBridge;)Lorg/apache/reef/javabridge/BridgeHandlerManager;
+*/
+JNIEXPORT jobject JNICALL Java_org_apache_reef_javabridge_NativeInterop_callClrSystemOnStartHandler
 (JNIEnv * env, jclass jclassx, jstring dateTimeString, jstring httpServerPort, jobject jevaluatorRequestorBridge) {
   try {
     ManagedLog::LOGGER->Log("+Java_org_apache_reef_javabridge_NativeInterop_callClrSystemOnStartHandler");
@@ -434,9 +434,9 @@ JNIEXPORT void JNICALL Java_org_apache_reef_javabridge_NativeInterop_clrSystemCo
 /*
 * Class:     org_apache_reef_javabridge_NativeInterop
 * Method:    callClrSystemOnRestartHandler
-* Signature: (Ljava/lang/String;Lorg/apache/reef/javabridge/EvaluatorRequestorBridge;Lorg/apache/reef/javabridge/DriverRestartedBridge;)[J
+* Signature: (Ljava/lang/String;Lorg/apache/reef/javabridge/EvaluatorRequestorBridge;Lorg/apache/reef/javabridge/DriverRestartedBridge;)Lorg/apache/reef/javabridge/BridgeHandlerManager;
 */
-JNIEXPORT jlongArray JNICALL Java_org_apache_reef_javabridge_NativeInterop_callClrSystemOnRestartHandler
+JNIEXPORT jobject JNICALL Java_org_apache_reef_javabridge_NativeInterop_callClrSystemOnRestartHandler
 (JNIEnv * env, jclass jclassx, jstring httpServerPort, jobject jevaluatorRequestorBridge, jobject jdriverRestartedBridge) {
 	try {
 		ManagedLog::LOGGER->Log("+Java_org_apache_reef_javabridge_NativeInterop_callClrSystemOnRestartHandler");
