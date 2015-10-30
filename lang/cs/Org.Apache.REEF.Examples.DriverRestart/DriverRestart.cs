@@ -23,6 +23,8 @@ using Org.Apache.REEF.Client.Yarn;
 using Org.Apache.REEF.Common.Evaluator;
 using Org.Apache.REEF.Driver;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Tang.Formats;
+using Org.Apache.REEF.Tang.Implementations.Configuration;
 using Org.Apache.REEF.Tang.Implementations.Tang;
 using Org.Apache.REEF.Tang.Util;
 
@@ -35,6 +37,23 @@ namespace Org.Apache.REEF.Examples.DriverRestart
     /// </summary>
     public sealed class DriverRestart
     {
+        public sealed class DriverRestartConfiguration : ConfigurationModuleBuilder
+        {
+            public static readonly RequiredParameter<int> TasksToSubmit = new RequiredParameter<int>();
+            public static readonly RequiredParameter<int> WaitTimeInMinutes = new RequiredParameter<int>();
+
+            public static ConfigurationModule Configuration
+            {
+                get
+                {
+                    return new DriverRestartConfiguration()
+                        .BindNamedParameter(GenericType<HelloRestartDriver.NumberOfTasksToSubmit>.Class, TasksToSubmit)
+                        .BindNamedParameter(GenericType<HelloRestartDriver.WaitTimeInMinutes>.Class, WaitTimeInMinutes)
+                        .Build();
+                }
+            }
+        }
+
         private readonly IREEFClient _reefClient;
         private readonly JobSubmissionBuilderFactory _jobSubmissionBuilderFactory;
 
@@ -48,7 +67,7 @@ namespace Org.Apache.REEF.Examples.DriverRestart
         /// <summary>
         /// Runs DriverRestart using the IREEFClient passed into the constructor.
         /// </summary>
-        private void Run()
+        private void Run(int tasksToSubmit, int waitTimeInMin)
         {
             // The driver configuration contains all the needed bindings.
             var driverConfiguration = DriverConfiguration.ConfigurationModule
@@ -69,11 +88,18 @@ namespace Org.Apache.REEF.Examples.DriverRestart
                 .Set(DriverConfiguration.MaxApplicationSubmissions, 2.ToString())
                 .Build();
 
+            var driverRestartConfiguration = Configurations.Merge(
+                driverConfiguration,
+                DriverRestartConfiguration.Configuration
+                    .Set(DriverRestartConfiguration.TasksToSubmit, tasksToSubmit.ToString())
+                    .Set(DriverRestartConfiguration.WaitTimeInMinutes, waitTimeInMin.ToString())
+                    .Build());
+
             // The JobSubmission contains the Driver configuration as well as the files needed on the Driver.
             var restartJobSubmission = _jobSubmissionBuilderFactory.GetJobSubmissionBuilder()
-                .AddDriverConfiguration(driverConfiguration)
+                .AddDriverConfiguration(driverRestartConfiguration)
                 .AddGlobalAssemblyForType(typeof(HelloRestartDriver))
-                .SetJobIdentifier("DriverRestart")
+                .SetJobIdentifier("DriverRestart" + tasksToSubmit)
                 .Build();
 
             _reefClient.SubmitAndGetDriverUrl(restartJobSubmission);
@@ -81,7 +107,9 @@ namespace Org.Apache.REEF.Examples.DriverRestart
 
         public static void Main(string[] args)
         {
-            TangFactory.GetTang().NewInjector(YARNClientConfiguration.ConfigurationModule.Build()).GetInstance<DriverRestart>().Run();
+            var tasksToSubmit = int.Parse(args[0]);
+            var waitTimeInMin = int.Parse(args[1]);
+            TangFactory.GetTang().NewInjector(YARNClientConfiguration.ConfigurationModule.Build()).GetInstance<DriverRestart>().Run(tasksToSubmit, waitTimeInMin);
         }
     }
 }

@@ -48,9 +48,19 @@ namespace Org.Apache.REEF.Examples.DriverRestart
         IObserver<IDriverRestarted>, IObserver<IActiveContext>, IObserver<IRunningTask>, IObserver<ICompletedTask>, IObserver<IFailedTask>,
         IObserver<IFailedEvaluator>
     {
+        [NamedParameter]
+        public sealed class NumberOfTasksToSubmit : Name<int>
+        {
+        }
+
+        [NamedParameter]
+        public sealed class WaitTimeInMinutes : Name<int>
+        {
+        }
+
         private static readonly Logger Logger = Logger.GetLogger(typeof(HelloRestartDriver));
-        private const int NumberOfTasksToSubmit = 1;
-        private const int NumberOfTasksToSubmitOnRestart = 1;
+        private readonly int _numberOfTasksToSubmit;
+        private readonly Stopwatch sw = new Stopwatch();
 
         private readonly IEvaluatorRequestor _evaluatorRequestor;
 
@@ -61,12 +71,16 @@ namespace Org.Apache.REEF.Examples.DriverRestart
         private readonly Timer _exceptionTimer;
 
         [Inject]
-        private HelloRestartDriver(IEvaluatorRequestor evaluatorRequestor)
+        private HelloRestartDriver(
+            [Parameter(typeof(NumberOfTasksToSubmit))] int numberOfTasksToSubmit,
+            [Parameter(typeof(WaitTimeInMinutes))] int waitTimeInMinutes,
+            IEvaluatorRequestor evaluatorRequestor)
         {
+            _numberOfTasksToSubmit = numberOfTasksToSubmit;
             _exceptionTimer = new Timer(obj =>
             {
                 throw new ApplicationException("Expected driver to be finished by now.");
-            }, new object(), TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(10));
+            }, new object(), TimeSpan.FromMinutes(waitTimeInMinutes), TimeSpan.FromMinutes(waitTimeInMinutes));
 
             _evaluatorRequestor = evaluatorRequestor;
         }
@@ -98,7 +112,7 @@ namespace Org.Apache.REEF.Examples.DriverRestart
         {
             _isRestart = false;
             Logger.Log(Level.Info, "HelloRestartDriver started at {0}", driverStarted.StartTime);
-            _evaluatorRequestor.Submit(_evaluatorRequestor.NewBuilder().SetNumber(NumberOfTasksToSubmit).SetMegabytes(64).Build());
+            _evaluatorRequestor.Submit(_evaluatorRequestor.NewBuilder().SetNumber(_numberOfTasksToSubmit).SetMegabytes(64).Build());
         }
 
         /// <summary>
@@ -118,8 +132,7 @@ namespace Org.Apache.REEF.Examples.DriverRestart
                 _evaluators.Add(expectedEvaluatorId, EvaluatorState.Expected);
             }
 
-            Logger.Log(Level.Info, "Requesting {0} new Evaluators on restart.", NumberOfTasksToSubmitOnRestart);
-            _evaluatorRequestor.Submit(_evaluatorRequestor.NewBuilder().SetNumber(NumberOfTasksToSubmitOnRestart).SetMegabytes(64).Build());
+            sw.Start();
         }
 
         public void OnNext(IActiveContext value)
@@ -157,7 +170,7 @@ namespace Org.Apache.REEF.Examples.DriverRestart
 
                     var newRunningCount = CountState(EvaluatorState.NewRunning);
                     // Kill itself in order for the driver to restart it.
-                    if (!_isRestart && newRunningCount == NumberOfTasksToSubmit)
+                    if (!_isRestart && newRunningCount == _numberOfTasksToSubmit)
                     {
                         Process.GetCurrentProcess().Kill();
                     }
@@ -165,10 +178,6 @@ namespace Org.Apache.REEF.Examples.DriverRestart
                     if (_isRestart)
                     {
                         value.Send(Encoding.UTF8.GetBytes("Hello from driver!"));
-                        if (newRunningCount == NumberOfTasksToSubmitOnRestart)
-                        {
-                            Logger.Log(Level.Info, "Received all requested new running tasks.");
-                        }
                     }
                 }
             }
@@ -260,14 +269,6 @@ namespace Org.Apache.REEF.Examples.DriverRestart
                     {
                         Logger.Log(Level.Info, "Newly allocated task on Evaluator [{0}] has finished.", evaluatorId);
                         _evaluators[evaluatorId] = EvaluatorState.NewFinished;
-
-                        if (_isRestart)
-                        {
-                            if (CountState(EvaluatorState.NewFinished) == NumberOfTasksToSubmitOnRestart)
-                            {
-                                Logger.Log(Level.Info, "All newly submitted tasks have finished.");
-                            }
-                        }
                     }
 
                     activeContext.Value.Dispose();
@@ -287,11 +288,12 @@ namespace Org.Apache.REEF.Examples.DriverRestart
             {
                 if (CountState(EvaluatorState.Expected, EvaluatorState.NewRunning, EvaluatorState.RecoveredRunning,
                         EvaluatorState.NewAllocated) == 0 &&
-                    _evaluators.Count == NumberOfTasksToSubmitOnRestart + NumberOfTasksToSubmit)
+                    _evaluators.Count == _numberOfTasksToSubmit)
                 {
                     var append = CountState(EvaluatorState.UnexpectedFailed) > 0 ? " However, there are evaluators that have unexpectedly failed " +
                         "in this trial. Please re-run or read through the logs to make sure that such evaluators are expected." : string.Empty;
-                    Logger.Log(Level.Info, "SUCCESS!" + append);
+                    sw.Stop();
+                    Logger.Log(Level.Info, "SUCCESS!!!!! Retrieved " + _evaluators.Count + " evaluators in " + sw.ElapsedMilliseconds + " milliseconds." + append);
                 }
             }
         }

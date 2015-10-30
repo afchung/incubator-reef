@@ -121,7 +121,7 @@ namespace Org.Apache.REEF.Common.Evaluator
                         // We have received a redirect URI, look there instead.
                         if (queryUri != null)
                         {
-                            LOGGER.Log(Level.Verbose, "Received redirect URI:[{0}], redirecting...", queryUri);
+                            // LOGGER.Log(Level.Verbose, "Received redirect URI:[{0}], redirecting...", queryUri);
                             continue;
                         }
 
@@ -134,21 +134,12 @@ namespace Org.Apache.REEF.Common.Evaluator
                         using (StreamReader streamReader = new StreamReader(stream, Encoding.UTF8))
                         {
                             var driverInformation = streamReader.ReadToEnd();
-                            LOGGER.Log(Level.Verbose, "Http response line: {0}", driverInformation);
-                            AvroDriverInfo info = null;
-                            try
-                            {
-                                info = AvroJsonSerializer<AvroDriverInfo>.FromString(driverInformation);
-                            }
-                            catch (Exception e)
-                            {
-                                Utilities.Diagnostics.Exceptions.CaughtAndThrow(
-                                    e, Level.Error, string.Format(CultureInfo.InvariantCulture, "Cannot read content: {0}.", driverInformation), LOGGER);
-                            }
+                            // LOGGER.Log(Level.Verbose, "Http response line: {0}", driverInformation);
+                            var info = AvroJsonSerializer<AvroDriverInfo>.FromString(driverInformation);
 
                             if (info == null)
                             {
-                                LOGGER.Log(Level.Info, "Cannot read content: {0}.", driverInformation);
+                                // LOGGER.Log(Level.Info, "Cannot read content: {0}.", driverInformation);
                                 return null;
                             }
                             
