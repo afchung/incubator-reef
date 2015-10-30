@@ -43,6 +43,10 @@ final class DriverStartClrHandlersInitializer implements ClrHandlersInitializer 
   @Override
   public BridgeHandlerManager getClrHandlers(final String portNumber,
                                              final EvaluatorRequestorBridge evaluatorRequestorBridge) {
-    return NativeInterop.callClrSystemOnStartHandler(startTime.toString(), portNumber, evaluatorRequestorBridge);
+    BridgeHandlerManager bridgeHandlerManager = new BridgeHandlerManager();
+    NativeInterop.callClrSystemOnStartHandler(startTime.toString(), portNumber, bridgeHandlerManager,
+        evaluatorRequestorBridge);
+
+    return bridgeHandlerManager;
   }
 }

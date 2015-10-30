@@ -196,17 +196,6 @@ public final class JobDriver {
           new EvaluatorRequestorBridge(JobDriver.this.evaluatorRequestor, false, loggingScopeFactory);
       JobDriver.this.handlerManager = initializer.getClrHandlers(portNumber, evaluatorRequestorBridge);
 
-      /*
-      if (handlers != null) {
-        if (handlers.length != NativeInterop.N_HANDLERS) {
-          throw new RuntimeException(
-              String.format("%s handlers initialized in CLR while native bridge is expecting %s handlers",
-                  String.valueOf(handlers.length),
-                  String.valueOf(NativeInterop.N_HANDLERS)));
-        }
-      }
-      */
-
       try (final LoggingScope lp =
                this.loggingScopeFactory.getNewLoggingScope("setupBridge::clrSystemHttpServerHandlerOnNext")) {
         final HttpServerEventBridge httpServerEventBridge = new HttpServerEventBridge("SPEC");

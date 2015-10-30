@@ -26,12 +26,15 @@ import org.apache.reef.javabridge.generic.DriverRestartCompletedBridge;
  */
 public final class NativeInterop {
   public static final String GLOBAL_LIBRARIES_FILENAME = "userSuppliedGlobalLibraries.txt";
-  
+
+  public static native void loadClrAssembly(final String filePath);
+
   public static native void clrBufferedLog(final int level, final String message);
 
-  public static native BridgeHandlerManager callClrSystemOnStartHandler(
+  public static native void callClrSystemOnStartHandler(
       final String dateTime,
       final String httpServerPortNumber,
+      final BridgeHandlerManager bridgeHandlerManager,
       final EvaluatorRequestorBridge javaEvaluatorRequestorBridge);
 
   public static native void clrSystemAllocatedEvaluatorHandlerOnNext(
@@ -108,8 +111,9 @@ public final class NativeInterop {
       final ContextMessageBridge contextMessageBridge
   );
 
-  public static native BridgeHandlerManager callClrSystemOnRestartHandler(
+  public static native void callClrSystemOnRestartHandler(
       final String httpServerPortNumber,
+      final BridgeHandlerManager bridgeHandlerManager,
       final EvaluatorRequestorBridge javaEvaluatorRequestorBridge,
       final DriverRestartedBridge driverRestartedBridge
   );
