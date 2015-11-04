@@ -35,6 +35,8 @@ import org.apache.reef.wake.time.event.Alarm;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,12 +47,18 @@ import java.util.logging.Logger;
 public final class HeartBeatManager {
 
   private static final Logger LOG = Logger.getLogger(HeartBeatManager.class.getName());
+  private static final int MaxHeartbeatFailures = 3;
 
+  private final Object heartbeatLock = new Object();
   private final Clock clock;
   private final int heartbeatPeriod;
-  private final EventHandler<EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto> evaluatorHeartbeatHandler;
   private final InjectionFuture<EvaluatorRuntime> evaluatorRuntime;
   private final InjectionFuture<ContextManager> contextManager;
+  private final Deque<EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto> heartbeatQueue = new LinkedList<>();
+
+  private boolean recovery = false;
+  private int heartbeatFailures = 0;
+  private EventHandler<EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto> evaluatorHeartbeatHandler;
 
   @Inject
   private HeartBeatManager(
@@ -60,7 +68,6 @@ public final class HeartBeatManager {
       final RemoteManager remoteManager,
       @Parameter(HeartbeatPeriod.class) final int heartbeatPeriod,
       @Parameter(DriverRemoteIdentifier.class) final String driverRID) {
-
     this.evaluatorRuntime = evaluatorRuntime;
     this.contextManager = contextManager;
     this.clock = clock;
@@ -72,48 +79,56 @@ public final class HeartBeatManager {
   /**
    * Assemble a complete new heartbeat and send it out.
    */
-  public synchronized void sendHeartbeat() {
-    this.sendHeartBeat(this.getEvaluatorHeartbeatProto());
+  public void sendHeartbeat() {
+    synchronized (heartbeatLock) {
+      this.sendAndDrainHeartbeats(this.getEvaluatorHeartbeatProto());
+    }
   }
 
   /**
    * Called with a specific TaskStatus that must be delivered to the driver.
    */
-  public synchronized void sendTaskStatus(final ReefServiceProtos.TaskStatusProto taskStatusProto) {
-    this.sendHeartBeat(this.getEvaluatorHeartbeatProto(
-        this.evaluatorRuntime.get().getEvaluatorStatus(),
-        this.contextManager.get().getContextStatusCollection(),
-        Optional.of(taskStatusProto)));
+  public void sendTaskStatus(final ReefServiceProtos.TaskStatusProto taskStatusProto) {
+    synchronized (heartbeatLock) {
+      this.sendAndDrainHeartbeats(this.getEvaluatorHeartbeatProto(
+          this.evaluatorRuntime.get().getEvaluatorStatus(),
+          this.contextManager.get().getContextStatusCollection(),
+          Optional.of(taskStatusProto)));
+    }
   }
 
   /**
    * Called with a specific ContextStatus that must be delivered to the driver.
    */
-  public synchronized void sendContextStatus(
+  public void sendContextStatus(
       final ReefServiceProtos.ContextStatusProto contextStatusProto) {
 
-    // TODO[JIRA REEF-833]: Write a test that verifies correct order of heartbeats.
-    final Collection<ReefServiceProtos.ContextStatusProto> contextStatusList = new ArrayList<>();
-    contextStatusList.add(contextStatusProto);
-    contextStatusList.addAll(this.contextManager.get().getContextStatusCollection());
+    synchronized (heartbeatLock) {
+      // TODO[JIRA REEF-833]: Write a test that verifies correct order of heartbeats.
+      final Collection<ReefServiceProtos.ContextStatusProto> contextStatusList = new ArrayList<>();
+      contextStatusList.add(contextStatusProto);
+      contextStatusList.addAll(this.contextManager.get().getContextStatusCollection());
 
-    final EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto heartbeatProto =
-        this.getEvaluatorHeartbeatProto(
-            this.evaluatorRuntime.get().getEvaluatorStatus(),
-            contextStatusList, Optional.<ReefServiceProtos.TaskStatusProto>empty());
+      final EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto heartbeatProto =
+          this.getEvaluatorHeartbeatProto(
+              this.evaluatorRuntime.get().getEvaluatorStatus(),
+              contextStatusList, Optional.<ReefServiceProtos.TaskStatusProto>empty());
 
-    this.sendHeartBeat(heartbeatProto);
+      this.sendAndDrainHeartbeats(heartbeatProto);
+    }
   }
 
   /**
    * Called with a specific EvaluatorStatus that must be delivered to the driver.
    */
-  public synchronized void sendEvaluatorStatus(
+  public void sendEvaluatorStatus(
       final ReefServiceProtos.EvaluatorStatusProto evaluatorStatusProto) {
-    this.sendHeartBeat(EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto.newBuilder()
-        .setTimestamp(System.currentTimeMillis())
-        .setEvaluatorStatus(evaluatorStatusProto)
-        .build());
+    synchronized (heartbeatLock) {
+      this.sendAndDrainHeartbeats(EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto.newBuilder()
+          .setTimestamp(System.currentTimeMillis())
+          .setEvaluatorStatus(evaluatorStatusProto)
+          .build());
+    }
   }
 
   /**
@@ -121,14 +136,30 @@ public final class HeartBeatManager {
    *
    * @param heartbeatProto
    */
-  private synchronized void sendHeartBeat(
+  private void sendAndDrainHeartbeats(
       final EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto heartbeatProto) {
-    if (LOG.isLoggable(Level.FINEST)) {
-      LOG.log(Level.FINEST, "Heartbeat message:\n" + heartbeatProto, new Exception("Stack trace"));
-    }
-    this.evaluatorHeartbeatHandler.onNext(heartbeatProto);
-  }
+    synchronized (heartbeatLock) {
+      if (LOG.isLoggable(Level.FINEST)) {
+        LOG.log(Level.FINEST, "Heartbeat message:\n" + heartbeatProto, new Exception("Stack trace"));
+      }
 
+      heartbeatQueue.addFirst(heartbeatProto);
+
+      try {
+        while (!heartbeatQueue.isEmpty()) {
+          this.evaluatorHeartbeatHandler.onNext(heartbeatQueue.peekFirst());
+          heartbeatFailures = 0;
+          heartbeatQueue.removeFirst(); // Remove only if success
+        }
+      } catch (final Exception e) {
+        LOG.log(Level.WARNING, "Exception when sending heartbeat: " + e);
+        heartbeatFailures++;
+        if (heartbeatFailures > MaxHeartbeatFailures) {
+          recovery = true;
+        }
+      }
+    }
+  }
 
   private EvaluatorRuntimeProtocol.EvaluatorHeartbeatProto getEvaluatorHeartbeatProto() {
     return this.getEvaluatorHeartbeatProto(
@@ -158,11 +189,19 @@ public final class HeartBeatManager {
     return builder.build();
   }
 
+  private void recover() {
+    new DefaultDriverConnection();
+  }
+
   final class HeartbeatAlarmHandler implements EventHandler<Alarm> {
     @Override
     public void onNext(final Alarm alarm) {
-      synchronized (HeartBeatManager.this) {
+      synchronized (HeartBeatManager.this.heartbeatLock) {
         if (evaluatorRuntime.get().isRunning()) {
+          if (recovery) {
+            HeartBeatManager.this.recover();
+          }
+
           HeartBeatManager.this.sendHeartbeat();
           HeartBeatManager.this.clock.scheduleAlarm(HeartBeatManager.this.heartbeatPeriod, this);
         } else {

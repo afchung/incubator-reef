@@ -18,6 +18,8 @@
  */
 package org.apache.reef.runtime.common.evaluator;
 
+import java.io.IOException;
+
 /**
  * Interface used for reconnecting to driver after driver restart.
  */
@@ -26,6 +28,6 @@ public interface DriverConnection extends AutoCloseable {
   /**
    * @return driver remove identifier to facilitate reconnection to the (restarted) driver
    */
-  String getDriverRemoteIdentifier();
+  String getDriverRemoteIdentifier() throws IOException;
 }
 

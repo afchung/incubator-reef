@@ -120,6 +120,10 @@ under the License.
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>reef-annotations</artifactId>
             <version>${project.version}</version>
