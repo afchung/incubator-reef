@@ -16,70 +16,52 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.runtime.common.launch;
+
+package org.apache.reef.runtime.local.client;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.reef.runtime.common.REEFLauncher;
+import org.apache.reef.runtime.common.launch.LaunchCommandBuilder;
 import org.apache.reef.util.EnvironmentUtils;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Build the launch command for Java REEF processes.
+ * Created by anchung on 11/6/2015.
  */
-public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
-  private static final Logger LOG = Logger.getLogger(JavaLaunchCommandBuilder.class.getName());
+public final class BootstrapLaunchCommandBuilder implements LaunchCommandBuilder {
+  private static final Logger LOG = Logger.getLogger(BootstrapLaunchCommandBuilder.class.getName());
 
   private static final String DEFAULT_JAVA_PATH = System.getenv("JAVA_HOME") + "/bin/" + "java";
   private static final String[] DEFAULT_OPTIONS = {"-XX:PermSize=128m", "-XX:MaxPermSize=128m"};
   private String stderrPath = null;
   private String stdoutPath = null;
-  private String configurationPath = null;
+  private String evaluatorConfigurationPath = null;
   private String javaPath = null;
   private String classPath = null;
   private Boolean assertionsEnabled = null;
   private Map<String, JVMOption> options = new HashMap<>();
   private final List<String> commandPrefixList;
-  private final Class launcherClass;
 
   /**
    * Constructor that populates default options.
    */
-  public JavaLaunchCommandBuilder() {
-    this(REEFLauncher.class, null);
-  }
-
-  /**
-   * Constructor that populates class.
-   */
-  public JavaLaunchCommandBuilder(final Class launcherClass) {
-    this(launcherClass, null);
+  public BootstrapLaunchCommandBuilder() {
+    this(null);
   }
 
   /**
    * Constructor that populates prefix.
    */
-  public JavaLaunchCommandBuilder(final List<String> commandPrefixList) {
-    this(REEFLauncher.class, commandPrefixList);
-  }
-
-  /**
-   * Constructor that populates class and prefix.
-   */
-  public JavaLaunchCommandBuilder(final Class launcherClass, final List<String> commandPrefixList) {
+  public BootstrapLaunchCommandBuilder(final List<String> commandPrefixList) {
     for (final String defaultOption : DEFAULT_OPTIONS) {
       addOption(defaultOption);
     }
     this.commandPrefixList = commandPrefixList;
-    this.launcherClass = launcherClass;
   }
 
   @Override
@@ -115,11 +97,9 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
         REEFLauncher.propagateProperties(this, false,
             "java.util.logging.config.file", "java.util.logging.config.class");
 
-        add(launcherClass.getName());
-
-        if (configurationPath != null) {
-          add(configurationPath);
-        }
+        add("org.apache.reef.bridge.client.BootstrapLauncher");
+        add("direct");
+        add(evaluatorConfigurationPath);
 
         if (stdoutPath != null && !stdoutPath.isEmpty()) {
           add("1>");
@@ -135,24 +115,24 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
 
   @Override
   @SuppressWarnings("checkstyle:hiddenfield")
-  public JavaLaunchCommandBuilder setMemory(final int megaBytes) {
+  public BootstrapLaunchCommandBuilder setMemory(final int megaBytes) {
     return addOption(JVMOption.parse("-Xmx" + megaBytes + "m"));
   }
 
   @Override
-  public JavaLaunchCommandBuilder setConfigurationFileName(final String configurationFileName) {
-    this.configurationPath = configurationFileName;
+  public BootstrapLaunchCommandBuilder setConfigurationFileName(final String configurationFileName) {
+    this.evaluatorConfigurationPath = configurationFileName;
     return this;
   }
 
   @Override
-  public JavaLaunchCommandBuilder setStandardOut(final String standardOut) {
+  public BootstrapLaunchCommandBuilder setStandardOut(final String standardOut) {
     this.stdoutPath = standardOut;
     return this;
   }
 
   @Override
-  public JavaLaunchCommandBuilder setStandardErr(final String standardErr) {
+  public BootstrapLaunchCommandBuilder setStandardErr(final String standardErr) {
     this.stderrPath = standardErr;
     return this;
   }
@@ -163,17 +143,17 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
    * @param path Path to the java executable.
    * @return this
    */
-  public JavaLaunchCommandBuilder setJavaPath(final String path) {
+  public BootstrapLaunchCommandBuilder setJavaPath(final String path) {
     this.javaPath = path;
     return this;
   }
 
-  public JavaLaunchCommandBuilder setClassPath(final String classPath) {
+  public BootstrapLaunchCommandBuilder setClassPath(final String classPath) {
     this.classPath = classPath;
     return this;
   }
 
-  public JavaLaunchCommandBuilder setClassPath(final Collection<String> classPathElements) {
+  public BootstrapLaunchCommandBuilder setClassPath(final Collection<String> classPathElements) {
     this.classPath = StringUtils.join(classPathElements, File.pathSeparatorChar);
     return this;
   }
@@ -183,11 +163,11 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
    * @param option The full option, e.g. "-XX:+PrintGCDetails"
    * @return this
    */
-  public JavaLaunchCommandBuilder addOption(final String option) {
+  public BootstrapLaunchCommandBuilder addOption(final String option) {
     return addOption(JVMOption.parse(option));
   }
 
-  private JavaLaunchCommandBuilder addOption(final JVMOption jvmOption) {
+  private BootstrapLaunchCommandBuilder addOption(final JVMOption jvmOption) {
     if (options.containsKey(jvmOption.option)) {
       LOG.warning("Replaced option " + options.get(jvmOption.option) + " with " + jvmOption);
     }
@@ -203,7 +183,7 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
    * @return this
    */
   @SuppressWarnings("checkstyle:hiddenfield")
-  public JavaLaunchCommandBuilder enableAssertions(final boolean assertionsEnabled) {
+  public BootstrapLaunchCommandBuilder enableAssertions(final boolean assertionsEnabled) {
     this.assertionsEnabled = assertionsEnabled;
     return this;
   }
@@ -223,7 +203,7 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
     public final String separator;
 
     private JVMOption(final String option, final String value,
-                     final String separator) {
+                      final String separator) {
       this.option = option;
       this.value = value;
       this.separator = separator;
