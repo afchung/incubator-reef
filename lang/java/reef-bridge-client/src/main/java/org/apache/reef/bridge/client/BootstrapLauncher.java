@@ -18,7 +18,7 @@
  */
 package org.apache.reef.bridge.client;
 
-import org.apache.reef.bridge.client.bootstrapdriverconfiggenerator.YarnBootstrapDriverConfigGenerator;
+import org.apache.reef.annotations.audience.Private;
 import org.apache.reef.runtime.common.REEFLauncher;
 import org.apache.reef.tang.Tang;
 import org.apache.reef.tang.exceptions.InjectionException;
@@ -30,6 +30,7 @@ import java.util.logging.Logger;
 /**
  * Created by anchung on 11/6/2015.
  */
+@Private
 public final class BootstrapLauncher {
   private static final Logger LOG = Logger.getLogger(BootstrapLauncher.class.getName());
 

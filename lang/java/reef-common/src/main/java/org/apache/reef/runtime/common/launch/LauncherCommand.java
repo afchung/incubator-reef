@@ -16,7 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.reef.runtime.common.launch;
+
+import org.apache.reef.annotations.audience.Private;
+
+import java.util.List;
+
 /**
- * Created by anchung on 11/6/2015.
+ * Created by anchung on 11/7/2015.
  */
-package org.apache.reef.bridge.client.bootstrapdriverconfiggenerator;
+@Private
+public interface LauncherCommand {
+
+  LauncherCommand addFlag(final String parameter);
+
+  String getLauncherClass();
+
+  List<String> getFlags();
+
+  LauncherCommand setConfigurationFileName(final String configurationFileName);
+
+  String getConfigurationFileName();
+}

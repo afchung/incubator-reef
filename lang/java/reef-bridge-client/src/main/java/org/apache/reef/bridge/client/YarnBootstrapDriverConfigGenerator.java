@@ -16,12 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.bridge.client.bootstrapdriverconfiggenerator;
+package org.apache.reef.bridge.client;
 
 import com.google.inject.Inject;
 import org.apache.avro.file.DataFileReader;
 import org.apache.avro.specific.SpecificDatumReader;
-import org.apache.reef.bridge.client.Constants;
 import org.apache.reef.client.DriverRestartConfiguration;
 import org.apache.reef.client.parameters.DriverConfigurationProviders;
 import org.apache.reef.io.TcpPortConfigurationProvider;
