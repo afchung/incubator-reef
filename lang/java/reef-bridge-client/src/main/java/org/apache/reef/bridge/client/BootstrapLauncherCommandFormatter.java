@@ -16,46 +16,49 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.runtime.common.launch;
+package org.apache.reef.bridge.client;
 
-import org.apache.commons.lang3.NotImplementedException;
-import org.apache.reef.runtime.common.REEFLauncher;
+import org.apache.reef.annotations.audience.Private;
+import org.apache.reef.runtime.common.launch.LauncherCommandFormatter;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by anchung on 11/7/2015.
+ * Creates the Java command line for the bootstrap Launcher class.
+ * @see org.apache.reef.runtime.common.launch.LauncherCommandFormatter
  */
-public final class REEFLauncherCommand implements LauncherCommand {
-  private final List<String> immutableFlags = Collections.unmodifiableList(new ArrayList<String>());
-  private String configFileName;
+@Private
+public final class BootstrapLauncherCommandFormatter implements LauncherCommandFormatter {
+  private final List<String> flags = new ArrayList<>();
+  private String configFileName = "";
 
-  private REEFLauncherCommand(){
+  private BootstrapLauncherCommandFormatter() {
   }
 
-  public static REEFLauncherCommand getLauncherCommand() {
-    return new REEFLauncherCommand();
+  public static BootstrapLauncherCommandFormatter getLauncherCommand(){
+    return new BootstrapLauncherCommandFormatter();
   }
 
   @Override
-  public LauncherCommand addFlag(final String flag) {
-    throw new NotImplementedException("Launching with the REEFLauncher does not support flags.");
+  public LauncherCommandFormatter addFlag(final String flag) {
+    flags.add(flag);
+    return this;
   }
 
   @Override
   public String getLauncherClass() {
-    return REEFLauncher.class.getName();
+    return BootstrapLauncher.class.getName();
   }
 
   @Override
   public List<String> getFlags() {
-    return immutableFlags;
+    return Collections.unmodifiableList(flags);
   }
 
   @Override
-  public LauncherCommand setConfigurationFileName(final String configurationFileName) {
+  public LauncherCommandFormatter setConfigurationFileName(final String configurationFileName) {
     configFileName = configurationFileName;
     return this;
   }

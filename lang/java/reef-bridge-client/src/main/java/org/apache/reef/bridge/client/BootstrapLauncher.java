@@ -28,7 +28,13 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by anchung on 11/6/2015.
+ * The bootstrap launcher that provides 2 ways to Launch a REEF driver, either
+ * directly or indirectly. This is generally called through Bridge.exe.
+ * The direct flag indicates that the Java Driver configuration is pre-generated, while
+ * an indirect method indicates that the Java Driver configuration is generated at
+ * runtime. This is to avoid Java dependencies for .NET clients.
+ * @see REEFLauncher
+ * @see org.apache.reef.runtime.common.launch.LauncherCommandFormatter
  */
 @Private
 public final class BootstrapLauncher {

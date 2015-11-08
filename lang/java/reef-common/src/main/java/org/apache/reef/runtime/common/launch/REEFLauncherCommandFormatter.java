@@ -16,48 +16,50 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.bridge.client;
+package org.apache.reef.runtime.common.launch;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.reef.annotations.audience.Private;
-import org.apache.reef.runtime.common.launch.LauncherCommand;
+import org.apache.reef.runtime.common.REEFLauncher;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by anchung on 11/7/2015.
+ * The Java command formatting class for the REEFLauncher class.
+ * Directly launches the Driver, assuming a pre-generated Java Driver configuration.
+ * @see LauncherCommandFormatter
  */
 @Private
-public final class BootstrapLauncherCommand implements LauncherCommand {
-  private final List<String> flags = new ArrayList<>();
-  private String configFileName = "";
+public final class REEFLauncherCommandFormatter implements LauncherCommandFormatter {
+  private final List<String> immutableFlags = Collections.unmodifiableList(new ArrayList<String>());
+  private String configFileName;
 
-  private BootstrapLauncherCommand() {
+  private REEFLauncherCommandFormatter(){
   }
 
-  public static BootstrapLauncherCommand getLauncherCommand(){
-    return new BootstrapLauncherCommand();
+  public static REEFLauncherCommandFormatter getLauncherCommand() {
+    return new REEFLauncherCommandFormatter();
   }
 
   @Override
-  public LauncherCommand addFlag(final String parameter) {
-    flags.add(parameter);
-    return this;
+  public LauncherCommandFormatter addFlag(final String flag) {
+    throw new NotImplementedException("Launching with the REEFLauncher does not support flags.");
   }
 
   @Override
   public String getLauncherClass() {
-    return BootstrapLauncher.class.getName();
+    return REEFLauncher.class.getName();
   }
 
   @Override
   public List<String> getFlags() {
-    return Collections.unmodifiableList(flags);
+    return immutableFlags;
   }
 
   @Override
-  public LauncherCommand setConfigurationFileName(final String configurationFileName) {
+  public LauncherCommandFormatter setConfigurationFileName(final String configurationFileName) {
     configFileName = configurationFileName;
     return this;
   }

@@ -43,7 +43,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Created by anchung on 11/6/2015.
+ * This is the Java Driver configuration generator for .NET Drivers that generates
+ * the Driver configuration at runtime. This is used by the "yarn" flag of the
+ * {@link BootstrapLauncher} to avoid Java dependencies for .NET clients during REST submission
+ * to YARN clusters.
+ * TODO[JIRA REEF-922]: Make sure that the generated Avro configurations work without dependencies on Java.
  */
 public final class YarnBootstrapDriverConfigGenerator {
   private static final REEFFileNames REEF_FILE_NAMES = new REEFFileNames();

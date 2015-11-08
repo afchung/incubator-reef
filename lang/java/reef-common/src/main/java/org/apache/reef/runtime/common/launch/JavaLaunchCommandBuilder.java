@@ -47,7 +47,7 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
   private Boolean assertionsEnabled = null;
   private Map<String, JVMOption> options = new HashMap<>();
   private final List<String> commandPrefixList;
-  private final LauncherCommand launcherCommand;
+  private final LauncherCommandFormatter launcherCommandFormatter;
 
   /**
    * Constructor that populates default options.
@@ -59,8 +59,8 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
   /**
    * Constructor that populates class.
    */
-  public JavaLaunchCommandBuilder(final LauncherCommand launcherCommand) {
-    this(launcherCommand, null);
+  public JavaLaunchCommandBuilder(final LauncherCommandFormatter launcherCommandFormatter) {
+    this(launcherCommandFormatter, null);
   }
 
   /**
@@ -73,15 +73,16 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
   /**
    * Constructor that populates class and prefix.
    */
-  public JavaLaunchCommandBuilder(final LauncherCommand launcherCommand, final List<String> commandPrefixList) {
+  public JavaLaunchCommandBuilder(final LauncherCommandFormatter launcherCommandFormatter,
+                                  final List<String> commandPrefixList) {
     for (final String defaultOption : DEFAULT_OPTIONS) {
       addOption(defaultOption);
     }
     this.commandPrefixList = commandPrefixList;
-    if (launcherCommand == null) {
-      this.launcherCommand = REEFLauncherCommand.getLauncherCommand();
+    if (launcherCommandFormatter == null) {
+      this.launcherCommandFormatter = REEFLauncherCommandFormatter.getLauncherCommand();
     } else {
-      this.launcherCommand = launcherCommand;
+      this.launcherCommandFormatter = launcherCommandFormatter;
     }
   }
 
@@ -118,13 +119,13 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
         REEFLauncher.propagateProperties(this, false,
             "java.util.logging.config.file", "java.util.logging.config.class");
 
-        add(launcherCommand.getLauncherClass());
+        add(launcherCommandFormatter.getLauncherClass());
 
-        for (final String param : launcherCommand.getFlags()) {
+        for (final String param : launcherCommandFormatter.getFlags()) {
           add(param);
         }
 
-        add(launcherCommand.getConfigurationFileName());
+        add(launcherCommandFormatter.getConfigurationFileName());
 
         if (stdoutPath != null && !stdoutPath.isEmpty()) {
           add("1>");
@@ -146,7 +147,7 @@ public final class JavaLaunchCommandBuilder implements LaunchCommandBuilder {
 
   @Override
   public JavaLaunchCommandBuilder setConfigurationFileName(final String configurationFileName) {
-    launcherCommand.setConfigurationFileName(configurationFileName);
+    launcherCommandFormatter.setConfigurationFileName(configurationFileName);
     return this;
   }
 

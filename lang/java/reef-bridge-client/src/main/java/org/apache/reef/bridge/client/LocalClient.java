@@ -56,7 +56,7 @@ public final class LocalClient {
 
     configurationGenerator.writeConfiguration(localSubmissionFromCS.getJobFolder(),
         localSubmissionFromCS.getJobId(), CLIENT_REMOTE_ID);
-    launcher.launch(BootstrapLauncherCommand.getLauncherCommand().addFlag("direct"),
+    launcher.launch(BootstrapLauncherCommandFormatter.getLauncherCommand().addFlag(BootstrapLauncher.DIRECT_LAUNCH),
         driverFolder, localSubmissionFromCS.getJobId(), CLIENT_REMOTE_ID);
   }
 
