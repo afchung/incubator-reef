@@ -29,6 +29,7 @@ import org.apache.reef.reef.bridge.client.avro.AvroYarnJobSubmissionParameters;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Represents a job submission from the CS code.
@@ -185,13 +186,18 @@ final class YarnClusterSubmissionFromCS {
   static YarnClusterSubmissionFromCS fromJobSubmissionParametersFile(final File yarnClusterJobSubmissionParametersFile)
       throws IOException {
     try (final FileInputStream fileInputStream = new FileInputStream(yarnClusterJobSubmissionParametersFile)) {
-      final JsonDecoder decoder = DecoderFactory.get().jsonDecoder(
-          AvroYarnClusterJobSubmissionParameters.getClassSchema(), fileInputStream);
-      final SpecificDatumReader<AvroYarnClusterJobSubmissionParameters> reader = new SpecificDatumReader<>(
-          AvroYarnClusterJobSubmissionParameters.class);
-      final AvroYarnClusterJobSubmissionParameters yarnClusterJobSubmissionParameters = reader.read(null, decoder);
-
-      return new YarnClusterSubmissionFromCS(yarnClusterJobSubmissionParameters);
+      // this is mainly a test hook
+      return readYarnClusterSubmissionFromCSFromInputStream(fileInputStream);
     }
+  }
+
+  static YarnClusterSubmissionFromCS readYarnClusterSubmissionFromCSFromInputStream(
+      final InputStream inputStream) throws IOException {
+    final JsonDecoder decoder = DecoderFactory.get().jsonDecoder(
+        AvroYarnClusterJobSubmissionParameters.getClassSchema(), inputStream);
+    final SpecificDatumReader<AvroYarnClusterJobSubmissionParameters> reader = new SpecificDatumReader<>(
+        AvroYarnClusterJobSubmissionParameters.class);
+    final AvroYarnClusterJobSubmissionParameters yarnClusterJobSubmissionParameters = reader.read(null, decoder);
+    return new YarnClusterSubmissionFromCS(yarnClusterJobSubmissionParameters);
   }
 }
