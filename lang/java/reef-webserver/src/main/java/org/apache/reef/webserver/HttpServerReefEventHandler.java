@@ -18,6 +18,10 @@
  */
 package org.apache.reef.webserver;
 
+import org.apache.reef.common.EvaluatorInfoSerializer;
+import org.apache.reef.common.EvaluatorListSerializer;
+import org.apache.reef.common.avro.AvroEvaluatorList;
+import org.apache.reef.common.avro.AvroEvaluatorsInfo;
 import org.apache.reef.driver.ProgressProvider;
 import org.apache.reef.driver.evaluator.EvaluatorDescriptor;
 import org.apache.reef.driver.parameters.ClientCloseHandlers;

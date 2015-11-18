@@ -18,25 +18,12 @@
  */
 [
   {
-    "namespace": "org.apache.reef.webserver",
+    "namespace": "org.apache.reef.common.avro",
     "type": "record",
-    "name": "AvroEvaluatorEntry",
+    "name": "AvroDriverInfo",
     "fields": [
-	    { "name": "id", "type": "string" },
-	    { "name": "name", "type": "string" }
-    ]
-  },
-  {
-    "namespace": "org.apache.reef.webserver",
-    "type": "record",
-    "name": "AvroEvaluatorList",
-    "fields": [
-	    {
-        "name": "evaluators",
-        "type": { "type": "array", "items": "AvroEvaluatorEntry" }
-      },
-	    { "name": "total", "type": "int" },
-	    { "name": "startTime", "type":"string" }
+      { "name": "remoteId", "type": "string" },
+      { "name": "startTime", "type": "string" }
     ]
   }
 ]

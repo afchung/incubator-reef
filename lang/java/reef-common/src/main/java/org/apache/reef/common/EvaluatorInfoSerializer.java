@@ -16,8 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.webserver;
+package org.apache.reef.common;
 
+import org.apache.reef.common.avro.AvroEvaluatorsInfo;
 import org.apache.reef.driver.evaluator.EvaluatorDescriptor;
 import org.apache.reef.tang.annotations.DefaultImplementation;
 

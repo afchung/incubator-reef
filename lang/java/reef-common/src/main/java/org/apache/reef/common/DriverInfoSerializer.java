@@ -16,35 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.webserver;
+package org.apache.reef.common;
 
-import org.apache.reef.driver.evaluator.EvaluatorDescriptor;
+import org.apache.reef.common.avro.AvroDriverInfo;
 import org.apache.reef.tang.annotations.DefaultImplementation;
 
-import java.util.Map;
-
 /**
- * Interface for EvaluatorListSerializer.
+ * Interface for DriverInfoSerializer.
  */
-@DefaultImplementation(AvroEvaluatorListSerializer.class)
-public interface EvaluatorListSerializer {
+@DefaultImplementation(AvroDriverInfoSerializer.class)
+public interface DriverInfoSerializer {
   /**
-   * Build AvroEvaluatorList object.
+   * Build AvroDriverInfo object from raw data.
    *
-   * @param evaluatorMap
-   * @param totalEvaluators
+   * @param id
    * @param startTime
-   * @return
+   * @return AvroDriverInfo object
    */
-  AvroEvaluatorList toAvro(final Map<String, EvaluatorDescriptor> evaluatorMap,
-                           final int totalEvaluators,
-                           final String startTime);
+  AvroDriverInfo toAvro(final String id, final String startTime);
 
   /**
-   * Convert AvroEvaluatorList to JSon string.
+   * Convert AvroDriverInfo object to Json string.
    *
-   * @param avroEvaluatorList
+   * @param avroDriverInfo
    * @return
    */
-  String toString(final AvroEvaluatorList avroEvaluatorList);
+  String toString(final AvroDriverInfo avroDriverInfo);
 }

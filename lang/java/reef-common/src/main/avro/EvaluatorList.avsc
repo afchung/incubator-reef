@@ -18,27 +18,25 @@
  */
 [
   {
-    "namespace": "org.apache.reef.webserver",
+    "namespace": "org.apache.reef.common.avro",
     "type": "record",
-    "name": "AvroEvaluatorInfo",
+    "name": "AvroEvaluatorEntry",
     "fields": [
-      { "name": "evaluatorId", "type": "string" },
-      { "name": "nodeId", "type": "string" },
-      { "name": "nodeName", "type": "string" },
-      { "name": "memory", "type": "int" },
-      { "name": "type", "type": "string" },
-      { "name": "internetAddress", "type": "string" }
+	    { "name": "id", "type": "string" },
+	    { "name": "name", "type": "string" }
     ]
   },
   {
-    "namespace": "org.apache.reef.webserver",
+    "namespace": "org.apache.reef.common.avro",
     "type": "record",
-    "name": "AvroEvaluatorsInfo",
+    "name": "AvroEvaluatorList",
     "fields": [
-      {
-        "name": "evaluatorsInfo",
-        "type": { "type": "array", "items": "AvroEvaluatorInfo" }
-      }
+	    {
+        "name": "evaluators",
+        "type": { "type": "array", "items": "AvroEvaluatorEntry" }
+      },
+	    { "name": "total", "type": "int" },
+	    { "name": "startTime", "type":"string" }
     ]
   }
 ]

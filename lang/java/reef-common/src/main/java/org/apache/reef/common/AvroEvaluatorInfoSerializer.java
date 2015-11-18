@@ -16,12 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.webserver;
+package org.apache.reef.common;
 
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonEncoder;
 import org.apache.avro.specific.SpecificDatumWriter;
+import org.apache.commons.lang3.CharEncoding;
+import org.apache.reef.common.avro.AvroEvaluatorInfo;
+import org.apache.reef.common.avro.AvroEvaluatorsInfo;
 import org.apache.reef.driver.evaluator.EvaluatorDescriptor;
 
 import javax.inject.Inject;
@@ -93,7 +96,7 @@ public class AvroEvaluatorInfoSerializer implements EvaluatorInfoSerializer {
       final JsonEncoder encoder = EncoderFactory.get().jsonEncoder(avroEvaluatorsInfo.getSchema(), out);
       evaluatorWriter.write(avroEvaluatorsInfo, encoder);
       encoder.flush();
-      return out.toString(AvroHttpSerializer.JSON_CHARSET);
+      return out.toString(CharEncoding.ISO_8859_1);
     } catch (final IOException e) {
       throw new RuntimeException(e);
     }
