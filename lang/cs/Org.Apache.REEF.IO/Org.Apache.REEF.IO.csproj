@@ -69,6 +69,14 @@ under the License.
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BlockManagement\BlockManager.cs" />
+    <Compile Include="BlockManagement\Block\Location.cs" />
+    <Compile Include="BlockManagement\Block\IBlock.cs" />
+    <Compile Include="BlockManagement\DataSet\IDataSet.cs" />
+    <Compile Include="BlockManagement\Parameters\PartitionIds.cs" />
+    <Compile Include="BlockManagement\Partition\InputPartition.cs" />
+    <Compile Include="BlockManagement\Partition\IPartition.cs" />
+    <Compile Include="BlockManagement\Partition\OutputPartition.cs" />
     <Compile Include="FileSystem\AzureBlob\AzureBlockBlobFileSystemConfiguration.cs" />
     <Compile Include="FileSystem\AzureBlob\AzureBlobType.cs" />
     <Compile Include="FileSystem\AzureBlob\AzureBlockBlobFileSystemConfigurationProvider.cs" />
