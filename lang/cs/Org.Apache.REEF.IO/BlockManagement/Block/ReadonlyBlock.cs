@@ -18,43 +18,45 @@
 using System;
 using System.Collections.Generic;
 using Org.Apache.REEF.Common.Attributes;
-using Org.Apache.REEF.IO.BlockManagement.Block;
-using Org.Apache.REEF.IO.BlockManagement.DataSet;
+using Org.Apache.REEF.IO.BlockManagement.Partition;
 
-namespace Org.Apache.REEF.IO.BlockManagement.Partition
+namespace Org.Apache.REEF.IO.BlockManagement.Block
 {
     /// <summary>
-    /// An appendable partition.
+    /// A readonly implementation of <see cref="IBlock"/>.
     /// </summary>
     [Unstable("0.14", "New feature. Implementation can change substantially.")]
-    public sealed class OutputPartition : IPartition
+    public sealed class ReadonlyBlock : IBlock
     {
-        private OutputPartition()
+        public Guid Uid { get; private set; }
+        
+        public IPartition Partition { get; private set; }
+
+        public Location Location { get; private set; }
+
+        public bool CanWrite
         {
-            throw new NotImplementedException();
+            get
+            {
+                return false;
+            }
         }
 
-        public string Id { get; private set; }
-
-        public ReadonlyBlock GetBlock(Guid blockUid)
+        public IList<byte> Data
         {
-            throw new NotImplementedException();
-        }
+            get
+            {
+                // TODO: Lazily fetch data into memory for consumption.
+                // TODO: Register with BlockManager that there is local copy.
+                // TODO: Return IReadOnlyList.
+                Location = Location.InMemory;
+                throw new NotImplementedException();
+            }
 
-        public IDataSet DataSet { get; private set; }
-
-        public IEnumerable<ReadonlyBlock> FetchBlocks()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Allocates a <see cref="WritableBlock"/>, which allows the user to
-        /// commit blocks into the block management framework.
-        /// </summary>
-        public WritableBlock AllocateBlock()
-        {
-            throw new NotImplementedException();
+            set
+            {
+                throw new NotSupportedException("Readable blocks are not set-able.");
+            }
         }
     }
 }

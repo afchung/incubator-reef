@@ -26,6 +26,9 @@ using Org.Apache.REEF.Tang.Annotations;
 
 namespace Org.Apache.REEF.IO.BlockManagement
 {
+    /// <summary>
+    /// The local BlockManager that enables operations on datasets, blocks, and partitions.
+    /// </summary>
     [Unstable("0.14", "New feature. Implementation can change substantially.")]
     public sealed class BlockManager
     {
@@ -61,6 +64,14 @@ namespace Org.Apache.REEF.IO.BlockManagement
         }
 
         /// <summary>
+        /// Gets a readonly block with its universal identifier.
+        /// </summary>
+        public ReadonlyBlock GetBlock(Guid blockUid)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
         /// Called by <see cref="IDataSet.GetPartition"/> to return a
         /// Partition of the DataSet. Does not make remote requests. The Partition
         /// will only be verified when a data read or write operation occurs on 
@@ -84,35 +95,17 @@ namespace Org.Apache.REEF.IO.BlockManagement
         /// Called by <see cref="IPartition.FetchBlocks"/> to internally fetch
         /// blocks from the BlockManagerMaster.
         /// </summary>
-        internal IEnumerable<IBlock> FetchBlocks(IPartition partition)
+        internal IEnumerable<ReadonlyBlock> FetchBlocks(IPartition partition)
         {
             throw new NotImplementedException();
         }
 
         /// <summary>
-        /// Called by <see cref="IBlock.LocalizeBlockInMemory"/>. Contacts the
-        /// BlockManagerMaster if Block is not already local to learn where the
-        /// Block is. Saves the block in memory.
-        /// If the Block is on another BlockManager, the BlockManager will contact
-        /// the other BlockManager to fetch the data.
-        /// If the Block is on an external source, the BlockManager will fetch the Block
-        /// based on its description.
+        /// Called by <see cref="WritableBlock.Commit"/> to internally
+        /// commit a block with the BlockManagerMaster.
         /// </summary>
-        internal void LocalizeBlockInMemory()
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Called by <see cref="IBlock.LocalizeBlockOnDisk"/>. Contacts the
-        /// BlockManagerMaster if Block is not already local to learn where the
-        /// Block is. Saves the block on disk.
-        /// If the Block is on another BlockManager, the BlockManager will contact
-        /// the other BlockManager to fetch the data.
-        /// If the Block is on an external source, the BlockManager will fetch the Block
-        /// based on its description.
-        /// </summary>
-        internal void LocalizeBlockOnDisk(string filePath)
+        /// TODO: Consider supporting batching commits.
+        internal ReadonlyBlock CommitBlock(WritableBlock writableBlock)
         {
             throw new NotImplementedException();
         }

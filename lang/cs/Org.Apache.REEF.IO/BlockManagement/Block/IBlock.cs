@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System.Collections.Generic;
 using System.IO;
 using Org.Apache.REEF.Common.Attributes;
 using Org.Apache.REEF.IO.BlockManagement.Partition;
@@ -26,10 +27,12 @@ namespace Org.Apache.REEF.IO.BlockManagement.Block
     /// The atomic unit of the Block Management framework in REEF.
     /// </summary>
     [Unstable("0.14", "New feature. Interface can change substantially.")]
-    public interface IBlock : IIdentifiable
+    internal interface IBlock : IUniquelyIdentifiable
     {
         /// <summary>
         /// The partition that the block belongs to.
+        /// Can potentially make a remote connection if the block was retrieved only 
+        /// with the Uid.
         /// </summary>
         IPartition Partition { get; }
 
@@ -39,22 +42,13 @@ namespace Org.Apache.REEF.IO.BlockManagement.Block
         Location Location { get; }
 
         /// <summary>
-        /// Opens the block.
+        /// Whether the block can be written to.
         /// </summary>
-        Stream DataStream { get; }
+        bool CanWrite { get; }
 
         /// <summary>
-        /// Localizes a block and caches in memory if not already localized.
-        /// The BlockManager will register the newly localized block
-        /// with the BlockManagerMaster.
+        /// Localizes and "opens" the block.
         /// </summary>
-        void LocalizeBlockInMemory();
-
-        /// <summary>
-        /// Localizes a block and puts onto disk if not already on disk.
-        /// The BlockManager will register the newly localized block with
-        /// the BlockManagerMaster.
-        /// </summary>
-        void LocalizeBlockOnDisk(string filePath);
+        IList<byte> Data { get; set; }
     }
 }

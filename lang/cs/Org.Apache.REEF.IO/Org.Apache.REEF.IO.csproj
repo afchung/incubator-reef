@@ -70,6 +70,9 @@ under the License.
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BlockManagement\BlockManager.cs" />
+    <Compile Include="BlockManagement\Block\BlockFactory.cs" />
+    <Compile Include="BlockManagement\Block\WritableBlock.cs" />
+    <Compile Include="BlockManagement\Block\ReadableBlock.cs" />
     <Compile Include="BlockManagement\Block\Location.cs" />
     <Compile Include="BlockManagement\Block\IBlock.cs" />
     <Compile Include="BlockManagement\DataSet\IDataSet.cs" />

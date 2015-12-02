@@ -44,6 +44,7 @@ under the License.
     <Compile Include="Diagnostics\Exceptions.cs" />
     <Compile Include="IIdentifiable.cs" />
     <Compile Include="IMessage.cs" />
+    <Compile Include="IUniquelyIdentifiable.cs" />
     <Compile Include="Logging\JavaLoggingSetting.cs" />
     <Compile Include="Logging\Level.cs" />
     <Compile Include="Logging\Logger.cs" />

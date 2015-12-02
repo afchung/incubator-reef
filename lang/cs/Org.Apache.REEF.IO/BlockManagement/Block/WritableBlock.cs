@@ -18,42 +18,50 @@
 using System;
 using System.Collections.Generic;
 using Org.Apache.REEF.Common.Attributes;
-using Org.Apache.REEF.IO.BlockManagement.Block;
-using Org.Apache.REEF.IO.BlockManagement.DataSet;
+using Org.Apache.REEF.IO.BlockManagement.Partition;
 
-namespace Org.Apache.REEF.IO.BlockManagement.Partition
+namespace Org.Apache.REEF.IO.BlockManagement.Block
 {
     /// <summary>
-    /// An appendable partition.
+    /// A block that can be written to.
     /// </summary>
     [Unstable("0.14", "New feature. Implementation can change substantially.")]
-    public sealed class OutputPartition : IPartition
+    public sealed class WritableBlock : IBlock
     {
-        private OutputPartition()
+        internal WritableBlock(IPartition partition, Guid uid)
         {
-            throw new NotImplementedException();
+            Partition = partition;
+            Uid = uid;
+            CanWrite = true;
+            Data = new List<byte>();
         }
 
-        public string Id { get; private set; }
+        public Guid Uid { get; private set; }
 
-        public ReadonlyBlock GetBlock(Guid blockUid)
+        public IPartition Partition { get; private set; }
+
+        public Location Location
         {
-            throw new NotImplementedException();
+            get
+            {
+                return Location.InMemory;
+            }
         }
 
-        public IDataSet DataSet { get; private set; }
-
-        public IEnumerable<ReadonlyBlock> FetchBlocks()
-        {
-            throw new NotImplementedException();
-        }
+        public bool CanWrite { get; private set; }
 
         /// <summary>
-        /// Allocates a <see cref="WritableBlock"/>, which allows the user to
-        /// commit blocks into the block management framework.
+        /// Data can only be mutated before commit.
         /// </summary>
-        public WritableBlock AllocateBlock()
+        public IList<byte> Data { get; set; }
+
+        /// <summary>
+        /// Commits the block with the BlockManager and disables write on the WritableBlock.
+        /// </summary>
+        public ReadonlyBlock Commit()
         {
+            // TODO: Commit the block with the BlockManager and return a ReadonlyBlock if success.
+            CanWrite = false;
             throw new NotImplementedException();
         }
     }

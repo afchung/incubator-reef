@@ -16,36 +16,17 @@
 // under the License.
 
 using System;
-using System.Collections.Generic;
-using Org.Apache.REEF.Common.Attributes;
-using Org.Apache.REEF.IO.BlockManagement.Block;
-using Org.Apache.REEF.IO.BlockManagement.DataSet;
 
-namespace Org.Apache.REEF.IO.BlockManagement.Partition
+namespace Org.Apache.REEF.Utilities
 {
     /// <summary>
-    /// A Partition that only allows reads-operations.
+    /// Denotes an object that is globally, uniquely identifiable.
     /// </summary>
-    [Unstable("0.14", "New feature. Implementation can change substantially.")]
-    internal sealed class InputPartition : IPartition
+    public interface IUniquelyIdentifiable
     {
-        private InputPartition()
-        {
-            throw new NotImplementedException();
-        }
-
-        public string Id { get; private set; }
-
-        public IDataSet DataSet { get; private set; }
-
-        public ReadonlyBlock GetBlock(Guid blockUid)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<ReadonlyBlock> FetchBlocks()
-        {
-            throw new NotImplementedException();
-        }
+        /// <summary>
+        /// The unique ID of the object.
+        /// </summary>
+        Guid Uid { get; }
     }
 }

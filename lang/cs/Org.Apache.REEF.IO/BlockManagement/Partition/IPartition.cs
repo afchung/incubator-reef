@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System;
 using System.Collections.Generic;
 using Org.Apache.REEF.Common.Attributes;
 using Org.Apache.REEF.IO.BlockManagement.Block;
@@ -36,7 +37,7 @@ namespace Org.Apache.REEF.IO.BlockManagement.Partition
         /// Gets a block within the partition. Does not make
         /// any remote connections.
         /// </summary>
-        IBlock GetBlock(string blockId);
+        ReadonlyBlock GetBlock(Guid blockUid);
 
         /// <summary>
         /// The DataSet that the Partition is a part of.
@@ -46,6 +47,6 @@ namespace Org.Apache.REEF.IO.BlockManagement.Partition
         /// <summary>
         /// Fetches the Blocks of a partition remotely from the BlockManagerMaster.
         /// </summary>
-        IEnumerable<IBlock> FetchBlocks();
+        IEnumerable<ReadonlyBlock> FetchBlocks();
     }
 }
