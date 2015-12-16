@@ -153,34 +153,7 @@ final class VortexDriver {
     public void onNext(final TaskMessage taskMessage) {
       final String workerId = taskMessage.getId();
       final WorkerReport workerReport = VortexAvroUtils.toWorkerReport(taskMessage.get());
-
-      // TODO[JIRA REEF-942]: Fix when aggregation is allowed.
-      assert workerReport.getTaskletReports().size() == 1;
-
-      final TaskletReport taskletReport = workerReport.getTaskletReports().get(0);
-      switch (taskletReport.getType()) {
-      case TaskletResult:
-        final TaskletResultReport taskletResultReport = (TaskletResultReport) taskletReport;
-
-        // TODO[JIRA REEF-942]: Fix when aggregation is allowed.
-        final List<Integer> resultTaskletIds = taskletResultReport.getTaskletIds();
-
-        assert resultTaskletIds.size() == 1;
-        vortexMaster.taskletCompleted(workerId, resultTaskletIds.get(0),
-            taskletResultReport.getResult());
-        break;
-      case TaskletCancelled:
-        final TaskletCancelledReport taskletCancelledReport = (TaskletCancelledReport) taskletReport;
-        vortexMaster.taskletCancelled(workerId, taskletCancelledReport.getTaskletId());
-        break;
-      case TaskletFailure:
-        final TaskletFailureReport taskletFailureReport = (TaskletFailureReport) taskletReport;
-        vortexMaster.taskletErrored(workerId, taskletFailureReport.getTaskletIds().get(0),
-            taskletFailureReport.getException());
-        break;
-      default:
-        throw new RuntimeException("Unknown Report");
-      }
+      vortexMaster.workerReported(workerId, workerReport);
     }
   }
 

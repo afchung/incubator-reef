@@ -58,7 +58,7 @@ public class RunningWorkersTest {
     final Collection<Tasklet> tasklets = runningWorkers.removeWorker(vortexWorkerManager.getId()).get();
     assertEquals("Only 1 Tasklet must have been running", 1, tasklets.size());
     assertTrue("This Tasklet must have been running", tasklets.contains(tasklet));
-    runningWorkers.completeTasklet(vortexWorkerManager.getId(), tasklet.getId(), null);
+    runningWorkers.completeTasklets(vortexWorkerManager.getId(), tasklet.getId(), null);
     assertFalse("Tasklet must not have been completed", tasklet.isCompleted());
   }
 }

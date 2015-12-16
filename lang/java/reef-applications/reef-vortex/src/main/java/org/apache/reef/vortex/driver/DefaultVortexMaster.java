@@ -25,6 +25,7 @@ import org.apache.reef.util.Optional;
 import org.apache.reef.vortex.api.FutureCallback;
 import org.apache.reef.vortex.api.VortexFunction;
 import org.apache.reef.vortex.api.VortexFuture;
+import org.apache.reef.vortex.common.*;
 
 import javax.inject.Inject;
 import java.io.Serializable;
@@ -44,6 +45,7 @@ final class DefaultVortexMaster implements VortexMaster {
   private final RunningWorkers runningWorkers;
   private final PendingTasklets pendingTasklets;
   private final Executor executor;
+  private final Map<Integer, VortexFutureDelegate> taskletFutureMap = new HashMap<>();
 
   /**
    * @param runningWorkers for managing all running workers.
@@ -73,8 +75,10 @@ final class DefaultVortexMaster implements VortexMaster {
       vortexFuture = new VortexFuture<>(executor, this, id);
     }
 
-    final Tasklet tasklet = new Tasklet<>(id, function, input, vortexFuture);
+    final Tasklet tasklet = new Tasklet<>(id, function, input);
     this.pendingTasklets.addLast(tasklet);
+
+    // TODO[MY TODO]: Match VortexFutureDelegate to Tasklet.
     return vortexFuture;
   }
 
@@ -107,30 +111,39 @@ final class DefaultVortexMaster implements VortexMaster {
     }
   }
 
-  /**
-   * Notify task completion to runningWorkers.
-   */
   @Override
-  public void taskletCompleted(final String workerId,
-                               final int taskletId,
-                               final Serializable result) {
-    runningWorkers.completeTasklet(workerId, taskletId, result);
-  }
+  public void workerReported(final String workerId, final WorkerReport workerReport) {
+    // TODO[JIRA REEF-942]: Fix when aggregation is allowed.
 
-  /**
-   * Notify task failure to runningWorkers.
-   */
-  @Override
-  public void taskletErrored(final String workerId, final int taskletId, final Exception exception) {
-    runningWorkers.errorTasklet(workerId, taskletId, exception);
-  }
+    for (final TaskletReport taskletReport : workerReport.getTaskletReports()) {
+      switch (taskletReport.getType()) {
+      case TaskletResult:
+        final TaskletResultReport taskletResultReport = (TaskletResultReport) taskletReport;
 
-  /**
-   * Notify tasklet cancellation to runningWorkers.
-   */
-  @Override
-  public void taskletCancelled(final String workerId, final int taskletId) {
-    runningWorkers.taskletCancelled(workerId, taskletId);
+        final List<Integer> resultTaskletIds = taskletResultReport.getTaskletIds();
+        runningWorkers.doneTasklets(workerId, resultTaskletIds);
+
+        // TODO[MY TODO]: Signal to VortexFutureDelegate.
+        break;
+      case TaskletCancelled:
+        final TaskletCancelledReport taskletCancelledReport = (TaskletCancelledReport) taskletReport;
+
+        // TODO[MY TODO]: Signal to VortexFutureDelegate.
+
+        break;
+      case TaskletFailure:
+        final TaskletFailureReport taskletFailureReport = (TaskletFailureReport) taskletReport;
+
+        final List<Integer> failureTaskletIds = taskletFailureReport.getTaskletIds();
+        runningWorkers.doneTasklets(workerId, taskletFailureReport.getTaskletIds());
+
+        // TODO[MY TODO]: Signal to VortexFutureDelegate.
+
+        break;
+      default:
+        throw new RuntimeException("Unknown Report");
+      }
+    }
   }
 
   /**

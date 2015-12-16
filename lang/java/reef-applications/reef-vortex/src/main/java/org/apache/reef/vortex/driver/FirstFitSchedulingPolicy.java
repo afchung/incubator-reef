@@ -19,6 +19,7 @@
 package org.apache.reef.vortex.driver;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -125,33 +126,33 @@ class FirstFitSchedulingPolicy implements SchedulingPolicy {
 
   /**
    * @param vortexWorker that the tasklet completed in
-   * @param tasklet completed
+   * @param tasklets completed
    */
   @Override
-  public void taskletCompleted(final VortexWorkerManager vortexWorker, final Tasklet tasklet) {
+  public void taskletsCompleted(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklets) {
     final String workerId = vortexWorker.getId();
-    removeTasklet(workerId);
+    removeTasklet(workerId, tasklets);
   }
 
   /**
    * @param vortexWorker that the tasklet failed in
-   * @param tasklet failed
+   * @param tasklets failed
    */
   @Override
-  public void taskletFailed(final VortexWorkerManager vortexWorker, final Tasklet tasklet) {
+  public void taskletsFailed(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklets) {
     final String workerId = vortexWorker.getId();
-    removeTasklet(workerId);
+    removeTasklet(workerId, tasklets);
   }
 
   @Override
   public void taskletCancelled(final VortexWorkerManager vortexWorker, final Tasklet tasklet) {
     final String workerId = vortexWorker.getId();
-    removeTasklet(workerId);
+    removeTasklet(workerId, Collections.singletonList(tasklet));
   }
 
-  private void removeTasklet(final String workerId) {
+  private void removeTasklet(final String workerId, final List<Tasklet> tasklets) {
     if (idLoadMap.containsKey(workerId)) {
-      idLoadMap.put(workerId, Math.max(0, idLoadMap.get(workerId) - 1));
+      idLoadMap.put(workerId, Math.max(0, idLoadMap.get(workerId) - tasklets.size()));
     }
   }
 }

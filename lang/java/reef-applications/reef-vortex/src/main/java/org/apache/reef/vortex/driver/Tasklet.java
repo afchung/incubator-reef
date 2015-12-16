@@ -32,16 +32,13 @@ class Tasklet<TInput extends Serializable, TOutput extends Serializable> {
   private final int taskletId;
   private final VortexFunction<TInput, TOutput> userTask;
   private final TInput input;
-  private final VortexFuture<TOutput> vortexFuture;
 
   Tasklet(final int taskletId,
           final VortexFunction<TInput, TOutput> userTask,
-          final TInput input,
-          final VortexFuture<TOutput> vortexFuture) {
+          final TInput input) {
     this.taskletId = taskletId;
     this.userTask = userTask;
     this.input = input;
-    this.vortexFuture = vortexFuture;
   }
 
   /**
@@ -63,34 +60,6 @@ class Tasklet<TInput extends Serializable, TOutput extends Serializable> {
    */
   VortexFunction<TInput, TOutput> getUserFunction() {
     return userTask;
-  }
-
-  /**
-   * Called by VortexMaster to let the user know that the task completed.
-   */
-  void completed(final TOutput result) {
-    vortexFuture.completed(result);
-  }
-
-  /**
-   * Called by VortexMaster to let the user know that the task threw an exception.
-   */
-  void threwException(final Exception exception) {
-    vortexFuture.threwException(exception);
-  }
-
-  /**
-   * Called by VortexMaster to let the user know that the task has been cancelled.
-   */
-  void cancelled(){
-    vortexFuture.cancelled();
-  }
-
-  /**
-   * For tests.
-   */
-  boolean isCompleted() {
-    return vortexFuture.isDone();
   }
 
   /**
