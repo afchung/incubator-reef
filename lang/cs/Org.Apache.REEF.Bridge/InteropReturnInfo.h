@@ -33,7 +33,7 @@ namespace Org {
   namespace Apache {
     namespace REEF {
 		namespace Bridge {
-			public ref class InteropReturnInfo : public IInteropReturnInfo {
+			public ref class InteropReturnInfo {
 				JNIEnv* _env;
 				jobject   _jobjectInteropReturnInfo;
 
