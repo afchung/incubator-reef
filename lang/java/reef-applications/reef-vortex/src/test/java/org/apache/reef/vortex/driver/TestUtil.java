@@ -49,12 +49,15 @@ public final class TestUtil {
   private final Executor executor = Executors.newFixedThreadPool(5);
   private final VortexMaster vortexMaster = mock(VortexMaster.class);
 
+  /**
+   * @return a new mocked worker, with a mocked {@link VortexMaster}.
+   */
   public VortexWorkerManager newWorker() {
     return newWorker(vortexMaster);
   }
 
   /**
-   * @return a new mocked worker.
+   * @return a new mocked worker, with the {@link VortexMaster} passed in.
    */
   public VortexWorkerManager newWorker(final VortexMaster master) {
     final RunningTask reefTask = mock(RunningTask.class);

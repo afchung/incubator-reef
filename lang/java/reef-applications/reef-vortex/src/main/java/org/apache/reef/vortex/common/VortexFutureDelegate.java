@@ -18,20 +18,34 @@
  */
 package org.apache.reef.vortex.common;
 
+import org.apache.reef.annotations.Unstable;
+import org.apache.reef.annotations.audience.DriverSide;
 import org.apache.reef.annotations.audience.Private;
 
 import java.io.Serializable;
 import java.util.List;
 
 /**
- * Created by afchung on 12/16/15.
+ * Exposes functions to be called by the {@link org.apache.reef.vortex.driver.VortexMaster}
+ * to note that a list of Tasklets associated with a Future has completed.
  */
+@Unstable
+@DriverSide
 @Private
 public interface VortexFutureDelegate<TOutput extends Serializable> {
 
+  /**
+   * the list of Tasklets associated with the Future have completed with a result.
+   */
   void completed(final List<Integer> taskletIds, final TOutput result);
 
+  /**
+   * The list of Tasklets associated with the Future have thrown an Exception.
+   */
   void threwException(final List<Integer> taskletIds, final Exception exception);
 
+  /**
+   * A Tasklet associated with the Future has been cancelled.
+   */
   void cancelled(final int taskletId);
 }

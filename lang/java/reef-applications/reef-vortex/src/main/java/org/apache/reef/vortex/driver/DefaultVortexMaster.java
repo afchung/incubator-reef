@@ -76,7 +76,7 @@ final class DefaultVortexMaster implements VortexMaster {
     }
 
     final Tasklet tasklet = new Tasklet<>(id, function, input, vortexFuture);
-    putDelegate(tasklet, vortexFuture);
+    putDelegate(Collections.singletonList(tasklet), vortexFuture);
     this.pendingTasklets.addLast(tasklet);
 
     return vortexFuture;
@@ -154,29 +154,35 @@ final class DefaultVortexMaster implements VortexMaster {
     runningWorkers.terminate();
   }
 
-  private synchronized void putDelegate(final Tasklet tasklet, final VortexFutureDelegate delegate) {
-    taskletFutureMap.put(tasklet.getId(), delegate);
+  /**
+   * Puts a delegate to associate with a Tasklet.
+   */
+  private synchronized void putDelegate(final List<Tasklet> tasklets, final VortexFutureDelegate delegate) {
+    for (final Tasklet tasklet : tasklets) {
+      taskletFutureMap.put(tasklet.getId(), delegate);
+    }
   }
 
+  /**
+   * Fetches a delegate that maps to the list of Tasklets.
+   */
   private synchronized VortexFutureDelegate fetchDelegate(final List<Integer> taskletIds) {
-    synchronized (taskletFutureMap) {
-      VortexFutureDelegate delegate = null;
-      for (final int taskletId : taskletIds) {
-        final VortexFutureDelegate currDelegate = taskletFutureMap.remove(taskletId);
-        if (currDelegate == null) {
-          // TODO[JIRA REEF-500]: Consider duplicate tasklets.
-          throw new RuntimeException("Tasklet should only be removed once.");
-        }
-
-        if (delegate == null) {
-          delegate = currDelegate;
-        } else {
-          assert delegate == currDelegate;
-        }
+    VortexFutureDelegate delegate = null;
+    for (final int taskletId : taskletIds) {
+      final VortexFutureDelegate currDelegate = taskletFutureMap.remove(taskletId);
+      if (currDelegate == null) {
+        // TODO[JIRA REEF-500]: Consider duplicate tasklets.
+        throw new RuntimeException("Tasklet should only be removed once.");
       }
 
-      return delegate;
+      if (delegate == null) {
+        delegate = currDelegate;
+      } else {
+        assert delegate == currDelegate;
+      }
     }
+
+    return delegate;
   }
 
 }
