@@ -30,7 +30,7 @@ using Org.Apache.REEF.Utilities.Logging;
 namespace Org.Apache.REEF.Driver.Evaluator
 {
     // This class is `public` because it is called from C++ code.
-    public sealed class EvaluatorDescriptorImpl : IEvaluatorDescriptor
+    internal sealed class EvaluatorDescriptorImpl : IEvaluatorDescriptor
     {
         private const string DefaultRackName = "default_rack";
         private static readonly Logger LOGGER = Logger.GetLogger(typeof(EvaluatorDescriptorImpl));
