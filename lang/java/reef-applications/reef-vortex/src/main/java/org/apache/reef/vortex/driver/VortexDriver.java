@@ -37,7 +37,6 @@ import org.apache.reef.wake.impl.ThreadPoolStage;
 import org.apache.reef.wake.time.event.StartTime;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;

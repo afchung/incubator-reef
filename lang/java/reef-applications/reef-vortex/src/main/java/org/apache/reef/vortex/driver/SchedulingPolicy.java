@@ -53,15 +53,5 @@ interface SchedulingPolicy {
   /**
    * Tasklets completed.
    */
-  void taskletsCompleted(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklet);
-
-  /**
-   * Tasklets failed.
-   */
-  void taskletsFailed(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklet);
-
-  /**
-   * Tasklet cancelled.
-   */
-  void taskletCancelled(final VortexWorkerManager vortexWorker, final Tasklet tasklet);
+  void taskletsDone(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklets);
 }

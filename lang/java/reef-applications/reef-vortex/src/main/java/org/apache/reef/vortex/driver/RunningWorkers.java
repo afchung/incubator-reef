@@ -189,7 +189,7 @@ final class RunningWorkers {
       if (!terminated && runningWorkers.containsKey(workerId)) { // Preemption can come before
         final VortexWorkerManager worker = this.runningWorkers.get(workerId);
         final List<Tasklet> tasklets = worker.taskletsDone(taskletIds);
-        this.schedulingPolicy.taskletsCompleted(worker, tasklets);
+        this.schedulingPolicy.taskletsDone(worker, tasklets);
 
         taskletsToCancel.removeAll(taskletIds); // cleanup to prevent memory leak.
 

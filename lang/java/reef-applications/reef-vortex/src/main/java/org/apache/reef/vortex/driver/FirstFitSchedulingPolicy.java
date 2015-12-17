@@ -19,7 +19,6 @@
 package org.apache.reef.vortex.driver;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -129,25 +128,9 @@ class FirstFitSchedulingPolicy implements SchedulingPolicy {
    * @param tasklets completed
    */
   @Override
-  public void taskletsCompleted(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklets) {
+  public void taskletsDone(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklets) {
     final String workerId = vortexWorker.getId();
     removeTasklet(workerId, tasklets);
-  }
-
-  /**
-   * @param vortexWorker that the tasklet failed in
-   * @param tasklets failed
-   */
-  @Override
-  public void taskletsFailed(final VortexWorkerManager vortexWorker, final List<Tasklet> tasklets) {
-    final String workerId = vortexWorker.getId();
-    removeTasklet(workerId, tasklets);
-  }
-
-  @Override
-  public void taskletCancelled(final VortexWorkerManager vortexWorker, final Tasklet tasklet) {
-    final String workerId = vortexWorker.getId();
-    removeTasklet(workerId, Collections.singletonList(tasklet));
   }
 
   private void removeTasklet(final String workerId, final List<Tasklet> tasklets) {

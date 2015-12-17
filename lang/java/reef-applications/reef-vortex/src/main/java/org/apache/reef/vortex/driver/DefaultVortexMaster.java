@@ -41,11 +41,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ThreadSafe
 @DriverSide
 final class DefaultVortexMaster implements VortexMaster {
+  private final Map<Integer, VortexFutureDelegate> taskletFutureMap = new HashMap<>();
   private final AtomicInteger taskletIdCounter = new AtomicInteger();
   private final RunningWorkers runningWorkers;
   private final PendingTasklets pendingTasklets;
   private final Executor executor;
-  private final Map<Integer, VortexFutureDelegate> taskletFutureMap = new HashMap<>();
 
   /**
    * @param runningWorkers for managing all running workers.
@@ -75,10 +75,10 @@ final class DefaultVortexMaster implements VortexMaster {
       vortexFuture = new VortexFuture<>(executor, this, id);
     }
 
-    final Tasklet tasklet = new Tasklet<>(id, function, input);
+    final Tasklet tasklet = new Tasklet<>(id, function, input, vortexFuture);
+    putDelegate(tasklet, vortexFuture);
     this.pendingTasklets.addLast(tasklet);
 
-    // TODO[MY TODO]: Match VortexFutureDelegate to Tasklet.
     return vortexFuture;
   }
 
@@ -122,13 +122,14 @@ final class DefaultVortexMaster implements VortexMaster {
 
         final List<Integer> resultTaskletIds = taskletResultReport.getTaskletIds();
         runningWorkers.doneTasklets(workerId, resultTaskletIds);
+        fetchDelegate(resultTaskletIds).completed(resultTaskletIds, taskletResultReport.getResult());
 
-        // TODO[MY TODO]: Signal to VortexFutureDelegate.
         break;
       case TaskletCancelled:
         final TaskletCancelledReport taskletCancelledReport = (TaskletCancelledReport) taskletReport;
-
-        // TODO[MY TODO]: Signal to VortexFutureDelegate.
+        final List<Integer> cancelledIdToList = Collections.singletonList(taskletCancelledReport.getTaskletId());
+        runningWorkers.doneTasklets(workerId, cancelledIdToList);
+        fetchDelegate(cancelledIdToList).cancelled(taskletCancelledReport.getTaskletId());
 
         break;
       case TaskletFailure:
@@ -136,8 +137,7 @@ final class DefaultVortexMaster implements VortexMaster {
 
         final List<Integer> failureTaskletIds = taskletFailureReport.getTaskletIds();
         runningWorkers.doneTasklets(workerId, taskletFailureReport.getTaskletIds());
-
-        // TODO[MY TODO]: Signal to VortexFutureDelegate.
+        fetchDelegate(failureTaskletIds).threwException(failureTaskletIds, taskletFailureReport.getException());
 
         break;
       default:
@@ -153,4 +153,30 @@ final class DefaultVortexMaster implements VortexMaster {
   public void terminate() {
     runningWorkers.terminate();
   }
+
+  private synchronized void putDelegate(final Tasklet tasklet, final VortexFutureDelegate delegate) {
+    taskletFutureMap.put(tasklet.getId(), delegate);
+  }
+
+  private synchronized VortexFutureDelegate fetchDelegate(final List<Integer> taskletIds) {
+    synchronized (taskletFutureMap) {
+      VortexFutureDelegate delegate = null;
+      for (final int taskletId : taskletIds) {
+        final VortexFutureDelegate currDelegate = taskletFutureMap.remove(taskletId);
+        if (currDelegate == null) {
+          // TODO[JIRA REEF-500]: Consider duplicate tasklets.
+          throw new RuntimeException("Tasklet should only be removed once.");
+        }
+
+        if (delegate == null) {
+          delegate = currDelegate;
+        } else {
+          assert delegate == currDelegate;
+        }
+      }
+
+      return delegate;
+    }
+  }
+
 }
