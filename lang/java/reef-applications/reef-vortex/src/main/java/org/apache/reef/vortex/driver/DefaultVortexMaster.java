@@ -113,16 +113,25 @@ final class DefaultVortexMaster implements VortexMaster {
 
   @Override
   public void workerReported(final String workerId, final WorkerReport workerReport) {
-    // TODO[JIRA REEF-942]: Fix when aggregation is allowed.
-
     for (final TaskletReport taskletReport : workerReport.getTaskletReports()) {
       switch (taskletReport.getType()) {
       case TaskletResult:
         final TaskletResultReport taskletResultReport = (TaskletResultReport) taskletReport;
 
-        final List<Integer> resultTaskletIds = taskletResultReport.getTaskletIds();
-        runningWorkers.doneTasklets(workerId, resultTaskletIds);
-        fetchDelegate(resultTaskletIds).completed(resultTaskletIds, taskletResultReport.getResult());
+        final int resultTaskletId = taskletResultReport.getTaskletId();
+        final List<Integer> singletonResultTaskletId = Collections.singletonList(resultTaskletId);
+        runningWorkers.doneTasklets(workerId, singletonResultTaskletId);
+        fetchDelegate(singletonResultTaskletId).completed(resultTaskletId, taskletResultReport.getResult());
+
+        break;
+      case TaskletAggregationResult:
+        final TaskletAggregationResultReport taskletAggregationResultReport =
+            (TaskletAggregationResultReport) taskletReport;
+
+        final List<Integer> aggregatedTaskletIds = taskletAggregationResultReport.getTaskletIds();
+        runningWorkers.doneTasklets(workerId, aggregatedTaskletIds);
+        fetchDelegate(aggregatedTaskletIds).aggregationCompleted(
+            aggregatedTaskletIds, taskletAggregationResultReport.getResult());
 
         break;
       case TaskletCancelled:
@@ -135,10 +144,20 @@ final class DefaultVortexMaster implements VortexMaster {
       case TaskletFailure:
         final TaskletFailureReport taskletFailureReport = (TaskletFailureReport) taskletReport;
 
-        final List<Integer> failureTaskletIds = taskletFailureReport.getTaskletIds();
-        runningWorkers.doneTasklets(workerId, taskletFailureReport.getTaskletIds());
-        fetchDelegate(failureTaskletIds).threwException(failureTaskletIds, taskletFailureReport.getException());
+        final int failureTaskletId = taskletFailureReport.getTaskletId();
+        final List<Integer> singletonFailedTaskletId = Collections.singletonList(failureTaskletId);
+        runningWorkers.doneTasklets(workerId, singletonFailedTaskletId);
+        fetchDelegate(singletonFailedTaskletId).threwException(failureTaskletId, taskletFailureReport.getException());
 
+        break;
+      case TaskletAggregationFailure:
+        final TaskletAggregationFailureReport taskletAggregationFailureReport =
+            (TaskletAggregationFailureReport) taskletReport;
+
+        final List<Integer> aggregationFailedTaskletIds = taskletAggregationFailureReport.getTaskletIds();
+        runningWorkers.doneTasklets(workerId, aggregationFailedTaskletIds);
+        fetchDelegate(aggregationFailedTaskletIds).aggregationThrewException(aggregationFailedTaskletIds,
+            taskletAggregationFailureReport.getException());
         break;
       default:
         throw new RuntimeException("Unknown Report");

@@ -75,7 +75,7 @@ public class DefaultVortexMasterTest {
 
     final ArrayList<Integer> taskletIds = launchTasklets(runningWorkers, pendingTasklets, 1);
     for (final int taskletId : taskletIds) {
-      final TaskletReport taskletReport = new TaskletResultReport<>(Collections.singletonList(taskletId), null);
+      final TaskletReport taskletReport = new TaskletResultReport<>(taskletId, null);
       vortexMaster.workerReported(
           vortexWorkerManager1.getId(), new WorkerReport(Collections.singletonList(taskletReport)));
     }
@@ -115,7 +115,7 @@ public class DefaultVortexMasterTest {
 
     // Completed?
     for (final int taskletId : taskletIds2) {
-      final TaskletReport taskletReport = new TaskletResultReport<>(Collections.singletonList(taskletId), null);
+      final TaskletReport taskletReport = new TaskletResultReport<>(taskletId, null);
       vortexMaster.workerReported(
           vortexWorkerManager2.getId(), new WorkerReport(Collections.singletonList(taskletReport)));
     }
@@ -166,7 +166,7 @@ public class DefaultVortexMasterTest {
     for (final int taskletId : taskletIds2) {
       final String workerId = runningWorkers.getWhereTaskletWasScheduledTo(taskletId);
       assertNotNull("The tasklet must have been scheduled", workerId);
-      final TaskletReport taskletReport = new TaskletResultReport<>(Collections.singletonList(taskletId), null);
+      final TaskletReport taskletReport = new TaskletResultReport<>(taskletId, null);
       vortexMaster.workerReported(
           workerId, new WorkerReport(Collections.singletonList(taskletReport)));
     }
@@ -209,8 +209,7 @@ public class DefaultVortexMasterTest {
     final ArrayList<Integer> taskletIds = launchTasklets(runningWorkers, pendingTasklets, 1);
 
     for (final int taskletId : taskletIds) {
-      final TaskletReport taskletReport = new TaskletFailureReport(
-          Collections.singletonList(taskletId), new RuntimeException("Test exception."));
+      final TaskletReport taskletReport = new TaskletFailureReport(taskletId, new RuntimeException("Test exception."));
       vortexMaster.workerReported(
           vortexWorkerManager1.getId(), new WorkerReport(Collections.singletonList(taskletReport)));
     }

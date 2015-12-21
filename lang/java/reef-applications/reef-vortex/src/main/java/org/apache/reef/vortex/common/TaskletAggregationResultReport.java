@@ -23,39 +23,49 @@ import org.apache.reef.annotations.audience.DriverSide;
 import org.apache.reef.annotations.audience.Private;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Exposes functions to be called by the {@link org.apache.reef.vortex.driver.VortexMaster}
- * to note that a list of Tasklets associated with a Future has completed.
+ * Report of a Tasklet aggregation execution result.
  */
-@Unstable
-@DriverSide
 @Private
-public interface VortexFutureDelegate<TOutput extends Serializable> {
+@DriverSide
+@Unstable
+public final class TaskletAggregationResultReport<TOutput extends Serializable> implements TaskletReport {
+  private final List<Integer> taskletIds;
+  private final TOutput result;
 
   /**
-   * A Tasklet associated with the future has completed with a result.
+   * @param taskletIds of the tasklets.
+   * @param result of the tasklet execution.
    */
-  void completed(final int taskletId, final TOutput result);
+  public TaskletAggregationResultReport(final List<Integer> taskletIds, final TOutput result) {
+    this.taskletIds = Collections.unmodifiableList(new ArrayList<>(taskletIds));
+    this.result = result;
+  }
 
   /**
-   * The list of aggregated Tasklets associated with the Future that have completed with a result.
+   * @return the type of this TaskletReport.
    */
-  void aggregationCompleted(final List<Integer> taskletIds, final TOutput result);
+  @Override
+  public TaskletReportType getType() {
+    return TaskletReportType.TaskletAggregationResult;
+  }
 
   /**
-   * A Tasklet associated with the Future has thrown an Exception.
+   * @return the TaskletId(s) of this TaskletReport
    */
-  void threwException(final int taskletId, final Exception exception);
+  public List<Integer> getTaskletIds() {
+    return taskletIds;
+  }
 
   /**
-   * The list of Tasklets associated with the Future that have thrown an Exception.
+   * @return the result of the Tasklet aggregation execution.
    */
-  void aggregationThrewException(final List<Integer> taskletIds, final Exception exception);
+  public TOutput getResult() {
+    return result;
+  }
 
-  /**
-   * A Tasklet associated with the Future has been cancelled.
-   */
-  void cancelled(final int taskletId);
 }

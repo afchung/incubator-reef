@@ -181,9 +181,8 @@ public final class VortexFuture<TOutput extends Serializable>
    */
   @Private
   @Override
-  public void completed(final List<Integer> taskletIds, final TOutput result) {
-    assert taskletIds.size() == 1;
-    assert taskletIds.get(0) == taskletId;
+  public void completed(final int pTaskletId, final TOutput result) {
+    assert taskletId == pTaskletId;
 
     this.userResult = Optional.ofNullable(result);
     if (callbackHandler != null) {
@@ -198,13 +197,21 @@ public final class VortexFuture<TOutput extends Serializable>
   }
 
   /**
+   * VortexMaster should never call this.
+   */
+  @Private
+  @Override
+  public void aggregationCompleted(final List<Integer> taskletIds, final TOutput result) {
+    throw new RuntimeException("Functions not associated with AggregationFunctions cannot be aggregated.");
+  }
+
+  /**
    * Called by VortexMaster to let the user know that the Tasklet threw an exception.
    */
   @Private
   @Override
-  public void threwException(final List<Integer> taskletIds, final Exception exception) {
-    assert taskletIds.size() == 1;
-    assert taskletIds.get(0) == taskletId;
+  public void threwException(final int pTaskletId, final Exception exception) {
+    assert taskletId == pTaskletId;
 
     this.userException = exception;
     if (callbackHandler != null) {
@@ -216,6 +223,15 @@ public final class VortexFuture<TOutput extends Serializable>
       });
     }
     this.countDownLatch.countDown();
+  }
+
+  /**
+   * VortexMaster should never call this.
+   */
+  @Private
+  @Override
+  public void aggregationThrewException(final List<Integer> taskletIds, final Exception exception) {
+    throw new RuntimeException("Functions not associated with AggregationFunctions cannot be aggregated");
   }
 
   /**
