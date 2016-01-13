@@ -57,12 +57,18 @@ final class RunningWorkers {
   // Scheduling policy
   private final SchedulingPolicy schedulingPolicy;
 
+  private final AggregateFunctionRepository aggregateFunctionRepository;
+
+  private final Map<String, Set<Integer>> workerAggregateFunctionMap = new HashMap<>();
+
   /**
    * RunningWorkers constructor.
    */
   @Inject
-  RunningWorkers(final SchedulingPolicy schedulingPolicy) {
+  RunningWorkers(final SchedulingPolicy schedulingPolicy,
+                 final AggregateFunctionRepository aggregateFunctionRepository) {
     this.schedulingPolicy = schedulingPolicy;
+    this.aggregateFunctionRepository = aggregateFunctionRepository;
   }
 
   /**
@@ -76,6 +82,7 @@ final class RunningWorkers {
         if (!removedBeforeAddedWorkers.contains(vortexWorkerManager.getId())) {
           this.runningWorkers.put(vortexWorkerManager.getId(), vortexWorkerManager);
           this.schedulingPolicy.workerAdded(vortexWorkerManager);
+          workerAggregateFunctionMap.put(vortexWorkerManager.getId(), new HashSet<Integer>());
 
           // Notify (possibly) waiting scheduler
           noWorkerOrResource.signal();
@@ -111,6 +118,7 @@ final class RunningWorkers {
         return Optional.empty();
       }
     } finally {
+      workerAggregateFunctionMap.remove(id);
       lock.unlock();
     }
   }
@@ -146,6 +154,11 @@ final class RunningWorkers {
         }
 
         final VortexWorkerManager vortexWorkerManager = runningWorkers.get(workerId.get());
+        if (tasklet.getAggregateFunctionId().isPresent() &&
+            !workerAggregateFunctionMap.containsKey(tasklet.getAggregateFunctionId().get())) {
+          // TODO[JIRA REEF-1130]: send aggregate function to worker.
+        }
+
         vortexWorkerManager.launchTasklet(tasklet);
         schedulingPolicy.taskletLaunched(vortexWorkerManager, tasklet);
       }

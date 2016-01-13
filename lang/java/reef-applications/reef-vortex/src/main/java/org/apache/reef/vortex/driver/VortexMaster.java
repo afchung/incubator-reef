@@ -18,14 +18,15 @@
  */
 package org.apache.reef.vortex.driver;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.reef.annotations.Unstable;
 import org.apache.reef.annotations.audience.DriverSide;
 import org.apache.reef.tang.annotations.DefaultImplementation;
 import org.apache.reef.util.Optional;
-import org.apache.reef.vortex.api.FutureCallback;
-import org.apache.reef.vortex.api.VortexFunction;
-import org.apache.reef.vortex.api.VortexFuture;
+import org.apache.reef.vortex.api.*;
 import org.apache.reef.vortex.common.WorkerReport;
+
+import java.util.List;
 
 /**
  * The heart of Vortex.
@@ -35,6 +36,10 @@ import org.apache.reef.vortex.common.WorkerReport;
 @DriverSide
 @DefaultImplementation(DefaultVortexMaster.class)
 public interface VortexMaster {
+  <TInput, TOutput> VortexAggregateFuture<TOutput>
+  enqueueTasklet(final VortexAggregateFunction<TInput, TOutput> aggregateFunction,
+                 final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions);
+
   /**
    * Submit a new Tasklet to be run sometime in the future, with an optional callback function on the result.
    */

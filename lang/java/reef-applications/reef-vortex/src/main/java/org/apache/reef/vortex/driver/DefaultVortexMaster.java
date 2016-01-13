@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @DriverSide
 final class DefaultVortexMaster implements VortexMaster {
   private final Map<Integer, VortexFutureDelegate> taskletFutureMap = new HashMap<>();
-  private final Map<Integer, VortexAggregateFunction> aggregateFunctionMap = new ConcurrentHashMap<>();
+  private final AggregateFunctionRepository aggregateFunctionRepository;
   private final AtomicInteger taskletIdCounter = new AtomicInteger();
   private final AtomicInteger aggregateIdCounter = new AtomicInteger();
   private final RunningWorkers runningWorkers;
@@ -55,10 +55,42 @@ final class DefaultVortexMaster implements VortexMaster {
   @Inject
   DefaultVortexMaster(final RunningWorkers runningWorkers,
                       final PendingTasklets pendingTasklets,
+                      final AggregateFunctionRepository aggregateFunctionRepository,
                       @Parameter(VortexMasterConf.CallbackThreadPoolSize.class) final int threadPoolSize) {
     this.executor = Executors.newFixedThreadPool(threadPoolSize);
     this.runningWorkers = runningWorkers;
     this.pendingTasklets = pendingTasklets;
+    this.aggregateFunctionRepository = aggregateFunctionRepository;
+  }
+
+  @Override
+  public <TInput, TOutput> VortexAggregateFuture<TOutput>
+      enqueueTasklet(final VortexAggregateFunction<TInput, TOutput> aggregateFunction,
+                     final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions) {
+    final int aggregateFunctionId = aggregateIdCounter.getAndIncrement();
+    aggregateFunctionRepository.put(aggregateFunctionId, aggregateFunction);
+    final Codec<TOutput> aggOutputCodec = aggregateFunction.getOutputCodec();
+    final List<Tasklet> tasklets = new ArrayList<>(functions.size());
+    final List<Integer> taskletIds = new ArrayList<>(functions.size());
+
+    for (final Pair<TInput, VortexFunction<TInput, TOutput>> pair : functions) {
+      taskletIds.add(taskletIdCounter.getAndIncrement());
+    }
+
+    final VortexAggregateFuture vortexAggregateFuture =
+        new VortexAggregateFuture(executor, this, taskletIds, aggOutputCodec);
+
+    for (int i = 0; i < taskletIds.size(); i++) {
+      final int id = taskletIds.get(i);
+      final Pair<TInput, VortexFunction<TInput, TOutput>> functionPair = functions.get(i);
+      final Tasklet tasklet = new Tasklet<>(id, Optional.of(aggregateFunctionId), functionPair.getRight(),
+          functionPair.getLeft(), vortexAggregateFuture);
+      tasklets.add(tasklet);
+      pendingTasklets.addLast(tasklet);
+    }
+
+    putDelegate(tasklets, vortexAggregateFuture);
+    return vortexAggregateFuture;
   }
 
   /**
@@ -83,35 +115,6 @@ final class DefaultVortexMaster implements VortexMaster {
     this.pendingTasklets.addLast(tasklet);
 
     return vortexFuture;
-  }
-
-  public <TInput, TOutput, TAggOutput> VortexAggregateFuture<TOutput>
-    enqueueTasklet(final VortexAggregateFunction<TOutput, TAggOutput> aggregateFunction,
-                   final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions) {
-    final int aggregateFunctionId = aggregateIdCounter.getAndIncrement();
-    aggregateFunctionMap.put(aggregateFunctionId, aggregateFunction);
-    final Codec<TAggOutput> aggOutputCodec = aggregateFunction.getOutputCodec();
-    final List<Tasklet> tasklets = new ArrayList<>(functions.size());
-    final List<Integer> taskletIds = new ArrayList<>(functions.size());
-
-    for (final Pair<TInput, VortexFunction<TInput, TOutput>> functionPair : functions) {
-      taskletIds.add(taskletIdCounter.getAndIncrement());
-    }
-
-    final VortexAggregateFuture vortexAggregateFuture =
-        new VortexAggregateFuture(executor, this, taskletIds, aggOutputCodec);
-
-    for (int i = 0; i < taskletIds.size(); i++) {
-      final int id = taskletIds.get(i);
-      final Pair<TInput, VortexFunction<TInput, TOutput>> functionPair = functions.get(i);
-      final Tasklet tasklet = new Tasklet<>(id, Optional.of(aggregateFunctionId), functionPair.getRight(),
-          functionPair.getLeft(), vortexAggregateFuture);
-      tasklets.add(tasklet);
-      pendingTasklets.addLast(tasklet);
-    }
-
-    putDelegate(tasklets, vortexAggregateFuture);
-    return vortexAggregateFuture;
   }
 
   /**
