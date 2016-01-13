@@ -18,11 +18,13 @@
  */
 package org.apache.reef.vortex.api;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.reef.annotations.Unstable;
 import org.apache.reef.util.Optional;
 import org.apache.reef.vortex.driver.VortexMaster;
 
 import javax.inject.Inject;
+import java.util.List;
 
 /**
  * Distributed thread pool.
@@ -60,5 +62,11 @@ public final class VortexThreadPool {
       submit(final VortexFunction<TInput, TOutput> function, final TInput input,
              final FutureCallback<TOutput> callback) {
     return vortexMaster.enqueueTasklet(function, input, Optional.of(callback));
+  }
+
+  public <TInput, TOutput, TAggOutput> VortexAggregateFuture<TAggOutput>
+    submit(final VortexAggregateFunction<TOutput, TAggOutput> aggregateFunction,
+           final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions) {
+    return vortexMaster.enqueueTasklet(aggregateFunction, functions);
   }
 }
