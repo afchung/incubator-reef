@@ -37,8 +37,8 @@ import java.util.List;
 @DefaultImplementation(DefaultVortexMaster.class)
 public interface VortexMaster {
   <TInput, TOutput> VortexAggregateFuture<TOutput>
-  enqueueTasklet(final VortexAggregateFunction<TInput, TOutput> aggregateFunction,
-                 final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions);
+      enqueueTasklet(final VortexAggregateFunction<TInput, TOutput> aggregateFunction,
+                     final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions);
 
   /**
    * Submit a new Tasklet to be run sometime in the future, with an optional callback function on the result.

@@ -65,8 +65,8 @@ public final class VortexThreadPool {
   }
 
   public <TInput, TOutput> VortexAggregateFuture<TOutput>
-    submit(final VortexAggregateFunction<TInput, TOutput> aggregateFunction,
-           final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions) {
+      submit(final VortexAggregateFunction<TInput, TOutput> aggregateFunction,
+             final List<Pair<TInput, VortexFunction<TInput, TOutput>>> functions) {
     return vortexMaster.enqueueTasklet(aggregateFunction, functions);
   }
 }

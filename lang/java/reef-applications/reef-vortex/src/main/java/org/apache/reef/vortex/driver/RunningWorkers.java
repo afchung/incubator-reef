@@ -118,8 +118,11 @@ final class RunningWorkers {
         return Optional.empty();
       }
     } finally {
-      workerAggregateFunctionMap.remove(id);
-      lock.unlock();
+      try {
+        workerAggregateFunctionMap.remove(id);
+      } finally {
+        lock.unlock();
+      }
     }
   }
 
