@@ -159,7 +159,6 @@ under the License.
     <Compile Include="Services\InjectedServices.cs" />
     <Compile Include="Services\IService.cs" />
     <Compile Include="Services\ServiceConfiguration.cs" />
-    <Compile Include="Services\ServicesConfigurationOptions.cs" />
     <Compile Include="Tasks\Defaults\DefaultDriverMessageHandler.cs" />
     <Compile Include="Tasks\Defaults\DefaultTaskMessageSource.cs" />
     <Compile Include="Tasks\DriverConnectionState.cs" />

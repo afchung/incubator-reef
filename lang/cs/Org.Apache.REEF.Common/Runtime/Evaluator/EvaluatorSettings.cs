@@ -289,14 +289,12 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator
                 Logger.Log(Level.Info, "RootServiceConfiguration is not set in Evaluator.config.");
             }
 
-            var serviceConfiguration = _serializer.FromString(
-                        TangFactory.GetTang().NewInjector(
-                        _serializer.FromString(rootServiceConfigString))
-                        .GetNamedInstance<ServicesConfigurationOptions.ServiceConfigString, string>());
+            if (string.IsNullOrEmpty(rootServiceConfigString))
+            {
+                return Optional<IConfiguration>.Empty();
+            }
 
-            return string.IsNullOrEmpty(rootServiceConfigString)
-                ? Optional<IConfiguration>.Empty()
-                : Optional<IConfiguration>.Of(serviceConfiguration);
+            return Optional<IConfiguration>.Of(_serializer.FromString(rootServiceConfigString));
         }
     }
 }

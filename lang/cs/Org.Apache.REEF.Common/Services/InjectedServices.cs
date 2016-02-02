@@ -23,17 +23,13 @@ namespace Org.Apache.REEF.Common.Services
 {
     internal sealed class InjectedServices : IDisposable
     {
-        private ISet<IService> _services; 
+        private readonly ISet<IService> _services; 
         private bool _disposed = false;
 
         [Inject]
         private InjectedServices([Parameter(typeof(ServicesSet))] ISet<IService> services)
         {
             _services = services;
-            foreach (var service in _services)
-            {
-                service.Start();
-            }
         }
 
         public void Dispose()

@@ -296,10 +296,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
                 if (addContextProto.service_configuration != null)
                 {
                     LOGGER.Log(Level.Error, "HELLOHELLOHELLO");
-                    var serviceConfiguration = _serializer.FromString(
-                        TangFactory.GetTang().NewInjector(
-                        _serializer.FromString(addContextProto.service_configuration))
-                        .GetNamedInstance<ServicesConfigurationOptions.ServiceConfigString, string>());
+                    var serviceConfiguration = _serializer.FromString(addContextProto.service_configuration);
                     newTopContext = currentTopContext.SpawnChildContext(contextConfiguration, serviceConfiguration);
                 }
                 else

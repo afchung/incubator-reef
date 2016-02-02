@@ -21,6 +21,5 @@ namespace Org.Apache.REEF.Common.Services
 {
     public interface IService : IDisposable
     {
-        void Start();
     }
 }

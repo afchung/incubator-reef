@@ -53,10 +53,6 @@ namespace Org.Apache.REEF.Examples.Tasks.HelloTask
             Guests.Add(guestName);
         }
 
-        public void Start()
-        {
-        }
-
         public void Dispose()
         {
         }

@@ -16,7 +16,6 @@
 // under the License.
 
 using Org.Apache.REEF.Common.Runtime.Evaluator.Utils;
-using Org.Apache.REEF.Common.Services;
 using Org.Apache.REEF.Common.Tasks;
 using Org.Apache.REEF.Driver.Context;
 using Org.Apache.REEF.Examples.HelloREEF;
@@ -161,7 +160,6 @@ namespace Org.Apache.REEF.Evaluator.Tests
 
             var serviceClassHierarchy = TangFactory.GetTang().GetClassHierarchy(new string[]
             {
-                typeof(ServicesConfigurationOptions).Assembly.GetName().Name,
                 typeof(IStreamingCodec<>).Assembly.GetName().Name
             });
             var rootServiceConfig = serializer.FromString(rootServiceConfigString, serviceClassHierarchy);
@@ -170,10 +168,7 @@ namespace Org.Apache.REEF.Evaluator.Tests
             string contextId = contextInjector.GetNamedInstance<ContextConfigurationOptions.ContextIdentifier, string>();
             Assert.True(contextId.StartsWith("MasterTaskContext"));
 
-            string serviceConfigString = TangFactory.GetTang().NewInjector(rootServiceConfig)
-                .GetNamedInstance<ServicesConfigurationOptions.ServiceConfigString, string>();
-
-            var serviceConfig = serializer.FromString(serviceConfigString, serviceClassHierarchy);
+            var serviceConfig = serializer.FromString(rootServiceConfigString, serviceClassHierarchy);
 
             var serviceInjector = contextInjector.ForkInjector(serviceConfig);
             var tcpCountRange = serviceInjector.GetNamedInstance<TcpPortRangeStart, int>();

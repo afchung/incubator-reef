@@ -102,9 +102,5 @@ namespace Org.Apache.REEF.Examples.MachineLearning.KMeans
         public void Dispose()
         {
         }
-
-        public void Start()
-        {
-        }
     }
 }
