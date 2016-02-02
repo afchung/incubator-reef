@@ -17,11 +17,9 @@
 
 using Org.Apache.REEF.Common.Services;
 using Org.Apache.REEF.Network.Group.Config;
-using Org.Apache.REEF.Tang.Exceptions;
 using Org.Apache.REEF.Tang.Formats;
 using Org.Apache.REEF.Tang.Implementations.Configuration;
 using Org.Apache.REEF.Tang.Implementations.Tang;
-using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Tang.Util;
 using Org.Apache.REEF.Wake.Remote.Impl;
 using Xunit;
@@ -61,9 +59,9 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
             var serviceConfigString = serializer.ToString(wrappedSeriveConfig);
 
             // the configuration string is received at Evaluator side
-            var serviceConfig2 = new ServiceConfiguration(serviceConfigString);
+            var serviceConfig2 = new AvroConfigurationSerializer().FromString(serviceConfigString);
 
-            Assert.Equal(serializer.ToString(serviceConfig), serializer.ToString(serviceConfig2.TangConfig));
+            Assert.Equal(serializer.ToString(serviceConfig), serializer.ToString(serviceConfig2));
         }
     }
 }

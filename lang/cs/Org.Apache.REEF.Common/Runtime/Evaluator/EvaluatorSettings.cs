@@ -20,7 +20,6 @@ using Org.Apache.REEF.Common.Context;
 using Org.Apache.REEF.Common.Evaluator;
 using Org.Apache.REEF.Common.Io;
 using Org.Apache.REEF.Common.Protobuf.ReefProtocol;
-using Org.Apache.REEF.Common.Runtime.Evaluator.Context;
 using Org.Apache.REEF.Common.Runtime.Evaluator.Parameters;
 using Org.Apache.REEF.Common.Runtime.Evaluator.Utils;
 using Org.Apache.REEF.Common.Services;
@@ -28,6 +27,7 @@ using Org.Apache.REEF.Common.Tasks;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Exceptions;
 using Org.Apache.REEF.Tang.Formats;
+using Org.Apache.REEF.Tang.Implementations.Tang;
 using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Utilities.Logging;
@@ -52,7 +52,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator
         private readonly IConfiguration _rootContextConfig;
         private readonly AvroConfigurationSerializer _serializer;
         private readonly Optional<TaskConfiguration> _rootTaskConfiguration;
-        private readonly Optional<ServiceConfiguration> _rootServiceConfiguration;
+        private readonly Optional<IConfiguration> _rootServiceConfiguration;
 
         private EvaluatorOperationState _operationState;
         private INameClient _nameClient;
@@ -206,7 +206,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator
         /// <summary>
         /// return Root Service Configuration passed from Evaluator configuration
         /// </summary>
-        public Optional<ServiceConfiguration> RootServiceConfiguration
+        public Optional<IConfiguration> RootServiceConfiguration
         {
             get { return _rootServiceConfiguration; }
         }
@@ -277,7 +277,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator
                     new TaskConfiguration(taskConfigString));
         }
 
-        private Optional<ServiceConfiguration> CreateRootServiceConfiguration()
+        private Optional<IConfiguration> CreateRootServiceConfiguration()
         {
             string rootServiceConfigString = null;
             try
@@ -288,10 +288,15 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator
             {
                 Logger.Log(Level.Info, "RootServiceConfiguration is not set in Evaluator.config.");
             }
+
+            var serviceConfiguration = _serializer.FromString(
+                        TangFactory.GetTang().NewInjector(
+                        _serializer.FromString(rootServiceConfigString))
+                        .GetNamedInstance<ServicesConfigurationOptions.ServiceConfigString, string>());
+
             return string.IsNullOrEmpty(rootServiceConfigString)
-                ? Optional<ServiceConfiguration>.Empty()
-                : Optional<ServiceConfiguration>.Of(
-                    new ServiceConfiguration(rootServiceConfigString));
+                ? Optional<IConfiguration>.Empty()
+                : Optional<IConfiguration>.Of(serviceConfiguration);
         }
     }
 }

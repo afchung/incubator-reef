@@ -98,5 +98,13 @@ namespace Org.Apache.REEF.Examples.MachineLearning.KMeans
         public class PartitionIndex : Name<int>
         {
         }
+
+        public void Dispose()
+        {
+        }
+
+        public void Start()
+        {
+        }
     }
 }

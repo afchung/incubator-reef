@@ -29,18 +29,18 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
     /// <summary>
     ///  Helper class that encapsulates the root context configuration: With or without services and an initial task.
     /// </summary>
-    internal sealed class RootContextLauncher
+    internal sealed class RootContextLauncher : IDisposable
     {
-        private static readonly Logger LOGGER = Logger.GetLogger(typeof(RootContextLauncher));
-        
-        private readonly IInjector _rootServiceInjector = null;
+        private static readonly Logger Logger = Logger.GetLogger(typeof(RootContextLauncher));
 
+        private readonly object _lockObj = new object();
+        private readonly IInjector _rootServiceInjector;
         private readonly IConfiguration _rootContextConfiguration;
-
-        private ContextRuntime _rootContext = null;
+        private InjectedServices _services;
+        private ContextRuntime _rootContext;
 
         public RootContextLauncher(string id, IConfiguration contextConfiguration,
-            Optional<ServiceConfiguration> rootServiceConfig, Optional<TaskConfiguration> rootTaskConfig)
+            Optional<IConfiguration> rootServiceConfig, Optional<TaskConfiguration> rootTaskConfig)
         {
             Id = id;
             _rootContextConfiguration = contextConfiguration;
@@ -60,7 +60,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
                 var deprecatedContextConfiguration = _rootContextConfiguration as ContextConfiguration;
                 if (deprecatedContextConfiguration != null)
                 {
-                    LOGGER.Log(Level.Info, "Using deprecated ContextConfiguration.");
+                    Logger.Log(Level.Info, "Using deprecated ContextConfiguration.");
                     _rootContext = new ContextRuntime(Id, _rootServiceInjector, _rootContextConfiguration);
                 }
                 else
@@ -71,33 +71,47 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
             return _rootContext;
         }
 
-        private static IInjector InjectServices(Optional<ServiceConfiguration> serviceConfig)
+        private IInjector InjectServices(Optional<IConfiguration> serviceConfig)
         {
             IInjector rootServiceInjector;
 
             if (serviceConfig.IsPresent())
             {
-                rootServiceInjector = TangFactory.GetTang().NewInjector(serviceConfig.Value.TangConfig);
-                InjectedServices services = null;
+                rootServiceInjector = TangFactory.GetTang().NewInjector(serviceConfig.Value);
                 try
                 {
-                    services = rootServiceInjector.GetInstance<InjectedServices>();
+                    _services = rootServiceInjector.GetInstance<InjectedServices>();
+                    Logger.Log(Level.Info, string.Format(CultureInfo.InvariantCulture, "injected service(s)"));
                 }
                 catch (Exception e)
                 {
-                    Utilities.Diagnostics.Exceptions.Caught(e, Level.Error, "Failed to instantiate service.", LOGGER);
-                    InvalidOperationException ex = new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Failed to inject service: encoutned error {1} with message [{0}] and stack trace:[{1}]", e, e.Message, e.StackTrace));
-                    Utilities.Diagnostics.Exceptions.Throw(ex, LOGGER);
+                    var errorMessage = string.Format(CultureInfo.InvariantCulture,
+                        "Failed to inject service: encountered error {1} with message [{0}] and stack trace:[{2}]", e,
+                        e.Message, e.StackTrace);
+                    Utilities.Diagnostics.Exceptions.Caught(e, Level.Error, "Failed to instantiate service.", Logger);
+                    var ex = new InvalidOperationException(errorMessage, e);
+                    Utilities.Diagnostics.Exceptions.Throw(ex, Logger);
                 }
-                LOGGER.Log(Level.Info, string.Format(CultureInfo.InvariantCulture, "injected {0} service(s)", services.Services.Count));
             }
             else
             {
                 rootServiceInjector = TangFactory.GetTang().NewInjector();
-                LOGGER.Log(Level.Info, "no service provided for injection.");
+                Logger.Log(Level.Info, "no service provided for injection.");
             }
             
             return rootServiceInjector;
+        }
+
+        public void Dispose()
+        {
+            lock (_lockObj)
+            {
+                if (_services != null)
+                {
+                    _services.Dispose();
+                    _services = null;
+                }
+            }
         }
     }
 }

@@ -16,11 +16,39 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
+using Org.Apache.REEF.Tang.Annotations;
 
 namespace Org.Apache.REEF.Common.Services
 {
-    public interface IService : IDisposable
+    internal sealed class InjectedServices : IDisposable
     {
-        void Start();
+        private ISet<IService> _services; 
+        private bool _disposed = false;
+
+        [Inject]
+        private InjectedServices([Parameter(typeof(ServicesSet))] ISet<IService> services)
+        {
+            _services = services;
+            foreach (var service in _services)
+            {
+                service.Start();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            foreach (var service in _services)
+            {
+                service.Dispose();
+            }
+
+            _disposed = true;
+        }
     }
 }

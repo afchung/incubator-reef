@@ -154,5 +154,9 @@ namespace Org.Apache.REEF.Network.NetworkService
 
             Logger.Log(Level.Info, "Disposed of network service");
         }
+
+        public void Start()
+        {
+        }
     }
 }

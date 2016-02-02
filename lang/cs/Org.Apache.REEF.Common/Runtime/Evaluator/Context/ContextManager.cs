@@ -26,7 +26,7 @@ using Org.Apache.REEF.Common.Services;
 using Org.Apache.REEF.Common.Tasks;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Formats;
-using Org.Apache.REEF.Tang.Interface;
+using Org.Apache.REEF.Tang.Implementations.Tang;
 using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Utilities.Logging;
 
@@ -36,10 +36,10 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
     {
         private static readonly Logger LOGGER = Logger.GetLogger(typeof(ContextManager));
         private readonly HeartBeatManager _heartBeatManager;
-        private readonly RootContextLauncher _rootContextLauncher;
         private readonly object _contextLock = new object();
         private readonly AvroConfigurationSerializer _serializer;
         private ContextRuntime _topContext = null;
+        private RootContextLauncher _rootContextLauncher = null;
 
         [Inject]
         private ContextManager(
@@ -253,6 +253,12 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
                     _topContext.Dispose();
                     _topContext = null;
                 }
+
+                if (_rootContextLauncher != null)
+                {
+                    _rootContextLauncher.Dispose();
+                    _rootContextLauncher = null;
+                }
             }
         }
 
@@ -289,8 +295,12 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
                 ContextRuntime newTopContext;
                 if (addContextProto.service_configuration != null)
                 {
-                    var serviceConfiguration = new ServiceConfiguration(addContextProto.service_configuration);
-                    newTopContext = currentTopContext.SpawnChildContext(contextConfiguration, serviceConfiguration.TangConfig);
+                    LOGGER.Log(Level.Error, "HELLOHELLOHELLO");
+                    var serviceConfiguration = _serializer.FromString(
+                        TangFactory.GetTang().NewInjector(
+                        _serializer.FromString(addContextProto.service_configuration))
+                        .GetNamedInstance<ServicesConfigurationOptions.ServiceConfigString, string>());
+                    newTopContext = currentTopContext.SpawnChildContext(contextConfiguration, serviceConfiguration);
                 }
                 else
                 {
