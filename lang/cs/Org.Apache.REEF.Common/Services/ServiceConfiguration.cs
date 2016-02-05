@@ -37,7 +37,7 @@ namespace Org.Apache.REEF.Common.Services
         /// will be made available to child context and tasks.
         /// </summary>
         [SuppressMessage("Microsoft.Security", "CA2104:Do not declare read only mutable reference types", Justification = "not applicable")]
-        public static readonly OptionalParameter<IService> Services = new OptionalParameter<IService>();
+        public static readonly OptionalParameter<object> Services = new OptionalParameter<object>();
 
         public static ConfigurationModule ConfigurationModule
         {
@@ -55,7 +55,7 @@ namespace Org.Apache.REEF.Common.Services
     }
 
     [NamedParameter("Set of services", "servicesSet")]
-    class ServicesSet : Name<ISet<IService>>
+    class ServicesSet : Name<ISet<object>>
     {      
     }
 }

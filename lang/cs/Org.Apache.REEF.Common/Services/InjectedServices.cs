@@ -21,30 +21,14 @@ using Org.Apache.REEF.Tang.Annotations;
 
 namespace Org.Apache.REEF.Common.Services
 {
-    internal sealed class InjectedServices : IDisposable
+    internal sealed class InjectedServices
     {
-        private readonly ISet<IService> _services; 
-        private bool _disposed = false;
+        private readonly ISet<object> _services; 
 
         [Inject]
-        private InjectedServices([Parameter(typeof(ServicesSet))] ISet<IService> services)
+        private InjectedServices([Parameter(typeof(ServicesSet))] ISet<object> services)
         {
             _services = services;
-        }
-
-        public void Dispose()
-        {
-            if (_disposed)
-            {
-                return;
-            }
-
-            foreach (var service in _services)
-            {
-                service.Dispose();
-            }
-
-            _disposed = true;
         }
     }
 }

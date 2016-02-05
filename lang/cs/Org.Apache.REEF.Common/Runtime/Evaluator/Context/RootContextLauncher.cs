@@ -29,7 +29,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
     /// <summary>
     ///  Helper class that encapsulates the root context configuration: With or without services and an initial task.
     /// </summary>
-    internal sealed class RootContextLauncher : IDisposable
+    internal sealed class RootContextLauncher
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(RootContextLauncher));
 
@@ -100,18 +100,6 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
             }
             
             return rootServiceInjector;
-        }
-
-        public void Dispose()
-        {
-            lock (_lockObj)
-            {
-                if (_services != null)
-                {
-                    _services.Dispose();
-                    _services = null;
-                }
-            }
         }
     }
 }
