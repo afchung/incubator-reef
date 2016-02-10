@@ -19,12 +19,12 @@ using System.IO;
 using Org.Apache.REEF.Client.API;
 using Org.Apache.REEF.Client.Avro;
 using Org.Apache.REEF.Client.Avro.YARN;
+using Org.Apache.REEF.Client.YARN.Parameters;
 using Org.Apache.REEF.Common.Avro;
 using Org.Apache.REEF.Common.Files;
-using Org.Apache.REEF.Driver.Bridge;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Tang.Implementations.Tang;
 using Org.Apache.REEF.Tang.Interface;
-using Org.Apache.REEF.Wake.Remote.Parameters;
 
 namespace Org.Apache.REEF.Client.YARN
 {
@@ -46,10 +46,26 @@ namespace Org.Apache.REEF.Client.YARN
         /// </summary>
         internal void SerializeAppFile(IJobSubmission jobSubmission, IInjector paramInjector, string localDriverFolderPath)
         {
-            var serializedArgs = SerializeAppArgsToBytes(jobSubmission, paramInjector, localDriverFolderPath);
+            var config = TangFactory.GetTang().NewConfigurationBuilder()
+                .BindNamedParameter(typeof(DriverMemorySizeMB), jobSubmission.DriverMemory.ToString())
+                .Build();
 
-            var submissionAppArgsFilePath = Path.Combine(
-                localDriverFolderPath, _fileNames.GetLocalFolderPath(), _fileNames.GetAppSubmissionParametersFile());
+            var submissionParams = paramInjector.ForkInjector(config).GetInstance<YarnDotNetAppSubmissionParameters>();
+            SerializeAppFile(submissionParams, localDriverFolderPath);
+        }
+
+        internal void SerializeAppFile(YarnDotNetAppSubmissionParameters submissionParams, string localDriverFolderPath)
+        {
+            localDriverFolderPath = localDriverFolderPath.TrimEnd('\\') + @"\";
+
+            var directory = Path.Combine(localDriverFolderPath, _fileNames.GetLocalFolderPath());
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+            
+            var submissionAppArgsFilePath = Path.Combine(directory, _fileNames.GetAppSubmissionParametersFile());
+            var serializedArgs = SerializeAppArgsToBytes(submissionParams);
 
             using (var jobArgsFileStream = new FileStream(submissionAppArgsFilePath, FileMode.CreateNew))
             {
@@ -57,21 +73,20 @@ namespace Org.Apache.REEF.Client.YARN
             }
         }
 
-        internal byte[] SerializeAppArgsToBytes(IJobSubmission jobSubmission, IInjector paramInjector, string localDriverFolderPath)
+        internal byte[] SerializeAppArgsToBytes(YarnDotNetAppSubmissionParameters parameters)
         {
             var avroAppSubmissionParameters = new AvroAppSubmissionParameters
             {
-                tcpBeginPort = paramInjector.GetNamedInstance<TcpPortRangeStart, int>(),
-                tcpRangeCount = paramInjector.GetNamedInstance<TcpPortRangeCount, int>(),
-                tcpTryCount = paramInjector.GetNamedInstance<TcpPortRangeTryCount, int>()
+                tcpBeginPort = parameters.TcpPortRangeStart,
+                tcpRangeCount = parameters.TcpPortRangeCount,
+                tcpTryCount = parameters.TcpPortRangeTryCount
             };
 
             var avroYarnAppSubmissionParameters = new AvroYarnAppSubmissionParameters
             {
                 sharedAppSubmissionParameters = avroAppSubmissionParameters,
-                driverMemory = jobSubmission.DriverMemory,
-                driverRecoveryTimeout =
-                    paramInjector.GetNamedInstance<DriverBridgeConfigurationOptions.DriverRestartEvaluatorRecoverySeconds, int>(),
+                driverMemory = parameters.DriverMemorySizeMB,
+                driverRecoveryTimeout = parameters.DriverRestartEvaluatorRecoverySeconds
             };
 
             return AvroJsonSerializer<AvroYarnAppSubmissionParameters>.ToBytes(avroYarnAppSubmissionParameters);

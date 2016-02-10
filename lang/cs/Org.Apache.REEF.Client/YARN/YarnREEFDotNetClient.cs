@@ -29,6 +29,7 @@ using Org.Apache.REEF.Common.Files;
 using Org.Apache.REEF.Driver.Bridge;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Implementations.Tang;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Utilities.Attributes;
 using Org.Apache.REEF.Utilities.Logging;
 
@@ -51,6 +52,7 @@ namespace Org.Apache.REEF.Client.YARN
         private readonly REEFFileNames _fileNames;
         private readonly IJobSubmissionDirectoryProvider _jobSubmissionDirectoryProvider;
         private readonly YarnREEFDotNetParamSerializer _paramSerializer;
+        private readonly IResourceArchiveFileGenerator _resourceArchiveFileGenerator;
 
         [Inject]
         private YarnREEFDotNetClient(
@@ -60,7 +62,8 @@ namespace Org.Apache.REEF.Client.YARN
             IYarnJobCommandProvider yarnJobCommandProvider,
             REEFFileNames fileNames,
             IJobSubmissionDirectoryProvider jobSubmissionDirectoryProvider,
-            YarnREEFDotNetParamSerializer paramSerializer)
+            YarnREEFDotNetParamSerializer paramSerializer,
+            IResourceArchiveFileGenerator resourceArchiveFileGenerator)
         {
             _jobSubmissionDirectoryProvider = jobSubmissionDirectoryProvider;
             _fileNames = fileNames;
@@ -69,6 +72,7 @@ namespace Org.Apache.REEF.Client.YARN
             _driverFolderPreparationHelper = driverFolderPreparationHelper;
             _yarnRMClient = yarnRMClient;
             _paramSerializer = paramSerializer;
+            _resourceArchiveFileGenerator = resourceArchiveFileGenerator;
         }
 
         public void Submit(IJobSubmission jobSubmission)
@@ -99,6 +103,7 @@ namespace Org.Apache.REEF.Client.YARN
 
                 _paramSerializer.SerializeAppFile(jobSubmission, paramInjector, localDriverFolderPath);
                 _paramSerializer.SerializeJobFile(jobSubmission, localDriverFolderPath, jobSubmissionDirectory);
+                CreateApplicationPackage(localDriverFolderPath);
 
                 var archiveResource = _jobResourceUploader.UploadArchiveResource(localDriverFolderPath, jobSubmissionDirectory);
 
@@ -126,6 +131,26 @@ namespace Org.Apache.REEF.Client.YARN
                 {
                     Directory.Delete(localDriverFolderPath, recursive: true);
                 }
+            }
+        }
+
+        public string CreateApplicationPackage(YarnDotNetAppSubmissionParameters appArgs, string localDriverFolderPath)
+        {
+            _paramSerializer.SerializeAppFile(appArgs, localDriverFolderPath);
+            return CreateApplicationPackage(localDriverFolderPath);
+        }
+
+        private string CreateApplicationPackage(string localDriverFolderPath)
+        {
+            localDriverFolderPath = localDriverFolderPath.TrimEnd('\\') + @"\";
+            return _resourceArchiveFileGenerator.CreateArchiveToUpload(localDriverFolderPath);
+        }
+
+        private static void ExecuteIfPresent<TIn, TOut>(Func<TIn, TOut> func, Optional<TIn> parameter)
+        {
+            if (parameter.IsPresent())
+            {
+                func(parameter.Value);
             }
         }
 

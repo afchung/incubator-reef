@@ -63,10 +63,7 @@ namespace Org.Apache.REEF.Client.Tests
             var injector = TangFactory.GetTang().NewInjector(tcpConf, driverConf);
 
             var serializer = injector.GetInstance<YarnREEFDotNetParamSerializer>();
-            var jobSubmission = injector.GetInstance<JobSubmissionBuilderFactory>()
-                .GetJobSubmissionBuilder().SetDriverMemory(AnyInt).Build();
-
-            var serializedBytes = serializer.SerializeAppArgsToBytes(jobSubmission, injector, AnyString);
+            var serializedBytes = serializer.SerializeAppArgsToBytes(injector.GetInstance<YarnDotNetAppSubmissionParameters>());
             var jsonObject = JObject.Parse(Encoding.UTF8.GetString(serializedBytes));
             var expectedJsonObject = JObject.Parse(expectedJson);
             Assert.True(JToken.DeepEquals(jsonObject, expectedJsonObject));
