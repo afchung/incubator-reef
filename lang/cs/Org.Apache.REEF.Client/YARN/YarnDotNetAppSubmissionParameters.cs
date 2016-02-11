@@ -89,17 +89,16 @@ namespace Org.Apache.REEF.Client.YARN
 
         public sealed class Builder
         {
-            private readonly IInjector _injector;
-            private readonly ConfigurationModule _confModule;
+            private ConfigurationModule _confModule;
 
-            public Builder NewBuilder()
+            public static Builder NewBuilder()
             {
                 return new Builder();
             }
 
             public Builder SetTcpPortRangeStart(int tcpPortRangeStart)
             {
-                _confModule.Set(
+                _confModule = _confModule.Set(
                     YarnDotNetAppSubmissionParametersConfiguration.TcpPortRangeStart,
                     tcpPortRangeStart.ToString());
 
@@ -108,7 +107,7 @@ namespace Org.Apache.REEF.Client.YARN
 
             public Builder SetTcpPortRangeCount(int tcpPortRangeCount)
             {
-                _confModule.Set(
+                _confModule = _confModule.Set(
                     YarnDotNetAppSubmissionParametersConfiguration.TcpPortRangeCount,
                     tcpPortRangeCount.ToString());
 
@@ -117,7 +116,7 @@ namespace Org.Apache.REEF.Client.YARN
 
             public Builder SetTcpPortRangeTryCount(int tcpPortRangeTryCount)
             {
-                _confModule.Set(
+                _confModule = _confModule.Set(
                     YarnDotNetAppSubmissionParametersConfiguration.TcpPortRangeTryCount,
                     tcpPortRangeTryCount.ToString());
 
@@ -126,7 +125,7 @@ namespace Org.Apache.REEF.Client.YARN
 
             public Builder SetDriverMemorySizeMB(int driverMemorySizeMB)
             {
-                _confModule.Set(
+                _confModule = _confModule.Set(
                     YarnDotNetAppSubmissionParametersConfiguration.DriverMemoryMB,
                     driverMemorySizeMB.ToString());
 
@@ -135,7 +134,7 @@ namespace Org.Apache.REEF.Client.YARN
 
             public Builder SetDriverRestartEvaluatorRecoverySeconds(int driverRestartEvaluatorRecoverySeconds)
             {
-                _confModule.Set(
+                _confModule = _confModule.Set(
                    YarnDotNetAppSubmissionParametersConfiguration.DriverRestartEvaluatorRecoverySeconds,
                    driverRestartEvaluatorRecoverySeconds.ToString());
 
@@ -144,12 +143,11 @@ namespace Org.Apache.REEF.Client.YARN
 
             public YarnDotNetAppSubmissionParameters Build()
             {
-                return _injector.GetInstance<YarnDotNetAppSubmissionParameters>();
+                return TangFactory.GetTang().NewInjector(_confModule.Build()).GetInstance<YarnDotNetAppSubmissionParameters>();
             }
 
             private Builder()
             {
-                _injector = TangFactory.GetTang().NewInjector();
                 _confModule = YarnDotNetAppSubmissionParametersConfiguration.ConfigurationModule;
             }
         }

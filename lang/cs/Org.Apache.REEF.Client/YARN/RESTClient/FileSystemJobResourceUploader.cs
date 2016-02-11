@@ -16,12 +16,10 @@
 // under the License.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Org.Apache.REEF.Client.Common;
 using Org.Apache.REEF.Client.Yarn;
 using Org.Apache.REEF.Client.YARN.RestClient.DataModel;
-using Org.Apache.REEF.Common.Files;
 using Org.Apache.REEF.IO.FileSystem;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Utilities.Diagnostics;
@@ -65,7 +63,7 @@ namespace Org.Apache.REEF.Client.YARN.RestClient
             var parentDirectoryUri = _fileSystem.CreateUriForPath(driverUploadPath);
 
             _fileSystem.CreateDirectory(parentDirectoryUri);
-            return GetJobResource(fileLocalPath, ResourceType.FILE, remoteUploadDirectoryPath);
+            return GetJobResource(fileLocalPath, ResourceType.FILE, driverUploadPath);
         }
 
         private JobResource GetJobResource(string filePath, ResourceType resourceType, string driverUploadPath)

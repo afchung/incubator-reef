@@ -49,21 +49,20 @@ namespace Org.Apache.REEF.Client.Tests
 
             var expectedJson = string.Format(formatStr, AnyInt);
 
-            var tcpConf = TcpPortConfigurationModule.ConfigurationModule
-                .Set(TcpPortConfigurationModule.PortRangeCount, AnyInt.ToString())
-                .Set(TcpPortConfigurationModule.PortRangeStart, AnyInt.ToString())
-                .Set(TcpPortConfigurationModule.PortRangeTryCount, AnyInt.ToString())
+            var builder = YarnDotNetAppSubmissionParameters.Builder.NewBuilder();
+            var appParam = builder
+                .SetDriverMemorySizeMB(AnyInt)
+                .SetDriverRestartEvaluatorRecoverySeconds(AnyInt)
+                .SetTcpPortRangeCount(AnyInt)
+                .SetTcpPortRangeStart(AnyInt)
+                .SetTcpPortRangeTryCount(AnyInt)
                 .Build();
 
-            var driverConf = DriverConfiguration.ConfigurationModule
-                .Set(DriverConfiguration.OnDriverStarted, GenericType<DriverStartHandler>.Class)
-                .Set(DriverConfiguration.DriverRestartEvaluatorRecoverySeconds, AnyInt.ToString())
-                .Build();
-
-            var injector = TangFactory.GetTang().NewInjector(tcpConf, driverConf);
+            var injector = TangFactory.GetTang().NewInjector();
 
             var serializer = injector.GetInstance<YarnREEFDotNetParamSerializer>();
-            var serializedBytes = serializer.SerializeAppArgsToBytes(injector.GetInstance<YarnDotNetAppSubmissionParameters>());
+
+            var serializedBytes = serializer.SerializeAppArgsToBytes(appParam);
             var jsonObject = JObject.Parse(Encoding.UTF8.GetString(serializedBytes));
             var expectedJsonObject = JObject.Parse(expectedJson);
             Assert.True(JToken.DeepEquals(jsonObject, expectedJsonObject));

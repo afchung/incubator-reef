@@ -25,15 +25,15 @@ namespace Org.Apache.REEF.Client.YARN
 {
     internal sealed class YarnDotNetAppSubmissionParametersConfiguration : ConfigurationModuleBuilder
     {
-        public static RequiredParameter<int> DriverMemoryMB = new RequiredParameter<int>();
+        public static readonly RequiredParameter<int> DriverMemoryMB = new RequiredParameter<int>();
 
-        public static OptionalParameter<int> TcpPortRangeStart = new OptionalParameter<int>();
+        public static readonly OptionalParameter<int> TcpPortRangeStart = new OptionalParameter<int>();
 
-        public static OptionalParameter<int> TcpPortRangeCount = new OptionalParameter<int>();
+        public static readonly OptionalParameter<int> TcpPortRangeCount = new OptionalParameter<int>();
 
-        public static OptionalParameter<int> TcpPortRangeTryCount = new OptionalParameter<int>();
+        public static readonly OptionalParameter<int> TcpPortRangeTryCount = new OptionalParameter<int>();
 
-        public static OptionalParameter<int> DriverRestartEvaluatorRecoverySeconds = new OptionalParameter<int>();
+        public static readonly OptionalParameter<int> DriverRestartEvaluatorRecoverySeconds = new OptionalParameter<int>();
 
         public static ConfigurationModule ConfigurationModule
         {

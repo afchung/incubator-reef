@@ -146,14 +146,6 @@ namespace Org.Apache.REEF.Client.YARN
             return _resourceArchiveFileGenerator.CreateArchiveToUpload(localDriverFolderPath);
         }
 
-        private static void ExecuteIfPresent<TIn, TOut>(Func<TIn, TOut> func, Optional<TIn> parameter)
-        {
-            if (parameter.IsPresent())
-            {
-                func(parameter.Value);
-            }
-        }
-
         public IJobSubmissionResult SubmitAndGetJobStatus(IJobSubmission jobSubmission)
         {
             throw new NotSupportedException();
