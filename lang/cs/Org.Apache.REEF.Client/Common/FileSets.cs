@@ -118,13 +118,13 @@ namespace Org.Apache.REEF.Client.Common
         /// <summary>
         /// Adds all the files referenced in the given JobSubmission
         /// </summary>
-        /// <param name="submission"></param>
-        internal void AddJobFiles(IAppSubmission submission)
+        /// <param name="parameters"></param>
+        internal void AddJobFiles(IAppParameters parameters)
         {
-            AddToGlobalFiles(submission.GlobalFiles);
-            AddToGlobalFiles(submission.GlobalAssemblies);
-            AddToLocalFiles(submission.LocalFiles);
-            AddToLocalFiles(submission.LocalAssemblies);
+            AddToGlobalFiles(parameters.GlobalFiles);
+            AddToGlobalFiles(parameters.GlobalAssemblies);
+            AddToLocalFiles(parameters.LocalFiles);
+            AddToLocalFiles(parameters.LocalAssemblies);
         }
 
         /// <summary>
