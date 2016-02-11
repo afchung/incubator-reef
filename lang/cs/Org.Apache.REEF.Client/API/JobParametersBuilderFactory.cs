@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License.  You may obtain a copy of the License at
-//
+// 
 //   http://www.apache.org/licenses/LICENSE-2.0
-//
+// 
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -15,31 +15,23 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System.Collections.Generic;
-using Org.Apache.REEF.Common.Client.Parameters;
 using Org.Apache.REEF.Tang.Annotations;
-using Org.Apache.REEF.Tang.Interface;
 
 namespace Org.Apache.REEF.Client.API
 {
-    /// <summary>
-    /// Instantiates IJobSubmissionBuilder based on configurationProviders.
-    /// </summary>
-    public sealed class JobSubmissionBuilderFactory
+    public sealed class JobParametersBuilderFactory
     {
-
         [Inject]
-        internal JobSubmissionBuilderFactory(AppParametersBuilderFactory appParametersBuilderFactory)
+        private JobParametersBuilderFactory()
         {
-            _configurationProviders = configurationProviders;
         }
 
         /// <summary>
-        /// Instantiates IJobSubmissionBuilder
+        /// Instantiates IAppParametersBuilder
         /// </summary>
-        public IJobSubmissionBuilder GetJobSubmissionBuilder()
+        public IJobParametersBuilder GetJobParametersBuilder()
         {
-            return new JobSubmissionBuilder();
+            return new JobParametersBuilder();
         }
     }
 }

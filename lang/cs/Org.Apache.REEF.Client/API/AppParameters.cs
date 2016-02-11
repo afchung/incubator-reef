@@ -23,15 +23,32 @@ namespace Org.Apache.REEF.Client.API
     /// <summary>
     /// Captures a submission of a REEF Job to a cluster.
     /// </summary>
-    internal sealed class JobSubmission : IJobSubmission
+    internal sealed class AppParameters : IAppParameters
     {
-        private readonly IJobParameters _jobParameters;
-        private readonly IAppParameters _appParameters;
+        private readonly ISet<IConfiguration> _driverConfigurations;
+        private readonly ISet<string> _globalAssemblies;
+        private readonly ISet<string> _globalFiles;
+        private readonly ISet<string> _localAssemblies;
+        private readonly ISet<string> _localFiles;
+        private readonly int _driverMemory;
+        private readonly string _driverConfigurationFileContents;
 
-        internal JobSubmission(IJobParameters jobParameters, IAppParameters appParameters)
+        internal AppParameters(
+            ISet<IConfiguration> driverConfigurations,
+            ISet<string> globalAssemblies,
+            ISet<string> globalFiles,
+            ISet<string> localAssemblies,
+            ISet<string> localFiles,
+            int driverMemory,
+            string driverConfigurationFileContents)
         {
-            _jobParameters = jobParameters;
-            _appParameters = appParameters;
+            _driverConfigurations = driverConfigurations;
+            _globalAssemblies = globalAssemblies;
+            _globalFiles = globalFiles;
+            _localAssemblies = localAssemblies;
+            _localFiles = localFiles;
+            _driverMemory = driverMemory;
+            _driverConfigurationFileContents = driverConfigurationFileContents;
         }
 
         /// <summary>
@@ -39,7 +56,7 @@ namespace Org.Apache.REEF.Client.API
         /// </summary>
         public ISet<string> GlobalAssemblies
         {
-            get { return _appParameters.GlobalAssemblies; }
+            get { return _globalAssemblies; }
         }
 
         /// <summary>
@@ -47,35 +64,27 @@ namespace Org.Apache.REEF.Client.API
         /// </summary>
         public ISet<IConfiguration> DriverConfigurations
         {
-            get { return _appParameters.DriverConfigurations; }
+            get { return _driverConfigurations; }
         }
 
         public ISet<string> GlobalFiles
         {
-            get { return _appParameters.GlobalFiles; }
+            get { return _globalFiles; }
         }
 
         public ISet<string> LocalAssemblies
         {
-            get { return _appParameters.LocalAssemblies; }
+            get { return _localAssemblies; }
         }
 
         public ISet<string> LocalFiles
         {
-            get { return _appParameters.LocalFiles; }
+            get { return _localFiles; }
         }
 
         public int DriverMemory
         {
-            get { return _appParameters.DriverMemory; }
-        }
-
-        /// <summary>
-        /// The Job's identifier
-        /// </summary>
-        public string JobIdentifier 
-        {
-            get { return _jobParameters.JobIdentifier; }
+            get { return _driverMemory; }
         }
 
         /// <summary>
@@ -84,7 +93,7 @@ namespace Org.Apache.REEF.Client.API
         /// </summary>
         public string DriverConfigurationFileContents
         {
-            get { return _appParameters.DriverConfigurationFileContents; }
+            get { return _driverConfigurationFileContents; }
         }
     }
 }

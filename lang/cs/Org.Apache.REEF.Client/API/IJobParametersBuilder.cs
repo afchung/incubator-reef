@@ -15,31 +15,21 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System.Collections.Generic;
-using Org.Apache.REEF.Common.Client.Parameters;
-using Org.Apache.REEF.Tang.Annotations;
-using Org.Apache.REEF.Tang.Interface;
-
 namespace Org.Apache.REEF.Client.API
 {
     /// <summary>
-    /// Instantiates IJobSubmissionBuilder based on configurationProviders.
+    /// Facilitates building of job parameters
     /// </summary>
-    public sealed class JobSubmissionBuilderFactory
+    public interface IJobParametersBuilder
     {
-
-        [Inject]
-        internal JobSubmissionBuilderFactory(AppParametersBuilderFactory appParametersBuilderFactory)
-        {
-            _configurationProviders = configurationProviders;
-        }
+        /// <summary>
+        /// Builds an <see cref="IJobParameters"/> object.
+        /// </summary>
+        IJobParameters Build();
 
         /// <summary>
-        /// Instantiates IJobSubmissionBuilder
+        /// Specify job identifier.
         /// </summary>
-        public IJobSubmissionBuilder GetJobSubmissionBuilder()
-        {
-            return new JobSubmissionBuilder();
-        }
+        IJobParametersBuilder SetJobIdentifier(string id);
     }
 }

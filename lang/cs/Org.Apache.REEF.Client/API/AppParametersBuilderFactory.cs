@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License.  You may obtain a copy of the License at
-//
+// 
 //   http://www.apache.org/licenses/LICENSE-2.0
-//
+// 
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -22,24 +22,23 @@ using Org.Apache.REEF.Tang.Interface;
 
 namespace Org.Apache.REEF.Client.API
 {
-    /// <summary>
-    /// Instantiates IJobSubmissionBuilder based on configurationProviders.
-    /// </summary>
-    public sealed class JobSubmissionBuilderFactory
+    public sealed class AppParametersBuilderFactory
     {
+        private readonly ISet<IConfigurationProvider> _configurationProviders;
 
         [Inject]
-        internal JobSubmissionBuilderFactory(AppParametersBuilderFactory appParametersBuilderFactory)
+        private AppParametersBuilderFactory(
+            [Parameter(typeof(DriverConfigurationProviders))] ISet<IConfigurationProvider> configurationProviders)
         {
             _configurationProviders = configurationProviders;
         }
 
         /// <summary>
-        /// Instantiates IJobSubmissionBuilder
+        /// Instantiates IAppParametersBuilder
         /// </summary>
-        public IJobSubmissionBuilder GetJobSubmissionBuilder()
+        public IAppParametersBuilder GetJobSubmissionBuilder()
         {
-            return new JobSubmissionBuilder();
+            return new AppParametersBuilder(_configurationProviders);
         }
     }
 }

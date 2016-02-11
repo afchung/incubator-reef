@@ -20,7 +20,6 @@ using Org.Apache.REEF.Driver.Bridge;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Formats;
 using Org.Apache.REEF.Tang.Implementations.Tang;
-using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Utilities.Attributes;
 using Org.Apache.REEF.Wake.Remote.Parameters;
 
@@ -84,71 +83,6 @@ namespace Org.Apache.REEF.Client.YARN
             get
             {
                 return _driverRestartEvaluatorRecoverySeconds;
-            }
-        }
-
-        public sealed class Builder
-        {
-            private ConfigurationModule _confModule;
-
-            public static Builder NewBuilder()
-            {
-                return new Builder();
-            }
-
-            public Builder SetTcpPortRangeStart(int tcpPortRangeStart)
-            {
-                _confModule = _confModule.Set(
-                    YarnDotNetAppSubmissionParametersConfiguration.TcpPortRangeStart,
-                    tcpPortRangeStart.ToString());
-
-                return this;
-            }
-
-            public Builder SetTcpPortRangeCount(int tcpPortRangeCount)
-            {
-                _confModule = _confModule.Set(
-                    YarnDotNetAppSubmissionParametersConfiguration.TcpPortRangeCount,
-                    tcpPortRangeCount.ToString());
-
-                return this;
-            }
-
-            public Builder SetTcpPortRangeTryCount(int tcpPortRangeTryCount)
-            {
-                _confModule = _confModule.Set(
-                    YarnDotNetAppSubmissionParametersConfiguration.TcpPortRangeTryCount,
-                    tcpPortRangeTryCount.ToString());
-
-                return this;
-            }
-
-            public Builder SetDriverMemorySizeMB(int driverMemorySizeMB)
-            {
-                _confModule = _confModule.Set(
-                    YarnDotNetAppSubmissionParametersConfiguration.DriverMemoryMB,
-                    driverMemorySizeMB.ToString());
-
-                return this;
-            }
-
-            public Builder SetDriverRestartEvaluatorRecoverySeconds(int driverRestartEvaluatorRecoverySeconds)
-            {
-                _confModule = _confModule.Set(
-                   YarnDotNetAppSubmissionParametersConfiguration.DriverRestartEvaluatorRecoverySeconds,
-                   driverRestartEvaluatorRecoverySeconds.ToString());
-
-                return this;
-            }
-
-            public YarnDotNetAppSubmissionParameters Build()
-            {
-                return TangFactory.GetTang().NewInjector(_confModule.Build()).GetInstance<YarnDotNetAppSubmissionParameters>();
-            }
-
-            private Builder()
-            {
-                _confModule = YarnDotNetAppSubmissionParametersConfiguration.ConfigurationModule;
             }
         }
     }

@@ -44,10 +44,10 @@ namespace Org.Apache.REEF.Client.YARN
         /// <summary>
         /// Serializes the application parameters to reef/local/app-submission-params.json.
         /// </summary>
-        internal void SerializeAppFile(IJobSubmission jobSubmission, IInjector paramInjector, string localDriverFolderPath)
+        internal void SerializeAppFile(IAppParameters appParameters, IInjector paramInjector, string localDriverFolderPath)
         {
             var config = TangFactory.GetTang().NewConfigurationBuilder()
-                .BindNamedParameter(typeof(DriverMemorySizeMB), jobSubmission.DriverMemory.ToString())
+                .BindNamedParameter(typeof(DriverMemorySizeMB), appParameters.DriverMemory.ToString())
                 .Build();
 
             var submissionParams = paramInjector.ForkInjector(config).GetInstance<YarnDotNetAppSubmissionParameters>();
@@ -95,24 +95,25 @@ namespace Org.Apache.REEF.Client.YARN
         /// <summary>
         /// Serializes the job parameters to job-submission-params.json.
         /// </summary>
-        internal void SerializeJobFile(IJobSubmission jobSubmission, string localDriverFolderPath, string jobSubmissionDirectory)
+        internal string SerializeJobFile(IJobParameters jobParameters, string localDriverFolderPath, string jobSubmissionDirectory)
         {
-            var serializedArgs = SerializeJobArgsToBytes(jobSubmission, localDriverFolderPath, jobSubmissionDirectory);
+            var serializedArgs = SerializeJobArgsToBytes(jobParameters, localDriverFolderPath, jobSubmissionDirectory);
 
-            var submissionJobArgsFilePath = Path.Combine(localDriverFolderPath,
-                _fileNames.GetJobSubmissionParametersFile());
+            var submissionJobArgsFilePath = Path.Combine(localDriverFolderPath,_fileNames.GetJobSubmissionParametersFile());
 
             using (var jobArgsFileStream = new FileStream(submissionJobArgsFilePath, FileMode.CreateNew))
             {
                 jobArgsFileStream.Write(serializedArgs, 0, serializedArgs.Length);
             }
+
+            return submissionJobArgsFilePath;
         }
 
-        internal byte[] SerializeJobArgsToBytes(IJobSubmission jobSubmission, string localDriverFolderPath, string jobSubmissionDirectory)
+        internal byte[] SerializeJobArgsToBytes(IJobParameters jobParameters, string localDriverFolderPath, string jobSubmissionDirectory)
         {
             var avroJobSubmissionParameters = new AvroJobSubmissionParameters
             {
-                jobId = jobSubmission.JobIdentifier,
+                jobId = jobParameters.JobIdentifier,
                 jobSubmissionFolder = localDriverFolderPath
             };
 
