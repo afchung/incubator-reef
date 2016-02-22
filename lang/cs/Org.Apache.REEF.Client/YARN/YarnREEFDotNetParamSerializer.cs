@@ -79,7 +79,7 @@ namespace Org.Apache.REEF.Client.YARN
         /// <summary>
         /// Serializes the job parameters to job-submission-params.json.
         /// </summary>
-        internal void SerializeJobFile(JobParameters jobParameters, string localDriverFolderPath, string jobSubmissionDirectory)
+        internal string SerializeJobFile(JobParameters jobParameters, string localDriverFolderPath, string jobSubmissionDirectory)
         {
             var serializedArgs = SerializeJobArgsToBytes(jobParameters, localDriverFolderPath, jobSubmissionDirectory);
 
@@ -90,6 +90,8 @@ namespace Org.Apache.REEF.Client.YARN
             {
                 jobArgsFileStream.Write(serializedArgs, 0, serializedArgs.Length);
             }
+
+            return submissionJobArgsFilePath;
         }
 
         internal byte[] SerializeJobArgsToBytes(JobParameters jobParameters, string localDriverFolderPath, string jobSubmissionDirectory)

@@ -76,6 +76,16 @@ namespace Org.Apache.REEF.Client.Yarn
             Launch(jobRequest, driverFolderPath);
         }
 
+        public void Submit(JobParameters jobParameters, string pathToAppPackage)
+        {
+            throw new NotImplementedException();
+        }
+
+        public string CreateApplicationPackage(AppParameters appParameters, string pathToAppPackage = null)
+        {
+            throw new NotImplementedException();
+        }
+
         public IJobSubmissionResult SubmitAndGetJobStatus(JobRequest jobRequest)
         {
             // Prepare the job submission folder
