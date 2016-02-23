@@ -16,12 +16,10 @@
 // under the License.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Org.Apache.REEF.Client.Common;
 using Org.Apache.REEF.Client.Yarn;
 using Org.Apache.REEF.Client.YARN.RestClient.DataModel;
-using Org.Apache.REEF.Common.Files;
 using Org.Apache.REEF.IO.FileSystem;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Utilities.Diagnostics;
@@ -38,34 +36,24 @@ namespace Org.Apache.REEF.Client.YARN.RestClient
     {
         private static readonly Logger Log = Logger.GetLogger(typeof(FileSystemJobResourceUploader));
         private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-        private readonly IResourceArchiveFileGenerator _resourceArchiveFileGenerator;
         private readonly IFileSystem _fileSystem;
-        private readonly REEFFileNames _reefFileNames;
         private readonly IFile _file;
 
         [Inject]
         private FileSystemJobResourceUploader(
-            IResourceArchiveFileGenerator resourceArchiveFileGenerator,
             IFileSystem fileSystem,
-            REEFFileNames reefFileNames,
             IFile file)
         {
             _fileSystem = fileSystem;
-            _resourceArchiveFileGenerator = resourceArchiveFileGenerator;
-            _reefFileNames = reefFileNames;
             _file = file;
         }
 
-        public JobResource UploadArchiveResource(string driverLocalFolderPath, string remoteUploadDirectoryPath)
+        public JobResource UploadArchiveResource(string archivePath, string remoteUploadDirectoryPath)
         {
-            driverLocalFolderPath = driverLocalFolderPath.TrimEnd('\\') + @"\";
             var driverUploadPath = remoteUploadDirectoryPath.TrimEnd('/') + @"/";
             var parentDirectoryUri = _fileSystem.CreateUriForPath(remoteUploadDirectoryPath);
-            Log.Log(Level.Verbose, "DriverFolderPath: {0} DriverUploadPath: {1}", driverLocalFolderPath, driverUploadPath);
-            
             _fileSystem.CreateDirectory(parentDirectoryUri);
 
-            var archivePath = _resourceArchiveFileGenerator.CreateArchiveToUpload(driverLocalFolderPath);
             return GetJobResource(archivePath, ResourceType.ARCHIVE, driverUploadPath);
         }
 
@@ -75,7 +63,7 @@ namespace Org.Apache.REEF.Client.YARN.RestClient
             var parentDirectoryUri = _fileSystem.CreateUriForPath(driverUploadPath);
 
             _fileSystem.CreateDirectory(parentDirectoryUri);
-            return GetJobResource(fileLocalPath, ResourceType.FILE, remoteUploadDirectoryPath);
+            return GetJobResource(fileLocalPath, ResourceType.FILE, driverUploadPath);
         }
 
         private JobResource GetJobResource(string filePath, ResourceType resourceType, string driverUploadPath)

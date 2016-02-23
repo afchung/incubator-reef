@@ -161,16 +161,6 @@ namespace Org.Apache.REEF.Client.Local
             Logger.Log(Level.Info, "Submitted the Driver for execution.");
         }
 
-        public void Submit(JobParameters jobParameters, string pathToAppPackage)
-        {
-            throw new NotImplementedException();
-        }
-
-        public string CreateApplicationPackage(AppParameters appParameters, string pathToAppPackage = null)
-        {
-            throw new NotImplementedException();
-        }
-
         public IJobSubmissionResult SubmitAndGetJobStatus(JobRequest jobRequest)
         {
             var driverFolder = PrepareDriverFolder(jobRequest);

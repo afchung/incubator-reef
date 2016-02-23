@@ -51,6 +51,7 @@ namespace Org.Apache.REEF.Client.YARN
         private readonly IJobSubmissionDirectoryProvider _jobSubmissionDirectoryProvider;
         private readonly YarnREEFDotNetParamSerializer _paramSerializer;
         private readonly IResourceArchiveFileGenerator _resourceArchiveFileGenerator;
+        private readonly IFile _file;
 
         [Inject]
         private YarnREEFDotNetClient(
@@ -61,7 +62,8 @@ namespace Org.Apache.REEF.Client.YARN
             REEFFileNames fileNames,
             IJobSubmissionDirectoryProvider jobSubmissionDirectoryProvider,
             YarnREEFDotNetParamSerializer paramSerializer,
-            IResourceArchiveFileGenerator resourceArchiveFileGenerator)
+            IResourceArchiveFileGenerator resourceArchiveFileGenerator,
+            IFile file)
         {
             _jobSubmissionDirectoryProvider = jobSubmissionDirectoryProvider;
             _fileNames = fileNames;
@@ -71,6 +73,7 @@ namespace Org.Apache.REEF.Client.YARN
             _yarnRMClient = yarnRMClient;
             _paramSerializer = paramSerializer;
             _resourceArchiveFileGenerator = resourceArchiveFileGenerator;
+            _file = file;
         }
 
         public void Submit(JobRequest jobRequest)
@@ -93,7 +96,7 @@ namespace Org.Apache.REEF.Client.YARN
 
         public void Submit(JobParameters jobParameters, string appPackagePath)
         {
-            if (!File.Exists(appPackagePath))
+            if (!_file.Exists(appPackagePath))
             {
                 throw new ArgumentException("Unable to find zipped application package.");
             }
@@ -135,16 +138,33 @@ namespace Org.Apache.REEF.Client.YARN
             }
             finally
             {
-                if (File.Exists(jobParamsFilePath))
+                if (_file.Exists(jobParamsFilePath))
                 {
-                    File.Delete(jobParamsFilePath);
+                    _file.Delete(jobParamsFilePath);
                 }
             }
         }
 
-        public string CreateApplicationPackage(AppParameters appParameters, string pathToAppPackage = null)
+        public string CreateApplicationPackage(AppParameters appParameters)
         {
-            throw new NotImplementedException();
+            var localDriverFolderPath = CreateDriverFolder();
+
+            localDriverFolderPath = localDriverFolderPath.TrimEnd('\\') + @"\";
+            Log.Log(Level.Verbose, "Preparing driver folder in {0}", localDriverFolderPath);
+            _driverFolderPreparationHelper.PrepareDriverFolder(appParameters, localDriverFolderPath);
+
+            // prepare configuration
+            var paramInjector = TangFactory.GetTang().NewInjector(appParameters.DriverConfigurations.ToArray());
+
+            _paramSerializer.SerializeAppFile(appParameters, paramInjector, localDriverFolderPath);
+
+            return CreateApplicationPackage(localDriverFolderPath);
+        }
+
+        private string CreateApplicationPackage(string localDriverFolderPath)
+        {
+            localDriverFolderPath = localDriverFolderPath.TrimEnd('\\') + @"\";
+            return _resourceArchiveFileGenerator.CreateArchiveToUpload(localDriverFolderPath);
         }
 
         public IJobSubmissionResult SubmitAndGetJobStatus(JobRequest jobRequest)
@@ -229,8 +249,13 @@ namespace Org.Apache.REEF.Client.YARN
         /// Creates the temporary directory to hold the job submission.
         /// </summary>
         /// <returns>The path to the folder created.</returns>
-        private static string CreateDriverFolder(string jobId)
+        private static string CreateDriverFolder(string jobId = null)
         {
+            if (jobId == null)
+            {
+                jobId = "job" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            }
+
             return Path.GetFullPath(
                 Path.Combine(Path.GetTempPath(), string.Join("-", "reef", jobId, Guid.NewGuid().ToString("N").Substring(0, 8))));
         }

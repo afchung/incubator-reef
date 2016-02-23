@@ -42,12 +42,6 @@ namespace Org.Apache.REEF.Client.API
         /// <param name="jobRequest"></param>
         void Submit(JobRequest jobRequest);
 
-        [Unstable("0.14", "New API.")]
-        void Submit(JobParameters jobParameters, string pathToAppPackage);
-
-        [Unstable("0.14", "New API.")]
-        string CreateApplicationPackage(AppParameters appParameters, string pathToAppPackage = null);
-
         /// <summary>
         /// Submit the job described in jobRequest to the cluster.
         /// Expect IJobSubmissionResult returned after the call.

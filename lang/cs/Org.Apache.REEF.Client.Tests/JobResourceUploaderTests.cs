@@ -52,15 +52,15 @@ namespace Org.Apache.REEF.Client.Tests
         }
 
         [Fact]
-        public void UploadJobResourceCreatesResourceArchive()
+        public void UploadJobResourceDoesNotCreateResourceArchive()
         {
             var testContext = new TestContext();
             var jobResourceUploader = testContext.GetJobResourceUploader();
 
-            jobResourceUploader.UploadArchiveResource(AnyDriverLocalFolderPath, AnyDriverResourceUploadPath);
+            jobResourceUploader.UploadArchiveResource(AnyLocalArchivePath, AnyDriverResourceUploadPath);
 
             // Archive file generator recieved exactly one call with correct driver local folder path
-            testContext.ResourceArchiveFileGenerator.Received(1).CreateArchiveToUpload(AnyDriverLocalFolderPath);
+            testContext.ResourceArchiveFileGenerator.Received(0).CreateArchiveToUpload(Arg.Any<string>());
         }
 
         [Fact]
@@ -69,7 +69,7 @@ namespace Org.Apache.REEF.Client.Tests
             var testContext = new TestContext();
             var jobResourceUploader = testContext.GetJobResourceUploader();
 
-            var archiveJobResource = jobResourceUploader.UploadArchiveResource(AnyDriverLocalFolderPath, AnyDriverResourceUploadPath);
+            var archiveJobResource = jobResourceUploader.UploadArchiveResource(AnyLocalArchivePath, AnyDriverResourceUploadPath);
             var fileJobResource = jobResourceUploader.UploadFileResource(AnyLocalJobFilePath, AnyDriverResourceUploadPath);
             var jobResources = new List<JobResource> { archiveJobResource, fileJobResource };
 
@@ -90,7 +90,7 @@ namespace Org.Apache.REEF.Client.Tests
             var testContext = new TestContext();
             var jobResourceUploader = testContext.GetJobResourceUploader();
 
-            jobResourceUploader.UploadArchiveResource(AnyDriverLocalFolderPath, AnyDriverResourceUploadPath);
+            jobResourceUploader.UploadArchiveResource(AnyLocalArchivePath, AnyDriverResourceUploadPath);
             jobResourceUploader.UploadFileResource(AnyLocalJobFilePath, AnyDriverResourceUploadPath);
 
             testContext.FileSystem.Received(1).CreateUriForPath(AnyUploadedResourcePath);

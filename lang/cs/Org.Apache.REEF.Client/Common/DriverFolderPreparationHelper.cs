@@ -19,7 +19,6 @@ using System;
 using System.IO;
 using System.Linq;
 using Org.Apache.REEF.Client.API;
-using Org.Apache.REEF.Common;
 using Org.Apache.REEF.Common.Files;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Formats;
@@ -82,7 +81,7 @@ namespace Org.Apache.REEF.Client.Common
         /// </summary>
         /// <param name="appParameters"></param>
         /// <param name="driverFolderPath"></param>
-        internal void PrepareDriverFolder(AppParameters appParameters, string driverFolderPath)
+        public void PrepareDriverFolder(AppParameters appParameters, string driverFolderPath)
         {
             Logger.Log(Level.Info, "Preparing Driver filesystem layout in " + driverFolderPath);
 
@@ -111,7 +110,7 @@ namespace Org.Apache.REEF.Client.Common
         /// </summary>
         /// <param name="appParameters"></param>
         /// <param name="driverFolderPath"></param>
-        internal void CreateDriverConfiguration(AppParameters appParameters, string driverFolderPath)
+        public void CreateDriverConfiguration(AppParameters appParameters, string driverFolderPath)
         {
             var driverConfiguration = Configurations.Merge(appParameters.DriverConfigurations.ToArray());
 
@@ -128,7 +127,7 @@ namespace Org.Apache.REEF.Client.Common
         /// </summary>
         /// <param name="appParameters">Job submission information</param>
         /// <param name="driverFolderPath">Driver folder path</param>
-        internal void CreateDefaultFolderStructure(AppParameters appParameters, string driverFolderPath)
+        public void CreateDefaultFolderStructure(AppParameters appParameters, string driverFolderPath)
         {
             Directory.CreateDirectory(Path.Combine(driverFolderPath, _fileNames.GetReefFolderName()));
             Directory.CreateDirectory(Path.Combine(driverFolderPath, _fileNames.GetLocalFolderPath()));
