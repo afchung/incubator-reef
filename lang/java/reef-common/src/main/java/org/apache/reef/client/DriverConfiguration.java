@@ -49,12 +49,10 @@ public final class DriverConfiguration extends ConfigurationModuleBuilder {
   /**
    * Identifies the driver and therefore the JOB. Expect to see this e.g. on YARN's dashboard.
    */
-  public static final OptionalParameter<String> DRIVER_IDENTIFIER = new OptionalParameter<>();
 
   /**
    * The amount of memory to be allocated for the Driver. This is the size of the AM container in YARN.
    */
-  public static final OptionalParameter<Integer> DRIVER_MEMORY = new OptionalParameter<>();
 
   /**
    * Files to be made available on the Driver and all Evaluators.
@@ -190,7 +188,6 @@ public final class DriverConfiguration extends ConfigurationModuleBuilder {
   /**
    * The number of submissions that the resource manager will attempt to submit the application. Defaults to 1.
    */
-  public static final OptionalParameter<Integer> MAX_APPLICATION_SUBMISSIONS = new OptionalParameter<>();
 
   /**
    * ConfigurationModule to fill out to get a legal Driver Configuration.

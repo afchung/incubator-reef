@@ -24,6 +24,10 @@ import org.apache.reef.runtime.common.client.REEFImplementation;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.annotations.DefaultImplementation;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+
 /**
  * The main entry point into the REEF resourcemanager.
  * <p>
@@ -52,4 +56,12 @@ public interface REEF extends AutoCloseable {
    * @param driverConf The driver configuration: including everything it needs to execute.  @see DriverConfiguration
    */
   void submit(final Configuration driverConf);
+
+  void submit(final Configuration driverConf, final Configuration runtimeConf);
+
+  void submit(final Configuration runtimeConf, final File applicationPackage);
+
+  Path createApplicationPackage(final Configuration driverConf) throws IOException;
+
+  Path createApplicationPackage(final Configuration driverConf, final Path packagePath) throws IOException;
 }

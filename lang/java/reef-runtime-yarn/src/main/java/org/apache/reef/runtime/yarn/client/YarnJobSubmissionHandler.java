@@ -103,6 +103,8 @@ final class YarnJobSubmissionHandler implements JobSubmissionHandler {
           : this.uploader.createJobFolder(submissionHelper.getApplicationId());
       final Configuration driverConfiguration = makeDriverConfiguration(jobSubmissionEvent, jobFolderOnDfs.getPath());
       final File jobSubmissionFile = this.jobJarMaker.createJobSubmissionJAR(jobSubmissionEvent, driverConfiguration);
+
+      LOG.log(Level.WARNING, "Created job JAR at " + jobSubmissionFile.getAbsolutePath());
       final LocalResource driverJarOnDfs =
           jobFolderOnDfs.uploadAsLocalResource(jobSubmissionFile, LocalResourceType.ARCHIVE);
 
