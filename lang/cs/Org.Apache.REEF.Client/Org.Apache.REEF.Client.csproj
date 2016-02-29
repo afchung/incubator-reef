@@ -89,8 +89,10 @@ under the License.
     <Compile Include="Common\FileSets.cs" />
     <Compile Include="Common\IJavaClientLauncher.cs" />
     <Compile Include="Common\IJobSubmissionResult.cs" />
+    <Compile Include="Common\JavaLogLevel.cs" />
     <Compile Include="Common\JobSubmissionResult.cs" />
     <Compile Include="Common\JavaClientLauncher.cs" />
+    <Compile Include="Common\Parameters\JavaLogLevelParameter.cs" />
     <Compile Include="Common\ResourceArchiveFileGenerator.cs" />
     <Compile Include="Common\ResourceHelper.cs" />
     <Compile Include="Local\LocalClient.cs" />

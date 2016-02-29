@@ -17,6 +17,8 @@
 
 using System.Collections.Generic;
 using System.Text;
+using Org.Apache.REEF.Client.Common;
+using Org.Apache.REEF.Client.Common.Parameters;
 using Org.Apache.REEF.Client.Yarn;
 using Org.Apache.REEF.Client.YARN.Parameters;
 using Org.Apache.REEF.Common.Files;
@@ -50,6 +52,7 @@ namespace Org.Apache.REEF.Client.YARN
         [Inject]
         private WindowsYarnJobCommandProvider(
             [Parameter(typeof(EnableDebugLogging))] bool enableDebugLogging,
+            [Parameter(typeof(JavaLogLevelParameter))] JavaLogLevel javaLogLevel,
             [Parameter(typeof(DriverMaxMemoryAllicationPoolSizeMB))] int driverMaxMemoryAllocationPoolSizeMB,
             [Parameter(typeof(DriverMaxPermSizeMB))] int driverMaxPermSizeMB,
             IYarnCommandLineEnvironment yarnCommandLineEnvironment,

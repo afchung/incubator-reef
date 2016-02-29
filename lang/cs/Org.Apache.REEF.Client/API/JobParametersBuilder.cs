@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using Org.Apache.REEF.Client.Common;
+
 namespace Org.Apache.REEF.Client.API
 {
     /// <summary>
@@ -25,6 +27,7 @@ namespace Org.Apache.REEF.Client.API
         private string _jobIdentifier;
         private int _maxApplicationSubmissions = 1;
         private int _driverMemory = 512;
+        private JavaLogLevel _logLevel = JavaLogLevel.Info;
 
         private JobParametersBuilder()
         {
@@ -44,7 +47,16 @@ namespace Org.Apache.REEF.Client.API
         /// <returns></returns>
         public JobParameters Build()
         {
-            return new JobParameters(_jobIdentifier, _maxApplicationSubmissions, _driverMemory);
+            return new JobParameters(_jobIdentifier, _maxApplicationSubmissions, _driverMemory, _logLevel);
+        }
+
+        /// <summary>
+        /// Sets the Log Level for Java logging.
+        /// </summary>
+        public JobParametersBuilder SetJavaLogLevel(JavaLogLevel logLevel)
+        {
+            _logLevel = logLevel;
+            return this;
         }
 
         /// <summary>

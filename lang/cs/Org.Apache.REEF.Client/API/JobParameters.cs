@@ -16,6 +16,7 @@
 // under the License.
 
 using System;
+using Org.Apache.REEF.Client.Common;
 
 namespace Org.Apache.REEF.Client.API
 {
@@ -29,19 +30,21 @@ namespace Org.Apache.REEF.Client.API
         private readonly string _jobIdentifier;
         private readonly int _maxApplicationSubmissions;
         private readonly int _driverMemory;
+        private readonly JavaLogLevel _logLevel;
 
-        internal JobParameters(string jobIdentifier, int maxApplicationSubmissions, int driverMemory)
+        internal JobParameters(string jobIdentifier, int maxApplicationSubmissions, int driverMemory, JavaLogLevel logLevel)
         {
             _jobIdentifier = jobIdentifier;
             _maxApplicationSubmissions = maxApplicationSubmissions;
             _driverMemory = driverMemory;
+            _logLevel = logLevel;
         }
 
         [Obsolete("Introduced to bridge deprecation of IJobSubmission.")]
         internal static JobParameters FromJobSubmission(IJobSubmission jobSubmission)
         {
             return new JobParameters(
-                jobSubmission.JobIdentifier, jobSubmission.MaxApplicationSubmissions, jobSubmission.DriverMemory);
+                jobSubmission.JobIdentifier, jobSubmission.MaxApplicationSubmissions, jobSubmission.DriverMemory, JavaLogLevel.Info);
         }
 
         /// <summary>
