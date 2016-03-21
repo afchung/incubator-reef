@@ -23,6 +23,7 @@ import org.apache.reef.tang.Tang;
 
 import javax.inject.Inject;
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,17 +45,7 @@ public final class HostnameBasedLocalAddressProvider implements LocalAddressProv
 
   @Override
   public synchronized String getLocalAddress() {
-    if (null == cached) {
-      try {
-        cached = Inet4Address.getLocalHost().getHostAddress();
-      } catch (final UnknownHostException ex) {
-        final String message = "Unable to resolve LocalHost. This is fatal.";
-        LOG.log(Level.SEVERE, message, ex);
-        throw new RuntimeException(message, ex);
-      }
-    }
-    assert null != cached;
-    return cached;
+    return InetAddress.getLoopbackAddress().getHostAddress();
   }
 
   @Override

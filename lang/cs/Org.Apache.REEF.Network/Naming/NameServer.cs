@@ -49,12 +49,14 @@ namespace Org.Apache.REEF.Network.Naming
         /// Create a new NameServer to run on the specified port.
         /// </summary>
         /// <param name="port">The port to listen for incoming connections on.</param>
+        /// <param name="addressProvider">The address provider.</param>
         /// <param name="tcpPortProvider">If port is 0, this interface provides 
         /// a port range to try.
         /// </param>
         [Inject]
         private NameServer(
             [Parameter(typeof(NamingConfigurationOptions.NameServerPort))] int port,
+            ILocalAddressProvider addressProvider,
             ITcpPortProvider tcpPortProvider)
         {
             IObserver<TransportEvent<NamingEvent>> handler = CreateServerHandler();

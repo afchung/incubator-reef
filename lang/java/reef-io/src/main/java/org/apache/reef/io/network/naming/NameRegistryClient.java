@@ -42,6 +42,7 @@ import org.apache.reef.wake.remote.transport.netty.LoggingLinkListener;
 import org.apache.reef.wake.remote.transport.netty.NettyMessagingTransport;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
@@ -96,7 +97,8 @@ public class NameRegistryClient implements Stage, NamingRegistry {
     this.replyQueue = new LinkedBlockingQueue<>();
 
     final Injector injector = Tang.Factory.getTang().newInjector();
-    injector.bindVolatileParameter(RemoteConfiguration.HostAddress.class, localAddressProvider.getLocalAddress());
+    injector.bindVolatileParameter(RemoteConfiguration.HostAddress.class,
+        InetAddress.getLoopbackAddress().getHostAddress());
     injector.bindVolatileParameter(RemoteConfiguration.RemoteClientStage.class,
         new SyncStage<>(new NamingRegistryClientHandler(new NamingRegistryResponseHandler(replyQueue), codec)));
 

@@ -23,10 +23,14 @@ import org.apache.reef.util.logging.LoggingScope;
 import org.apache.reef.util.logging.LoggingScopeFactory;
 import org.apache.reef.wake.remote.ports.TcpPortProvider;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
+import org.mortbay.jetty.Connector;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.bio.SocketConnector;
 
 import javax.inject.Inject;
 import java.net.BindException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -98,7 +102,11 @@ public final class HttpServerImpl implements HttpServer {
   }
 
   private Server tryPort(final int portNumber) throws Exception {
-    Server srv = new Server(portNumber);
+    Server srv = new Server();
+    Connector connector = new SocketConnector();
+    connector.setHost(InetAddress.getLoopbackAddress().getHostAddress());
+    connector.setPort(portNumber);
+    srv.addConnector(connector);
     try {
       srv.start();
       LOG.log(Level.INFO, "Jetty Server started with port: {0}", portNumber);
