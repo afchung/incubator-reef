@@ -34,6 +34,7 @@ import org.apache.reef.runtime.yarn.driver.parameters.JobSubmissionDirectory;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Configurations;
 import org.apache.reef.tang.Tang;
+import org.apache.reef.wake.remote.address.LoopbackLocalAddressProvider;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeBegin;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeCount;
 import org.apache.reef.wake.remote.ports.parameters.TcpPortRangeTryCount;
@@ -99,6 +100,7 @@ final class LocalSubmissionFromCS {
 
     final Configuration userProviderConfiguration = Tang.Factory.getTang().newConfigurationBuilder()
         .bindSetEntry(DriverConfigurationProviders.class, TcpPortConfigurationProvider.class)
+        .bindSetEntry(DriverConfigurationProviders.class, LoopbackLocalAddressProvider.class)
         .bindNamedParameter(TcpPortRangeBegin.class, Integer.toString(tcpBeginPort))
         .bindNamedParameter(TcpPortRangeCount.class, Integer.toString(tcpRangeCount))
         .bindNamedParameter(TcpPortRangeTryCount.class, Integer.toString(tcpTryCount))

@@ -17,8 +17,12 @@
 
 using Org.Apache.REEF.Client.API;
 using Org.Apache.REEF.Client.Local.Parameters;
+using Org.Apache.REEF.Common.Evaluator.Parameters;
 using Org.Apache.REEF.Tang.Formats;
+using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Tang.Util;
+using Org.Apache.REEF.Wake.Remote;
+using Org.Apache.REEF.Wake.Remote.Impl;
 
 namespace Org.Apache.REEF.Client.Local
 {

@@ -66,7 +66,7 @@ namespace Org.Apache.REEF.Network.Naming
             // Start transport server, get listening IP endpoint
             _logger.Log(Level.Info, "Starting naming server");
             _server = new TransportServer<NamingEvent>(
-                new IPEndPoint(NetworkUtils.LocalIPAddress, port), handler, 
+                new IPEndPoint(addressProvider.LocalAddress, port), handler, 
                 codec, tcpPortProvider);
             _server.Run();
             LocalEndpoint = _server.LocalEndpoint;

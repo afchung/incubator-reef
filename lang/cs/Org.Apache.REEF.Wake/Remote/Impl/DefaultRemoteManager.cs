@@ -77,8 +77,9 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <summary>
         /// Constructs a DefaultRemoteManager. Does not listen for incoming messages.
         /// </summary>
+        /// <param name="localAddressProvider">The local address provider</param>
         /// <param name="codec">The codec used for serializing messages</param>
-        internal DefaultRemoteManager(ICodec<T> codec)
+        internal DefaultRemoteManager(ILocalAddressProvider localAddressProvider, ICodec<T> codec)
         {
             using (LOGGER.LogFunction("DefaultRemoteManager::DefaultRemoteManager"))
             {
@@ -91,7 +92,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                 _codec = new RemoteEventCodec<T>(codec);
                 _cachedClients = new Dictionary<IPEndPoint, ProxyObserver>();
 
-                LocalEndpoint = new IPEndPoint(NetworkUtils.LocalIPAddress, 0);
+                LocalEndpoint = new IPEndPoint(localAddressProvider.LocalAddress, 0);
                 Identifier = new SocketRemoteIdentifier(LocalEndpoint);
             }
         }

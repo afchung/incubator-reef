@@ -28,10 +28,13 @@ namespace Org.Apache.REEF.Wake.Impl
     internal sealed class DefaultRemoteManagerFactory : IRemoteManagerFactory
     {
         private readonly ITcpPortProvider _tcpPortProvider;
+        private readonly ILocalAddressProvider _localAddressProvider;
+
         [Inject]
-        private DefaultRemoteManagerFactory(ITcpPortProvider tcpPortProvider)
+        private DefaultRemoteManagerFactory(ITcpPortProvider tcpPortProvider, ILocalAddressProvider localAddressProvider)
         {
             _tcpPortProvider = tcpPortProvider;
+            _localAddressProvider = localAddressProvider;
         }
 
         public IRemoteManager<T> GetInstance<T>(IPAddress localAddress, int port, ICodec<T> codec)
@@ -46,7 +49,7 @@ namespace Org.Apache.REEF.Wake.Impl
 
         public IRemoteManager<T> GetInstance<T>(ICodec<T> codec)
         {
-            return new DefaultRemoteManager<T>(codec);
+            return new DefaultRemoteManager<T>(_localAddressProvider, codec);
         }
     }
 }

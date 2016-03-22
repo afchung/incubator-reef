@@ -17,19 +17,32 @@
 
 using System.Net;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Tang.Implementations.Tang;
+using Org.Apache.REEF.Tang.Interface;
+using Org.Apache.REEF.Tang.Util;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
-    public sealed class LoopbackLocalAddressProvider : ILocalAddressProvider
+    public sealed class LoopbackLocalAddressProvider : ILocalAddressProvider, IConfigurationProvider
     {
+        private readonly IConfiguration _configuration;
+
         [Inject]
         private LoopbackLocalAddressProvider()
         {
+            _configuration = TangFactory.GetTang().NewConfigurationBuilder()
+                .BindImplementation(GenericType<ILocalAddressProvider>.Class, GenericType<LoopbackLocalAddressProvider>.Class)
+                .Build();
         }
 
         public IPAddress LocalAddress
         {
             get { return IPAddress.Loopback; }
+        }
+
+        public IConfiguration GetConfiguration()
+        {
+            return _configuration;
         }
     }
 }

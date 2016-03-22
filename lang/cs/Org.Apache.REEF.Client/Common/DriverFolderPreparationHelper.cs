@@ -15,17 +15,20 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System;
 using System.IO;
 using System.Linq;
 using Org.Apache.REEF.Client.API;
-using Org.Apache.REEF.Common;
+using Org.Apache.REEF.Common.Evaluator.Parameters;
 using Org.Apache.REEF.Common.Files;
 using Org.Apache.REEF.Common.Jar;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Formats;
 using Org.Apache.REEF.Tang.Implementations.Configuration;
+using Org.Apache.REEF.Tang.Implementations.Tang;
+using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Utilities.Logging;
+using Org.Apache.REEF.Wake.Remote;
+using Org.Apache.REEF.Wake.Remote.Impl;
 
 namespace Org.Apache.REEF.Client.Common
 {
@@ -54,6 +57,7 @@ namespace Org.Apache.REEF.Client.Common
         private readonly AvroConfigurationSerializer _configurationSerializer;
         private readonly REEFFileNames _fileNames;
         private readonly FileSets _fileSets;
+        private readonly IConfiguration _localConfigurationOnDriver;
 
         [Inject]
         internal DriverFolderPreparationHelper(
@@ -64,6 +68,12 @@ namespace Org.Apache.REEF.Client.Common
             _fileNames = fileNames;
             _configurationSerializer = configurationSerializer;
             _fileSets = fileSets;
+            _localConfigurationOnDriver =
+                TangFactory.GetTang()
+                    .NewConfigurationBuilder()
+                    .BindImplementation<ILocalAddressProvider, LoopbackLocalAddressProvider>()
+                    .BindSetEntry<EvaluatorConfigurationProviders, LoopbackLocalAddressProvider, IConfigurationProvider>()
+                    .Build();
         }
 
         /// <summary>
@@ -102,7 +112,7 @@ namespace Org.Apache.REEF.Client.Common
         /// <param name="driverFolderPath"></param>
         internal void CreateDriverConfiguration(AppParameters appParameters, string driverFolderPath)
         {
-            var driverConfiguration = Configurations.Merge(appParameters.DriverConfigurations.ToArray());
+            var driverConfiguration = Configurations.Merge(new[] { _localConfigurationOnDriver }.Concat(appParameters.DriverConfigurations).ToArray());
 
             _configurationSerializer.ToFile(driverConfiguration,
                 Path.Combine(driverFolderPath, _fileNames.GetClrDriverConfigurationPath()));

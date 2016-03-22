@@ -22,45 +22,28 @@ import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Tang;
 
 import javax.inject.Inject;
-import java.net.Inet4Address;
-import java.net.UnknownHostException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.net.InetAddress;
 
 /**
- * A LocalAddressProvider that uses <code>Inet4Address.getLocalHost().getHostAddress()</code>.
+ * A LocalAddressProvider that always uses the Loopback Address. This is used
+ * mainly in local runtime for C# to prevent firewall message popups.
  */
-public final class HostnameBasedLocalAddressProvider implements LocalAddressProvider {
-  private static final Logger LOG = Logger.getLogger(HostnameBasedLocalAddressProvider.class.getName());
-  private String cached = null;
+public class LoopbackLocalAddressProvider implements LocalAddressProvider {
 
-  /**
-   * The constructor is for Tang only.
-   */
   @Inject
-  private HostnameBasedLocalAddressProvider() {
-    LOG.log(Level.FINE, "Instantiating HostnameBasedLocalAddressProvider");
+  private LoopbackLocalAddressProvider() {
   }
 
   @Override
-  public synchronized String getLocalAddress() {
-    if (null == cached) {
-      try {
-        cached = Inet4Address.getLocalHost().getHostAddress();
-      } catch (final UnknownHostException ex) {
-        final String message = "Unable to resolve LocalHost. This is fatal.";
-        LOG.log(Level.SEVERE, message, ex);
-        throw new RuntimeException(message, ex);
-      }
-    }
-    assert null != cached;
-    return cached;
+  public String getLocalAddress() {
+    // Use the loopback address.
+    return InetAddress.getLoopbackAddress().getHostAddress();
   }
 
   @Override
   public Configuration getConfiguration() {
     return Tang.Factory.getTang().newConfigurationBuilder()
-        .bind(LocalAddressProvider.class, HostnameBasedLocalAddressProvider.class)
+        .bind(LocalAddressProvider.class, LoopbackLocalAddressProvider.class)
         .build();
   }
 }

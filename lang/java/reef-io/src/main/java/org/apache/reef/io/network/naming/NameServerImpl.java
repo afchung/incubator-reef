@@ -38,7 +38,6 @@ import org.apache.reef.wake.remote.transport.netty.NettyMessagingTransport;
 import org.apache.reef.webserver.ReefEventStateManager;
 
 import javax.inject.Inject;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.logging.Level;
@@ -78,8 +77,7 @@ public final class NameServerImpl implements NameServer {
     final Codec<NamingMessage> codec = NamingCodecFactory.createFullCodec(factory);
     final EventHandler<NamingMessage> handler = createEventHandler(codec);
 
-    injector.bindVolatileParameter(RemoteConfiguration.HostAddress.class,
-        InetAddress.getLoopbackAddress().getHostAddress());
+    injector.bindVolatileParameter(RemoteConfiguration.HostAddress.class, localAddressProvider.getLocalAddress());
     injector.bindVolatileParameter(RemoteConfiguration.Port.class, port);
     injector.bindVolatileParameter(RemoteConfiguration.RemoteServerStage.class,
         new SyncStage<>(new NamingServerHandler(handler, codec)));
