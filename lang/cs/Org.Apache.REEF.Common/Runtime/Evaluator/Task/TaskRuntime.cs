@@ -82,7 +82,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Task
         /// <summary>
         /// Runs the task asynchronously.
         /// </summary>
-        public void RunTask()
+        public void RunTask(object taskStatusSyncObject)
         {
             if (Interlocked.Exchange(ref _taskRan, 1) != 0)
             {
@@ -101,29 +101,32 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Task
                 {
                     try
                     {
-                        // Task failed.
-                        if (runTask.IsFaulted)
+                        lock (taskStatusSyncObject)
                         {
-                            Logger.Log(Level.Warning,
-                                string.Format(CultureInfo.InvariantCulture, "Task failed caused by exception [{0}]", runTask.Exception));
-                            _currentStatus.SetException(runTask.Exception);
-                            return;
-                        }
+                            // Task failed.
+                            if (runTask.IsFaulted)
+                            {
+                                Logger.Log(Level.Warning,
+                                    string.Format(CultureInfo.InvariantCulture, "Task failed caused by exception [{0}]", runTask.Exception));
+                                _currentStatus.SetException(runTask.Exception);
+                                return;
+                            }
 
-                        if (runTask.IsCanceled)
-                        {
-                            Logger.Log(Level.Warning,
-                                string.Format(CultureInfo.InvariantCulture, "Task failed caused by task cancellation"));
-                            return;
-                        }
+                            if (runTask.IsCanceled)
+                            {
+                                Logger.Log(Level.Warning,
+                                    string.Format(CultureInfo.InvariantCulture, "Task failed caused by task cancellation"));
+                                return;
+                            }
 
-                        // Task completed.
-                        var result = runTask.Result;
-                        Logger.Log(Level.Info, "Task Call Finished");
-                        _currentStatus.SetResult(result);
-                        if (result != null && result.Length > 0)
-                        {
-                            Logger.Log(Level.Info, "Task running result:\r\n" + System.Text.Encoding.Default.GetString(result));
+                            // Task completed.
+                            var result = runTask.Result;
+                            Logger.Log(Level.Info, "Task Call Finished");
+                            _currentStatus.SetResult(result);
+                            if (result != null && result.Length > 0)
+                            {
+                                Logger.Log(Level.Info, "Task running result:\r\n" + System.Text.Encoding.Default.GetString(result));
+                            }
                         }
                     }
                     finally
