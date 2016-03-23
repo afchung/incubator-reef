@@ -231,7 +231,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
                 try
                 {
                     _task = Optional<TaskRuntime>.Of(taskRuntime);
-                    taskRuntime.RunTask(_contextLifeCycle);
+                    taskRuntime.RunTask();
                 }
                 catch (Exception e)
                 {
@@ -250,7 +250,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Context
             lock (_contextLifeCycle)
             {
                 _contextState = ContextStatusProto.State.DONE;
-                if (_task.IsPresent() && !_task.Value.HasEnded())
+                if (_task.IsPresent())
                 {
                     LOGGER.Log(Level.Warning, "Shutting down an task because the underlying context is being closed.");
                     _task.Value.Close(null);

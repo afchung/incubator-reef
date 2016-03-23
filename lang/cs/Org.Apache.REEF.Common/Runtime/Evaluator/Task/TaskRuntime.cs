@@ -35,6 +35,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Task
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(TaskRuntime));
 
+        private readonly object _lockObject = new object();
         private readonly TaskStatus _currentStatus;
         private readonly Optional<IDriverConnectionMessageHandler> _driverConnectionMessageHandler;
         private readonly Optional<IDriverMessageHandler> _driverMessageHandler;
@@ -82,7 +83,7 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Task
         /// <summary>
         /// Runs the task asynchronously.
         /// </summary>
-        public void RunTask(object taskStatusSyncObject)
+        public void RunTask()
         {
             if (Interlocked.Exchange(ref _taskRan, 1) != 0)
             {
@@ -101,32 +102,29 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Task
                 {
                     try
                     {
-                        lock (taskStatusSyncObject)
+                        // Task failed.
+                        if (runTask.IsFaulted)
                         {
-                            // Task failed.
-                            if (runTask.IsFaulted)
-                            {
-                                Logger.Log(Level.Warning,
-                                    string.Format(CultureInfo.InvariantCulture, "Task failed caused by exception [{0}]", runTask.Exception));
-                                _currentStatus.SetException(runTask.Exception);
-                                return;
-                            }
+                            Logger.Log(Level.Warning,
+                                string.Format(CultureInfo.InvariantCulture, "Task failed caused by exception [{0}]", runTask.Exception));
+                            _currentStatus.SetException(runTask.Exception);
+                            return;
+                        }
 
-                            if (runTask.IsCanceled)
-                            {
-                                Logger.Log(Level.Warning,
-                                    string.Format(CultureInfo.InvariantCulture, "Task failed caused by task cancellation"));
-                                return;
-                            }
+                        if (runTask.IsCanceled)
+                        {
+                            Logger.Log(Level.Warning,
+                                string.Format(CultureInfo.InvariantCulture, "Task failed caused by task cancellation"));
+                            return;
+                        }
 
-                            // Task completed.
-                            var result = runTask.Result;
-                            Logger.Log(Level.Info, "Task Call Finished");
-                            _currentStatus.SetResult(result);
-                            if (result != null && result.Length > 0)
-                            {
-                                Logger.Log(Level.Info, "Task running result:\r\n" + System.Text.Encoding.Default.GetString(result));
-                            }
+                        // Task completed.
+                        var result = runTask.Result;
+                        Logger.Log(Level.Info, "Task Call Finished");
+                        _currentStatus.SetResult(result);
+                        if (result != null && result.Length > 0)
+                        {
+                            Logger.Log(Level.Info, "Task running result:\r\n" + System.Text.Encoding.Default.GetString(result));
                         }
                     }
                     finally
