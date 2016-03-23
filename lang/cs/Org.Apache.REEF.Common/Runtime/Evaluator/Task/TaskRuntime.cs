@@ -35,7 +35,6 @@ namespace Org.Apache.REEF.Common.Runtime.Evaluator.Task
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(TaskRuntime));
 
-        private readonly object _lockObject = new object();
         private readonly TaskStatus _currentStatus;
         private readonly Optional<IDriverConnectionMessageHandler> _driverConnectionMessageHandler;
         private readonly Optional<IDriverMessageHandler> _driverMessageHandler;
