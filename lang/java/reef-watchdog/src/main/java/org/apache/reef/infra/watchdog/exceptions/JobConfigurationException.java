@@ -16,16 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.infra.watchdog.parameters;
-
-import org.apache.reef.tang.annotations.Name;
-import org.apache.reef.tang.annotations.NamedParameter;
+package org.apache.reef.infra.watchdog.exceptions;
 
 /**
  * Created by anchung on 3/28/2016.
  */
-@NamedParameter(doc = "The maximum number of Evaluators per job dispatched by the WatchDog.")
-public final class MaxNumEvaluatorsPerJob implements Name<Integer> {
-  private MaxNumEvaluatorsPerJob() {
-  }
+public final class JobConfigurationException extends Exception {
 }

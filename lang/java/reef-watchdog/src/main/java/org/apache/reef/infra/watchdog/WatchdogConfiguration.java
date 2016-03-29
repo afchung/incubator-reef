@@ -16,16 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.infra.watchdog.parameters;
+package org.apache.reef.infra.watchdog;
 
-import org.apache.reef.tang.annotations.Name;
-import org.apache.reef.tang.annotations.NamedParameter;
+import org.apache.reef.infra.watchdog.parameters.WatchdogAddress;
+import org.apache.reef.infra.watchdog.parameters.WatchdogPort;
+import org.apache.reef.tang.formats.ConfigurationModule;
+import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
+import org.apache.reef.tang.formats.RequiredParameter;
 
 /**
  * Created by anchung on 3/29/2016.
  */
-@NamedParameter(doc = "The port of the Watchdog process.")
-public final class WatchdogPort implements Name<Integer> {
-  private WatchdogPort() {
-  }
+public final class WatchdogConfiguration extends ConfigurationModuleBuilder {
+
+  public static final RequiredParameter<String> WATCHDOG_ADDRESS = new RequiredParameter<>();
+
+  public static final RequiredParameter<Integer> WATCHDOG_PORT = new RequiredParameter<>();
+
+  public static final ConfigurationModule CONF = new WatchdogConfiguration()
+      .bindNamedParameter(WatchdogAddress.class, WATCHDOG_ADDRESS)
+      .bindNamedParameter(WatchdogPort.class, WATCHDOG_PORT)
+      .build();
 }

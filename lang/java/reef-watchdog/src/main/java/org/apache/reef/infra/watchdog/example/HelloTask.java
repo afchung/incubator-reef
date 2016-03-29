@@ -16,16 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.infra.watchdog.parameters;
+package org.apache.reef.infra.watchdog.example;
 
-import org.apache.reef.tang.annotations.Name;
-import org.apache.reef.tang.annotations.NamedParameter;
+import org.apache.reef.task.Task;
+
+import javax.inject.Inject;
 
 /**
- * Created by anchung on 3/28/2016.
+ * A 'hello REEF' Task.
  */
-@NamedParameter(doc = "The maximum number of Evaluators per job dispatched by the WatchDog.")
-public final class MaxNumEvaluatorsPerJob implements Name<Integer> {
-  private MaxNumEvaluatorsPerJob() {
+public final class HelloTask implements Task {
+
+  @Inject
+  private HelloTask() {
+  }
+
+  @Override
+  public byte[] call(final byte[] memento) {
+    System.out.println("Hello, REEF!");
+    return null;
   }
 }

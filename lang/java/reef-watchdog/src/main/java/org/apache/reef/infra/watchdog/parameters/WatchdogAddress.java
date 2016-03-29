@@ -22,10 +22,10 @@ import org.apache.reef.tang.annotations.Name;
 import org.apache.reef.tang.annotations.NamedParameter;
 
 /**
- * Created by anchung on 3/28/2016.
+ * Created by anchung on 3/29/2016.
  */
-@NamedParameter(doc = "The maximum number of Evaluators per job dispatched by the WatchDog.")
-public final class MaxNumEvaluatorsPerJob implements Name<Integer> {
-  private MaxNumEvaluatorsPerJob() {
+@NamedParameter(doc = "The address of the Watchdog process.")
+public final class WatchdogAddress implements Name<String> {
+  private WatchdogAddress(){
   }
 }
