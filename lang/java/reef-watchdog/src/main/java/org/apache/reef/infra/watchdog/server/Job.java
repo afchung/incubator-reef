@@ -16,7 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.reef.infra.watchdog.server;
+
 /**
- * Created by anchung on 3/29/2016.
+ * Created by anchung on 4/4/2016.
  */
-package org.apache.reef.infra.watchdog.utils;
+public final class Job {
+  private final String id;
+  private JobStatus status;
+
+  public Job(final String id) {
+    this.id = id;
+    status = JobStatus.STARTED;
+  }
+
+  public synchronized JobStatus getStatus() {
+    return status;
+  }
+
+  public synchronized boolean setStatus(final JobStatus to) {
+    if (JobStatus.isLegalTransition(this.status, to)) {
+      this.status = to;
+      return true;
+    }
+
+    return false;
+  }
+}

@@ -16,14 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.infra.watchdog;
+package org.apache.reef.infra.watchdog.server.handlers;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.reef.client.DriverLauncher;
+import org.apache.reef.infra.watchdog.WatchdogJobConfiguration;
 import org.apache.reef.infra.watchdog.exceptions.JobConfigurationException;
 import org.apache.reef.infra.watchdog.parameters.MaxNumEvaluatorsPerJob;
-import org.apache.reef.infra.watchdog.parameters.WatchdogAddress;
-import org.apache.reef.infra.watchdog.parameters.WatchdogPort;
+import org.apache.reef.infra.watchdog.parameters.WatchdogServerAddress;
+import org.apache.reef.infra.watchdog.parameters.WatchdogServerPort;
+import org.apache.reef.infra.watchdog.server.Job;
+import org.apache.reef.infra.watchdog.server.JobContainer;
+import org.apache.reef.infra.watchdog.utils.Constants;
 import org.apache.reef.runtime.local.client.LocalRuntimeConfiguration;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.Configurations;
@@ -38,27 +42,28 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Created by anchung on 3/28/2016.
  */
-public class WatchdogRequestHandler extends AbstractHandler {
-  private static final Logger LOG = Logger.getLogger(WatchdogRequestHandler.class.getName());
+public final class WatchdogSubmitHandler extends AbstractHandler {
+  private static final Logger LOG = Logger.getLogger(WatchdogSubmitHandler.class.getName());
 
-  private final AtomicBoolean jobSubmitted = new AtomicBoolean(false);
+  private final JobContainer jobContainer;
   private final int maxNumEvaluatorsPerJob;
   private final ConfigurationSerializer serializer;
   private final String address;
   private final int port;
 
   @Inject
-  private WatchdogRequestHandler(final ConfigurationSerializer serializer,
-                                 @Parameter(WatchdogAddress.class) final String address,
-                                 @Parameter(WatchdogPort.class) final int port,
-                                 @Parameter(MaxNumEvaluatorsPerJob.class) int maxNumEvaluatorsPerJob) {
+  private WatchdogSubmitHandler(final JobContainer jobContainer,
+                                final ConfigurationSerializer serializer,
+                                @Parameter(WatchdogServerAddress.class) final String address,
+                                @Parameter(WatchdogServerPort.class) final int port,
+                                @Parameter(MaxNumEvaluatorsPerJob.class) final int maxNumEvaluatorsPerJob) {
+    this.jobContainer = jobContainer;
     this.maxNumEvaluatorsPerJob = maxNumEvaluatorsPerJob;
     this.serializer = serializer;
     this.address = address;
@@ -70,23 +75,18 @@ public class WatchdogRequestHandler extends AbstractHandler {
                      final HttpServletRequest httpServletRequest,
                      final HttpServletResponse httpServletResponse,
                      final int dispatchMode) throws IOException, ServletException {
-    LOG.log(Level.SEVERE, "HELLO3");
-    if (httpServletRequest.getMethod() != HttpMethods.POST) {
-      // TODO: set response.
-      return;
-    }
-
-    if (jobSubmitted.get()) {
-      // TODO: set response.
+    if (!httpServletRequest.getMethod().equals(HttpMethods.POST)) {
+      // TODO[JIRA]: set response.
       return;
     }
 
     try {
       final Configuration driverConfig = Configurations.merge(
-          validateSubmitJobInput(httpServletRequest), getWatchdogConfiguration());
+          validateSubmitJobInput(httpServletRequest), getWatchdogJobConfiguration());
 
-      if (jobSubmitted.getAndSet(true)) {
-        // TODO: set response.
+      final String id = Constants.TEMP_ID;
+      if (jobContainer.addJob(id, new Job(id))) {
+        // TODO[JIRA]: set response.
         // Already submitted. Temporary to only submit once. Set response.
         return;
       }
@@ -94,15 +94,16 @@ public class WatchdogRequestHandler extends AbstractHandler {
       final DriverLauncher launcher = DriverLauncher.getLauncher(getRuntimeConfiguration());
       launcher.run(driverConfig);
     } catch (final Exception e) {
-      e.printStackTrace();
+      LOG.log(Level.SEVERE, e.getMessage());
       throw new RuntimeException(e);
     }
   }
 
-  private Configuration getWatchdogConfiguration() {
-    return WatchdogConfiguration.CONF
-        .set(WatchdogConfiguration.WATCHDOG_ADDRESS, address)
-        .set(WatchdogConfiguration.WATCHDOG_PORT, port)
+  private Configuration getWatchdogJobConfiguration() {
+    return WatchdogJobConfiguration.CONF
+        .set(WatchdogJobConfiguration.WATCHDOG_JOB_ID, 1)
+        .set(WatchdogJobConfiguration.WATCHDOG_ADDRESS, address)
+        .set(WatchdogJobConfiguration.WATCHDOG_PORT, port)
         .build();
   }
 

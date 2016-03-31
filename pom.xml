@@ -740,6 +740,7 @@ under the License.
         <module>lang/java/reef-tang</module>
         <module>lang/java/reef-tests</module>
         <module>lang/java/reef-wake</module>
+		<module>lang/java/reef-watchdog</module>
         <module>lang/java/reef-webserver</module>
         <module>lang/java/reef-utils-hadoop</module>
         <module>lang/java/reef-utils</module>

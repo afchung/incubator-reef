@@ -16,7 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-/**
- * Created by anchung on 3/29/2016.
- */
-package org.apache.reef.infra.watchdog.utils;
+[
+  {
+    "namespace": "org.apache.reef.infra.watchdog.avro",
+    "type": "record",
+    "name": "SubmitRequest",
+    "fields": [
+      { "name": "jobId", "type": "string" },
+      { "name": "command", "type": "string" },
+      { "name": "rootPath", "type": "string" }
+    ]
+  },
+  {
+    "namespace": "org.apache.reef.infra.watchdog.avro",
+    "type": "record",
+    "name": "PidRegisterRequest",
+    "fields": [
+      { "name": "jobId", "type": "string" }
+    ]
+  }
+]

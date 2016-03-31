@@ -16,16 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.infra.watchdog.parameters;
-
-import org.apache.reef.tang.annotations.Name;
-import org.apache.reef.tang.annotations.NamedParameter;
-
 /**
- * Created by anchung on 3/29/2016.
+ * Created by anchung on 3/31/2016.
  */
-@NamedParameter(doc = "The address of the Watchdog process.")
-public final class WatchdogAddress implements Name<String> {
-  private WatchdogAddress(){
-  }
-}
+package org.apache.reef.infra.watchdog.server;

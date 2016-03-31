@@ -23,6 +23,7 @@ import org.apache.reef.driver.evaluator.AllocatedEvaluator;
 import org.apache.reef.driver.evaluator.EvaluatorRequest;
 import org.apache.reef.driver.evaluator.EvaluatorRequestor;
 import org.apache.reef.driver.task.TaskConfiguration;
+import org.apache.reef.infra.watchdog.driver.WatchdogHeartbeatManager;
 import org.apache.reef.tang.Configuration;
 import org.apache.reef.tang.annotations.Unit;
 import org.apache.reef.util.EnvironmentUtils;
@@ -49,7 +50,8 @@ public final class HelloDriver {
    * @param requestor evaluator requestor object used to create new evaluator containers.
    */
   @Inject
-  private HelloDriver(final EvaluatorRequestor requestor) {
+  private HelloDriver(final EvaluatorRequestor requestor, final WatchdogHeartbeatManager hbm) {
+    hbm.start();
     this.requestor = requestor;
     LOG.log(Level.FINE, "Instantiated 'HelloDriver'");
   }

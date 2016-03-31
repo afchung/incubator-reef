@@ -16,7 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.reef.infra.watchdog.server;
+
+import javax.inject.Inject;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 /**
- * Created by anchung on 3/29/2016.
+ * Created by anchung on 3/31/2016.
  */
-package org.apache.reef.infra.watchdog.utils;
+public final class JobContainer {
+  private final ConcurrentMap<String, Job> jobMap = new ConcurrentHashMap<>();
+
+  @Inject
+  private JobContainer() {
+  }
+
+  public boolean addJob(final String id, final Job job) {
+    return jobMap.putIfAbsent(id, job) != null;
+  }
+
+  public void removeJob(final String id) {
+    jobMap.remove(id);
+  }
+
+  public Job getJob(final String id) {
+    return jobMap.get(id);
+  }
+}

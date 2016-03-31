@@ -16,30 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.reef.infra.watchdog.example;
+package org.apache.reef.infra.watchdog.server.handlers;
 
-import org.apache.reef.task.Task;
+import org.mortbay.jetty.handler.AbstractHandler;
 
 import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * A 'hello REEF' Task.
+ * Created by anchung on 3/31/2016.
  */
-public final class HelloTask implements Task {
+public final class WatchdogHeartbeatHandler extends AbstractHandler {
+
+  private static final Logger LOG = Logger.getLogger(WatchdogSubmitHandler.class.getName());
 
   @Inject
-  private HelloTask() {
+  private WatchdogHeartbeatHandler() {
   }
 
   @Override
-  public byte[] call(final byte[] memento) {
-    try {
-      Thread.sleep(50000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-
-    System.out.println("Hello, REEF!");
-    return null;
+  public void handle(final String requestTarget,
+                     final HttpServletRequest httpServletRequest,
+                     final HttpServletResponse httpServletResponse,
+                     final int dispatchMode) throws IOException, ServletException {
+    LOG.log(Level.SEVERE, "HELLO2");
   }
 }

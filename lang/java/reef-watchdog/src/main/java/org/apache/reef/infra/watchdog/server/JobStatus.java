@@ -16,7 +16,39 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.reef.infra.watchdog.server;
+
+import org.apache.reef.infra.watchdog.avro.Status;
+
 /**
- * Created by anchung on 3/29/2016.
+ * Created by anchung on 4/4/2016.
  */
-package org.apache.reef.infra.watchdog.utils;
+public enum JobStatus {
+  STARTED,
+  RUNNING,
+  NOT_RESPONDING,
+  CRASHED,
+  DONE;
+
+  public Status toAvroStatus() {
+    switch(this) {
+    case STARTED:
+      return Status.Started;
+    case RUNNING:
+      return Status.Running;
+    case NOT_RESPONDING:
+      return Status.NotResponding;
+    case CRASHED:
+      return Status.Crashed;
+    case DONE:
+      return Status.Done;
+    default:
+      throw new RuntimeException("Unknown state!");
+    }
+  }
+
+  public static boolean isLegalTransition(final JobStatus from, final JobStatus to) {
+    // TODO[JIRA]: Fill in.
+    return true;
+  }
+}

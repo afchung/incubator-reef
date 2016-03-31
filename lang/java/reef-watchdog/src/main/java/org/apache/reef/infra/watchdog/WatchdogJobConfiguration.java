@@ -18,9 +18,9 @@
  */
 package org.apache.reef.infra.watchdog;
 
-import org.apache.reef.infra.watchdog.parameters.MaxNumEvaluatorsPerJob;
-import org.apache.reef.infra.watchdog.parameters.WatchdogAddress;
-import org.apache.reef.infra.watchdog.parameters.WatchdogPort;
+import org.apache.reef.infra.watchdog.parameters.WatchdogJobId;
+import org.apache.reef.infra.watchdog.parameters.WatchdogServerAddress;
+import org.apache.reef.infra.watchdog.parameters.WatchdogServerPort;
 import org.apache.reef.tang.formats.ConfigurationModule;
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
 import org.apache.reef.tang.formats.RequiredParameter;
@@ -28,16 +28,17 @@ import org.apache.reef.tang.formats.RequiredParameter;
 /**
  * Created by anchung on 3/29/2016.
  */
-public final class SubmissionRequestHandlerConfiguration extends ConfigurationModuleBuilder {
+public final class WatchdogJobConfiguration extends ConfigurationModuleBuilder {
+
   public static final RequiredParameter<String> WATCHDOG_ADDRESS = new RequiredParameter<>();
 
   public static final RequiredParameter<Integer> WATCHDOG_PORT = new RequiredParameter<>();
 
-  public static final RequiredParameter<Integer> MAX_NUM_EVALUATORS_PER_JOB = new RequiredParameter<>();
+  public static final RequiredParameter<Integer> WATCHDOG_JOB_ID = new RequiredParameter<>();
 
-  public static final ConfigurationModule CONF = new SubmissionRequestHandlerConfiguration()
-      .bindNamedParameter(WatchdogAddress.class, WATCHDOG_ADDRESS)
-      .bindNamedParameter(WatchdogPort.class, WATCHDOG_PORT)
-      .bindNamedParameter(MaxNumEvaluatorsPerJob.class, MAX_NUM_EVALUATORS_PER_JOB)
+  public static final ConfigurationModule CONF = new WatchdogJobConfiguration()
+      .bindNamedParameter(WatchdogServerAddress.class, WATCHDOG_ADDRESS)
+      .bindNamedParameter(WatchdogServerPort.class, WATCHDOG_PORT)
+      .bindNamedParameter(WatchdogJobId.class, WATCHDOG_JOB_ID)
       .build();
 }

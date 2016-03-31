@@ -18,8 +18,9 @@
  */
 package org.apache.reef.infra.watchdog;
 
-import org.apache.reef.infra.watchdog.parameters.WatchdogAddress;
-import org.apache.reef.infra.watchdog.parameters.WatchdogPort;
+import org.apache.reef.infra.watchdog.parameters.MaxNumEvaluatorsPerJob;
+import org.apache.reef.infra.watchdog.parameters.WatchdogServerAddress;
+import org.apache.reef.infra.watchdog.parameters.WatchdogServerPort;
 import org.apache.reef.tang.formats.ConfigurationModule;
 import org.apache.reef.tang.formats.ConfigurationModuleBuilder;
 import org.apache.reef.tang.formats.RequiredParameter;
@@ -33,8 +34,11 @@ public final class WatchdogConfiguration extends ConfigurationModuleBuilder {
 
   public static final RequiredParameter<Integer> WATCHDOG_PORT = new RequiredParameter<>();
 
+  public static final RequiredParameter<Integer> MAX_NUM_EVALUATORS_PER_JOB = new RequiredParameter<>();
+
   public static final ConfigurationModule CONF = new WatchdogConfiguration()
-      .bindNamedParameter(WatchdogAddress.class, WATCHDOG_ADDRESS)
-      .bindNamedParameter(WatchdogPort.class, WATCHDOG_PORT)
+      .bindNamedParameter(WatchdogServerAddress.class, WATCHDOG_ADDRESS)
+      .bindNamedParameter(WatchdogServerPort.class, WATCHDOG_PORT)
+      .bindNamedParameter(MaxNumEvaluatorsPerJob.class, MAX_NUM_EVALUATORS_PER_JOB)
       .build();
 }

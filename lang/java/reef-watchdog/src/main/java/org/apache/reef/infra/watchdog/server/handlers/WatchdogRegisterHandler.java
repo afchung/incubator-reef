@@ -16,7 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+package org.apache.reef.infra.watchdog.server.handlers;
+
+import org.mortbay.jetty.handler.AbstractHandler;
+
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
 /**
- * Created by anchung on 3/29/2016.
+ * Created by anchung on 4/4/2016.
  */
-package org.apache.reef.infra.watchdog.utils;
+public final class WatchdogRegisterHandler extends AbstractHandler {
+
+  @Inject
+  private WatchdogRegisterHandler() {
+  }
+
+  @Override
+  public void handle(final String requestTarget,
+                     final HttpServletRequest httpServletRequest,
+                     final HttpServletResponse httpServletResponse,
+                     final int dispatchMode) throws IOException, ServletException {
+  }
+}
