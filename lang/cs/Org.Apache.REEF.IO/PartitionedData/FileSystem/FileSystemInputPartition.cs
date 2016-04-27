@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using Org.Apache.REEF.IO.DataCache;
 using Org.Apache.REEF.IO.FileSystem;
 using Org.Apache.REEF.IO.PartitionedData.FileSystem.Parameters;
 using Org.Apache.REEF.IO.PartitionedData.Random.Parameters;
@@ -26,7 +27,6 @@ using Org.Apache.REEF.IO.TempFileCreation;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Utilities.Attributes;
-using Org.Apache.REEF.Utilities.Diagnostics;
 using Org.Apache.REEF.Utilities.Logging;
 
 namespace Org.Apache.REEF.IO.PartitionedData.FileSystem
@@ -71,13 +71,22 @@ namespace Org.Apache.REEF.IO.PartitionedData.FileSystem
         /// <summary>
         /// Caches from the remote File System to a local disk.
         /// </summary>
-        public void Cache()
+        public int Cache(int cacheLevel)
         {
             lock (_lock)
             {
-                if (!_localFiles.IsPresent())
+                if (cacheLevel <= CacheLevelConstants.Disk)
                 {
-                    _localFiles = Optional<ISet<string>>.Of(Download());
+                    if (!_localFiles.IsPresent())
+                    {
+                        _localFiles = Optional<ISet<string>>.Of(Download());
+                    }
+
+                    return CacheLevelConstants.Disk;
+                }
+                else
+                {
+                    return _localFiles.IsPresent() ? CacheLevelConstants.Disk : CacheLevelConstants.Remote;
                 }
             }
         }
@@ -131,7 +140,7 @@ namespace Org.Apache.REEF.IO.PartitionedData.FileSystem
                 {
                     if (!_localFiles.IsPresent())
                     {
-                        Cache();
+                        Cache(CacheLevelConstants.Disk);
                     }
 
                     // For now, assume IFileDeSerializer is local.

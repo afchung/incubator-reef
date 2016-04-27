@@ -16,8 +16,10 @@
 // under the License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using Org.Apache.REEF.IO.DataCache;
 using Org.Apache.REEF.IO.PartitionedData.Random.Parameters;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Utilities;
@@ -52,13 +54,18 @@ namespace Org.Apache.REEF.IO.PartitionedData.Random
             get { return _id; }
         }
 
-        public void Cache()
+        public int Cache(int cacheLevel)
         {
             lock (_lock)
             {
+                if (cacheLevel > CacheLevelConstants.InMemoryMaterialized)
+                {
+                    return CacheLevelConstants.Remote;
+                }
+
                 if (_randomData.IsPresent())
                 {
-                    return;
+                    return CacheLevelConstants.InMemoryMaterialized;
                 }
 
                 var random = new System.Random();
@@ -75,7 +82,9 @@ namespace Org.Apache.REEF.IO.PartitionedData.Random
                         generatedData[index] = randomDoubleAsBytes[j];
                     }
                 }
+
                 _randomData = Optional<byte[]>.Of(generatedData);
+                return CacheLevelConstants.InMemoryMaterialized;
             }
         }
 
@@ -85,7 +94,7 @@ namespace Org.Apache.REEF.IO.PartitionedData.Random
             {
                 if (!_randomData.IsPresent())
                 {
-                    Cache();
+                    Cache(CacheLevelConstants.InMemoryMaterialized);
                 }
 
                 return new MemoryStream(_randomData.Value, false);

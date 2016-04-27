@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License.  You may obtain a copy of the License at
-//
+// 
 //   http://www.apache.org/licenses/LICENSE-2.0
-//
+// 
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -15,34 +15,30 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System.Collections.Generic;
-using Org.Apache.REEF.Utilities.Attributes;
-
-namespace Org.Apache.REEF.IO.PartitionedData
+namespace Org.Apache.REEF.IO.DataCache
 {
     /// <summary>
-    /// Evaluator-Side representation of a data set partition.
+    /// A mover of data between data representations.
     /// </summary>
-    /// <typeparam name="T">Generic Type representing data pointer.
-    /// For example, for data in local file it can be file pointer </typeparam>
-    [Unstable("API contract may change.")]
-    public interface IInputPartition<T> 
+    /// <typeparam name="T">The type of the data.</typeparam>
+    /// <typeparam name="TRepFrom">The "from" representation of the data.</typeparam>
+    /// <typeparam name="TRepTo">The "to" representation of the data.</typeparam>
+    public interface IDataMover<T, in TRepFrom, out TRepTo> 
+        where TRepFrom : IDataRepresentation<T> where TRepTo : IDataRepresentation<T>
     {
         /// <summary>
-        /// The id of the partition.
+        /// The origin cache level.
         /// </summary>
-        string Id { get; }
+        int CacheLevelFrom { get; }
 
         /// <summary>
-        /// Caches the data based on the method parameter. Returns the actual cached level.
+        /// The destination cache level.
         /// </summary>
-        [Unstable("0.15", "Contract may change.")]
-        int Cache(int cacheLevel);
+        int CacheLevelTo { get; }
 
         /// <summary>
-        /// Gives a pointer to the underlying partition.
+        /// Moves between the data representations.
         /// </summary>
-        /// <returns>The pointer to the underlying partition</returns>
-        T GetPartitionHandle();
+        TRepTo Move(TRepFrom representationFrom);
     }
 }

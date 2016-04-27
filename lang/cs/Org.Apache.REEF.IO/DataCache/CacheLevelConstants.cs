@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License.  You may obtain a copy of the License at
-//
+// 
 //   http://www.apache.org/licenses/LICENSE-2.0
-//
+// 
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -15,34 +15,34 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System.Collections.Generic;
 using Org.Apache.REEF.Utilities.Attributes;
 
-namespace Org.Apache.REEF.IO.PartitionedData
+namespace Org.Apache.REEF.IO.DataCache
 {
     /// <summary>
-    /// Evaluator-Side representation of a data set partition.
+    /// A static class for constants describing cache levels.
     /// </summary>
-    /// <typeparam name="T">Generic Type representing data pointer.
-    /// For example, for data in local file it can be file pointer </typeparam>
-    [Unstable("API contract may change.")]
-    public interface IInputPartition<T> 
+    [Unstable("0.16", "Constant values may change.")]
+    public static class CacheLevelConstants
     {
         /// <summary>
-        /// The id of the partition.
+        /// The data is deserialized.
         /// </summary>
-        string Id { get; }
+        public const int InMemoryMaterialized = 100;
 
         /// <summary>
-        /// Caches the data based on the method parameter. Returns the actual cached level.
+        /// The data is in memory, but as MemoryStream.
         /// </summary>
-        [Unstable("0.15", "Contract may change.")]
-        int Cache(int cacheLevel);
+        public const int InMemoryAsStream = 100000;
 
         /// <summary>
-        /// Gives a pointer to the underlying partition.
+        /// The data is in disk.
         /// </summary>
-        /// <returns>The pointer to the underlying partition</returns>
-        T GetPartitionHandle();
+        public const int Disk = 200000;
+
+        /// <summary>
+        /// The data is not local.
+        /// </summary>
+        public const int Remote = int.MaxValue;
     }
 }
