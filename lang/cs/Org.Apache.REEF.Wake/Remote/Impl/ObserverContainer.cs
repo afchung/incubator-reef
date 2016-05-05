@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Net;
+using Org.Apache.REEF.Utilities.Logging;
 using Org.Apache.REEF.Wake.Util;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
@@ -28,6 +29,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     /// </summary>
     internal sealed class ObserverContainer<T> : IObserver<TransportEvent<IRemoteEvent<T>>>
     {
+        private static readonly Logger Logger = Logger.GetLogger(typeof(ObserverContainer<>));
         private readonly ConcurrentDictionary<IPEndPoint, IObserver<T>> _endpointMap;
         private readonly ConcurrentDictionary<Type, IObserver<IRemoteMessage<T>>> _typeMap;
         private IObserver<T> _universalObserver;
@@ -48,16 +50,25 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <param name="remoteEndpoint">The IPEndPoint of the remote host</param>
         /// <param name="observer">The IObserver to handle incoming messages</param>
         /// <returns>An IDisposable used to unregister the observer with</returns>
-        public IDisposable RegisterObserver(IPEndPoint remoteEndpoint, IObserver<T> observer) 
+        public IDisposable RegisterObserver(IPEndPoint remoteEndpoint, IObserver<T> observer)
         {
-            if (remoteEndpoint.Address.Equals(IPAddress.Any))
+            try
             {
-                _universalObserver = observer;
-                return Disposable.Create(() => { _universalObserver = null; });
-            }
+                Logger.Log(Level.Error, "Registering Observer for " + remoteEndpoint + "!");
 
-            _endpointMap[remoteEndpoint] = observer;
-            return Disposable.Create(() => _endpointMap.TryRemove(remoteEndpoint, out observer));
+                if (remoteEndpoint.Address.Equals(IPAddress.Any))
+                {
+                    _universalObserver = observer;
+                    return Disposable.Create(() => { _universalObserver = null; });
+                }
+
+                _endpointMap[remoteEndpoint] = observer;
+                return Disposable.Create(() => _endpointMap.TryRemove(remoteEndpoint, out observer));
+            }
+            finally
+            {
+                Logger.Log(Level.Error, "Registered Observer for " + remoteEndpoint + "!");
+            }
         }
 
         /// <summary>

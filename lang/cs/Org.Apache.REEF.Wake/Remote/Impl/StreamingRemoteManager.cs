@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using Org.Apache.REEF.Utilities.Logging;
 using Org.Apache.REEF.Wake.StreamingCodec;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
@@ -28,6 +29,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     /// <typeparam name="T">Message type T.</typeparam>
     internal sealed class StreamingRemoteManager<T> : IRemoteManager<T>
     {
+        private static readonly Logger Logger = Utilities.Logging.Logger.GetLogger(typeof(StreamingRemoteManager<>));
+
         private readonly ObserverContainer<T> _observerContainer;
         private readonly StreamingTransportServer<IRemoteEvent<T>> _server;
         private readonly Dictionary<IPEndPoint, ProxyObserver> _cachedClients;
@@ -108,6 +111,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <returns>An IObserver used to send messages to the remote host</returns>
         public IObserver<T> GetRemoteObserver(IPEndPoint remoteEndpoint)
         {
+            Logger.Log(Level.Error, "GettingRemoteObserver for " + remoteEndpoint + "!");
             if (remoteEndpoint == null)
             {
                 throw new ArgumentNullException("remoteEndpoint");
@@ -116,10 +120,12 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             ProxyObserver remoteObserver;
             if (!_cachedClients.TryGetValue(remoteEndpoint, out remoteObserver))
             {
+                Logger.Log(Level.Error, "CreatingRemoteObserver for " + remoteEndpoint + "!");
                 remoteObserver = CreateRemoteObserver(remoteEndpoint);
                 _cachedClients[remoteEndpoint] = remoteObserver;
             }
 
+            Logger.Log(Level.Error, "GotRemoteObserver for " + remoteEndpoint + "!");
             return remoteObserver;
         }
 

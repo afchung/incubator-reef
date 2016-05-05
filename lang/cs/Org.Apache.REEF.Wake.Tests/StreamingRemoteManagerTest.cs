@@ -42,7 +42,6 @@ namespace Org.Apache.REEF.Wake.Tests
             TaskScheduler.UnobservedTaskException += (sender, args) =>
             {
                 Logger.Log(Level.Error, "UNOBSERVED TASK EXCEPTION!!! AAAAAAAAAAA!" + args.Exception);
-                throw args.Exception;
             };
         }
 
@@ -66,7 +65,11 @@ namespace Org.Apache.REEF.Wake.Tests
             {
                 Logger.Log(Level.Error, "STARTED!");
 
-                var observer = Observer.Create<string>(queue.Add);
+                var observer = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue!");
+                    queue.Add(s);
+                });
                 IPEndPoint endpoint1 = new IPEndPoint(listeningAddress, 0);
                 remoteManager2.RegisterObserver(endpoint1, observer);
 
@@ -109,8 +112,16 @@ namespace Org.Apache.REEF.Wake.Tests
 
                 // Register observers for remote manager 1 and remote manager 2
                 var remoteEndpoint = new IPEndPoint(listeningAddress, 0);
-                var observer1 = Observer.Create<string>(queue1.Add);
-                var observer2 = Observer.Create<string>(queue2.Add);
+                var observer1 = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue1!");
+                    queue1.Add(s);
+                });
+                var observer2 = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue2!");
+                    queue2.Add(s);
+                });
                 remoteManager1.RegisterObserver(remoteEndpoint, observer1);
                 remoteManager2.RegisterObserver(remoteEndpoint, observer2);
 
@@ -164,7 +175,11 @@ namespace Org.Apache.REEF.Wake.Tests
             {
                 Logger.Log(Level.Error, "STARTED!");
                 var remoteEndpoint = new IPEndPoint(listeningAddress, 0);
-                var observer = Observer.Create<string>(queue.Add);
+                var observer = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue!");
+                    queue.Add(s);
+                });
                 remoteManager3.RegisterObserver(remoteEndpoint, observer);
 
                 var remoteObserver1 = remoteManager1.GetRemoteObserver(remoteManager3.LocalEndpoint);
@@ -215,11 +230,23 @@ namespace Org.Apache.REEF.Wake.Tests
 
                 var remoteEndpoint = new IPEndPoint(listeningAddress, 0);
 
-                var observer = Observer.Create<string>(queue1.Add);
+                var observer = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue1!");
+                    queue1.Add(s);
+                });
                 remoteManager1.RegisterObserver(remoteEndpoint, observer);
-                var observer2 = Observer.Create<string>(queue2.Add);
+                var observer2 = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue2!");
+                    queue2.Add(s);
+                });
                 remoteManager2.RegisterObserver(remoteEndpoint, observer2);
-                var observer3 = Observer.Create<string>(queue3.Add);
+                var observer3 = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue3!");
+                    queue3.Add(s);
+                });
                 remoteManager3.RegisterObserver(remoteEndpoint, observer3);
 
                 var remoteObserver1 = remoteManager1.GetRemoteObserver(remoteManager3.LocalEndpoint);
@@ -293,7 +320,11 @@ namespace Org.Apache.REEF.Wake.Tests
                 remoteManager2.RegisterObserver(remoteEndpoint, receiverObserver);
 
                 // Register handler for remote manager 1 to record the ack
-                var senderObserver = Observer.Create<string>(queue.Add);
+                var senderObserver = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue!");
+                    queue.Add(s);
+                });
                 remoteManager1.RegisterObserver(remoteEndpoint, senderObserver);
 
                 // Begin to send messages
@@ -336,7 +367,11 @@ namespace Org.Apache.REEF.Wake.Tests
                 Logger.Log(Level.Error, "STARTED!");
 
                 // RemoteManager2 listens and records events of type IRemoteEvent<string>
-                var observer = Observer.Create<IRemoteMessage<string>>(message => queue.Add(message.Message));
+                var observer = Observer.Create<IRemoteMessage<string>>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s.Message + "\"to queue!");
+                    queue.Add(s.Message);
+                });
                 remoteManager2.RegisterObserver(observer);
 
                 // Remote manager 1 sends 3 events to remote manager 2
@@ -375,7 +410,11 @@ namespace Org.Apache.REEF.Wake.Tests
             {
                 Logger.Log(Level.Error, "STARTED!");
 
-                var observer = Observer.Create<string>(queue.Add);
+                var observer = Observer.Create<string>(s =>
+                {
+                    Logger.Log(Level.Error, "Adding \"" + s + "\"to queue!");
+                    queue.Add(s);
+                });
                 IPEndPoint endpoint1 = new IPEndPoint(listeningAddress, 0);
                 remoteManager2.RegisterObserver(endpoint1, observer);
 

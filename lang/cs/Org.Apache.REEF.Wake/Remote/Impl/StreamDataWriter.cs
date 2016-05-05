@@ -19,11 +19,14 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Org.Apache.REEF.Utilities.Logging;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
     public sealed class StreamDataWriter : IDataWriter
     {
+        private static readonly Logger Logger = Logger.GetLogger(typeof(StreamDataWriter));
+
          /// <summary>
         /// Stream to which to write
         /// </summary>
@@ -105,9 +108,12 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         {
             var charString = obj.ToCharArray();
             byte[] byteString = new byte[charString.Length * sizeof(char)];
+            Logger.Log(Level.Error, "Writing LEN of message " + obj + ". LEN is " + byteString.Length);
             WriteInt32(byteString.Length);
             Buffer.BlockCopy(charString, 0, byteString, 0, byteString.Length);
+            Logger.Log(Level.Error, "Writing message " + obj + ".");
             _stream.Write(byteString, 0, byteString.Length);
+            Logger.Log(Level.Error, "Done writing message " + obj + ".");
         }
 
         /// <summary>
