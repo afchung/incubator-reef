@@ -131,8 +131,6 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
 
                 if (_serverTask != null)
                 {
-                    _serverTask.Wait();
-
                     // Give the TransportServer Task 500ms to shut down, ignore any timeout errors
                     try
                     {
