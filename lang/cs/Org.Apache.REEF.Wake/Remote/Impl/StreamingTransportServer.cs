@@ -123,6 +123,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                 try
                 {
                     _listener.Stop();
+                    LOGGER.Log(Level.Error, "LISTENER DISPOSED!");
                 }
                 catch (SocketException)
                 {
@@ -136,18 +137,16 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                     {
                         CancellationTokenSource serverDisposeTimeout = new CancellationTokenSource(500);
                         _serverTask.Wait(serverDisposeTimeout.Token);
+                        _serverTask.Dispose();
                     }
                     catch (Exception e)
                     {
                         Console.Error.WriteLine(e);
                     }
-                    finally
-                    {
-                        _serverTask.Dispose();
-                    }
                 }
             }
 
+            LOGGER.Log(Level.Error, "SERVER DISPOSED!");
             _disposed = true;
         }
 
