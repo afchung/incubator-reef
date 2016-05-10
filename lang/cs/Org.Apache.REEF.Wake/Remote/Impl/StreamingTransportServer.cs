@@ -183,8 +183,10 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         {
             // Keep reading messages from client until they disconnect or timeout
             CancellationToken token = _cancellationSource.Token;
+            LOGGER.Log(Level.Error, "Processing client from link " + (IPEndPoint)client.Client.RemoteEndPoint + " in StreamingTransportServer.");
             using (ILink<T> link = new StreamingLink<T>(client, _streamingCodec))
             {
+                LOGGER.Log(Level.Error, "Created streaming link with client " + (IPEndPoint)client.Client.RemoteEndPoint + " in StreamingTransportServer.");
                 while (!token.IsCancellationRequested)
                 {
                     LOGGER.Log(Level.Error, "Reading from link " + (IPEndPoint)client.Client.RemoteEndPoint + " in StreamingTransportServer.");
