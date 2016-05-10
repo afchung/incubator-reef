@@ -30,7 +30,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     public sealed class StreamDataReader : IDataReader
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(StreamDataReader));
-        
+        private readonly string _guid = System.Guid.NewGuid().ToString().Substring(24);
+
         /// <summary>
         /// Stream from which to read
         /// </summary>
@@ -48,6 +49,11 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             }
 
             _stream = stream;
+        }
+
+        public string Guid
+        {
+            get { return _guid; }
         }
 
         /// <summary>
@@ -308,15 +314,15 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <returns>Task handler that reads string</returns>
         public async Task<string> ReadStringAsync(CancellationToken token)
         {
-            Logger.Log(Level.Error, "Reading String Byte LEN from StreamDataReader.");
+            Logger.Log(Level.Error, "Reading String Byte LEN from reader" + _guid + ".");
             int length = ReadInt32();
-            Logger.Log(Level.Error, "Done reading String Byte LEN of " + length + "from StreamDataReader.");
+            Logger.Log(Level.Error, "Done reading String Byte LEN of " + length + " from reader" + _guid + ".");
 
-            Logger.Log(Level.Error, "Reading String from StreamDataReader.");
+            Logger.Log(Level.Error, "Reading String from reader" + _guid + ".");
             byte[] stringByte = new byte[length];
             int readBytes = await ReadAsync(stringByte, 0, stringByte.Length, token);
 
-            Logger.Log(Level.Error, "Done reading String from StreamDataReader.");
+            Logger.Log(Level.Error, "Done reading String from reader" + _guid + ".");
 
             if (readBytes == -1)
             {

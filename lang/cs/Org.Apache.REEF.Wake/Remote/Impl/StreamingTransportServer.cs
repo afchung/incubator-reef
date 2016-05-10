@@ -187,9 +187,9 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             {
                 while (!token.IsCancellationRequested)
                 {
-                    LOGGER.Log(Level.Error, "Reading from link in StreamingTransportServer.");
+                    LOGGER.Log(Level.Error, "Reading from link " + (IPEndPoint)client.Client.RemoteEndPoint + " in StreamingTransportServer.");
                     T message = await link.ReadAsync(token);
-                    LOGGER.Log(Level.Error, "Done reading from link in StreamingTransportServer.");
+                    LOGGER.Log(Level.Error, "Done reading from link " + (IPEndPoint)client.Client.RemoteEndPoint + " in StreamingTransportServer.");
 
                     if (message == null)
                     {

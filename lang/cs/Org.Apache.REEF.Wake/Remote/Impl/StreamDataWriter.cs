@@ -26,6 +26,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     public sealed class StreamDataWriter : IDataWriter
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(StreamDataWriter));
+        private readonly string _guid = System.Guid.NewGuid().ToString("N").Substring(24);
 
          /// <summary>
         /// Stream to which to write
@@ -44,6 +45,11 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             }
 
             _stream = stream;
+        }
+
+        public string Guid
+        {
+            get { return _guid; }
         }
 
         /// <summary>
@@ -108,12 +114,12 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         {
             var charString = obj.ToCharArray();
             byte[] byteString = new byte[charString.Length * sizeof(char)];
-            Logger.Log(Level.Error, "Writing LEN of message " + obj + ". LEN is " + byteString.Length);
+            Logger.Log(Level.Error, "Writing LEN of message " + obj + " in writer" + _guid + ". LEN is " + byteString.Length);
             WriteInt32(byteString.Length);
             Buffer.BlockCopy(charString, 0, byteString, 0, byteString.Length);
-            Logger.Log(Level.Error, "Writing message " + obj + ".");
+            Logger.Log(Level.Error, "Writing message " + obj + " in writer" + _guid + ".");
             _stream.Write(byteString, 0, byteString.Length);
-            Logger.Log(Level.Error, "Done writing message " + obj + ".");
+            Logger.Log(Level.Error, "Done writing message " + obj + " in writer" + _guid + ".");
         }
 
         /// <summary>

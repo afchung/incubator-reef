@@ -71,6 +71,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             _disposed = false;
             _reader = new StreamDataReader(stream);
             _writer = new StreamDataWriter(stream);
+            Logger.Log(Level.Error, "Initialized reader" + _reader.Guid + " and writer" + _writer.Guid + " for remote endpoint " + remoteEndpoint);
             _streamingCodec = streamingCodec;
         }
 
@@ -93,6 +94,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             _disposed = false;
             _reader = new StreamDataReader(stream);
             _writer = new StreamDataWriter(stream);
+            Logger.Log(Level.Error, "Initialized reader" + _reader.Guid + " and writer" + _writer.Guid + " for endpoint " + RemoteEndpoint);
             _streamingCodec = streamingCodec;
         }
 

@@ -29,6 +29,8 @@ namespace Org.Apache.REEF.Wake.Remote
     /// </summary>
     public interface IDataReader
     {
+        string Guid { get; }
+
         /// <summary>
         /// Reads double
         /// </summary>

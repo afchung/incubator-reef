@@ -29,6 +29,8 @@ namespace Org.Apache.REEF.Wake.Remote
     /// </summary>
     public interface IDataWriter
     {
+        string Guid { get; }
+
         /// <summary>
         /// write double
         /// </summary>
