@@ -164,8 +164,11 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             {
                 while (!_cancellationSource.Token.IsCancellationRequested)
                 {
+                    var guid = Guid.NewGuid();
+                    LOGGER.Log(Level.Error, "Listening for clients..." + guid);
                     TcpClient client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
-                    ProcessClient(client).Forget();
+                    LOGGER.Log(Level.Error, "Got client!" + guid);
+                    ProcessClient(client, guid).Forget();
                 }
             }
             catch (InvalidOperationException)
@@ -176,14 +179,17 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             {
                 LOGGER.Log(Level.Info, "StreamingTransportServer has been closed.");
             }
+
+            LOGGER.Log(Level.Error, "StreamingTransportServer is done!");
         }
 
         /// <summary>
         /// Receives event from connected TcpClient and invokes handler on the event.
         /// </summary>
-        /// <param name="client">The connected client</param>
-        private async Task ProcessClient(TcpClient client)
+        private async Task ProcessClient(TcpClient client, Guid guid)
         {
+            LOGGER.Log(Level.Error, "Process client for " + guid);
+
             // Keep reading messages from client until they disconnect or timeout
             CancellationToken token = _cancellationSource.Token;
             LOGGER.Log(Level.Error, "Processing client from link " + (IPEndPoint)client.Client.RemoteEndPoint + " in StreamingTransportServer.");

@@ -15,14 +15,23 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System;
 using System.Threading.Tasks;
 
 namespace Org.Apache.REEF.Wake.Util
 {
     public static class TaskExtensions
     {
-        public static void Forget(this Task task)
+        public static async void Forget(this Task task)
         {
+            try
+            {
+                await task.ConfigureAwait(false);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("FORGOTTEN! " + e);
+            }
         }
     }
 }
