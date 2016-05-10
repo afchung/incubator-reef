@@ -130,6 +130,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                     LOGGER.Log(Level.Info, "Disposing of transport server before listener is created.");
                 }
 
+                LOGGER.Log(Level.Error, "Listener Stop done.");
+
                 if (_serverTask != null)
                 {
                     // Give the TransportServer Task 500ms to shut down, ignore any timeout errors
@@ -141,7 +143,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                     }
                     catch (Exception e)
                     {
-                        Console.Error.WriteLine(e);
+                        LOGGER.Log(Level.Error, "Encountered error when disposing server task.");
+                        Exceptions.Caught(e, Level.Error, LOGGER);
                     }
                 }
             }
