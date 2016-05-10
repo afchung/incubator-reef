@@ -179,6 +179,7 @@ namespace Org.Apache.REEF.Wake.Tests
                 {
                     Logger.Log(Level.Error, "Adding \"" + s + "\"to queue!");
                     queue.Add(s);
+                    Logger.Log(Level.Error, "DONE \"" + s + "\"to queue!");
                 });
                 remoteManager3.RegisterObserver(remoteEndpoint, observer);
 
