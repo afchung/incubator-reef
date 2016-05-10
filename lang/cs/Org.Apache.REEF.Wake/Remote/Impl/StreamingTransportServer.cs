@@ -168,7 +168,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                     LOGGER.Log(Level.Error, "Listening for clients..." + guid);
                     TcpClient client = await _listener.AcceptTcpClientAsync().ConfigureAwait(false);
                     LOGGER.Log(Level.Error, "Got client!" + guid);
-                    ProcessClient(client, guid).Forget();
+                    Task.Factory.StartNew(() => ProcessClient(client, guid), TaskCreationOptions.LongRunning).Forget();
                 }
             }
             catch (InvalidOperationException)
