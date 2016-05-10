@@ -35,6 +35,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// Stream from which to read
         /// </summary>
         private readonly Stream _stream;
+
+        private readonly object _lock = new object();
         
         /// <summary>
         /// Constructs the StreamDataReader
@@ -306,26 +308,29 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads string</returns>
-        public async Task<string> ReadStringAsync(CancellationToken token)
+        public Task<string> ReadStringAsync(CancellationToken token)
         {
-            Logger.Log(Level.Error, "Reading String Byte LEN from StreamDataReader.");
-            int length = ReadInt32();
-            Logger.Log(Level.Error, "Done reading String Byte LEN of " + length + "from StreamDataReader.");
-
-            Logger.Log(Level.Error, "Reading String from StreamDataReader.");
-            byte[] stringByte = new byte[length];
-            int readBytes = await ReadAsync(stringByte, 0, stringByte.Length, token);
-
-            Logger.Log(Level.Error, "Done reading String from StreamDataReader.");
-
-            if (readBytes == -1)
+            lock (_lock)
             {
-                return null;
-            }
+                Logger.Log(Level.Error, "Reading String Byte LEN from StreamDataReader.");
+                int length = ReadInt32();
+                Logger.Log(Level.Error, "Done reading String Byte LEN of " + length + "from StreamDataReader.");
 
-            char[] stringChar = new char[stringByte.Length / sizeof(char)];
-            Buffer.BlockCopy(stringByte, 0, stringChar, 0, stringByte.Length);
-            return new string(stringChar);
+                Logger.Log(Level.Error, "Reading String from StreamDataReader.");
+                byte[] stringByte = new byte[length];
+                int readBytes = ReadAsync(stringByte, 0, stringByte.Length, token).Result;
+
+                Logger.Log(Level.Error, "Done reading String from StreamDataReader.");
+
+                if (readBytes == -1)
+                {
+                    return null;
+                }
+
+                char[] stringChar = new char[stringByte.Length / sizeof(char)];
+                Buffer.BlockCopy(stringByte, 0, stringChar, 0, stringByte.Length);
+                return Task.Run(() => new string(stringChar), token);
+            }
         }
 
         /// <summary>

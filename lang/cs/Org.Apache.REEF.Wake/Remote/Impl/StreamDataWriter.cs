@@ -203,9 +203,13 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         {
             var charString = obj.ToCharArray();
             byte[] byteString = new byte[charString.Length * sizeof(char)];
-            await WriteInt32Async(byteString.Length, token);
             Buffer.BlockCopy(charString, 0, byteString, 0, byteString.Length);
-            await _stream.WriteAsync(byteString, 0, byteString.Length, token);
+            byte[] strLenInBytes = BitConverter.GetBytes(byteString.Length);
+            byte[] sendBytes = new byte[strLenInBytes.Length + byteString.Length];
+            Array.Copy(strLenInBytes, sendBytes, strLenInBytes.Length);
+            Array.Copy(byteString, 0, sendBytes, strLenInBytes.Length, byteString.Length);
+
+            await WriteAsync(sendBytes, 0, sendBytes.Length, token);
         }
 
         /// <summary>
