@@ -38,12 +38,8 @@ namespace Org.Apache.REEF.Client.Yarn.RestClient
         {
         }
 
-        private static readonly string HadoopConfDirEnvVariable = "HADOOP_CONF_DIR";
-        private static readonly string YarnConfigFileName = "yarn-site.xml";
-        private static readonly string YarnRmWebappHttpsAddressPropertyName = "yarn.resourcemanager.webapp.https.address";
-        private static readonly string YarnRmWebappHttpAddressPropertyName = "yarn.resourcemanager.webapp.address";
         private static readonly Logger Logger = Logger.GetLogger(typeof(YarnConfigurationUrlProvider));
-        private IList<Uri> _yarnRmUri;
+        private readonly IEnumerable<Uri> _yarnRmUri;
 
         [Inject]
         private YarnConfigurationUrlProvider(
@@ -57,42 +53,12 @@ namespace Org.Apache.REEF.Client.Yarn.RestClient
             [Parameter(typeof(HadoopConfigurationDirectory))] string hadoopConfigDir,
             [Parameter(typeof(UseHttpsForYarnCommunication))] bool useHttps)
         {
-            hadoopConfigDir = hadoopConfigDir ?? Environment.GetEnvironmentVariable(HadoopConfDirEnvVariable);
-
-            if (string.IsNullOrEmpty(hadoopConfigDir) || !Directory.Exists(hadoopConfigDir))
-            {
-                throw new ArgumentException(HadoopConfDirEnvVariable + " is not configured or does not exist.",
-                    "hadoopConfigDir");
-            }
-
-            Logger.Log(Level.Verbose, "Using {0} as hadoop configuration directory", hadoopConfigDir);
-            string yarnConfigurationFile = Path.Combine(hadoopConfigDir, YarnConfigFileName);
-            LoadYarnConfiguration(yarnConfigurationFile, useHttps);
+            _yarnRmUri = Utilities.Yarn.GetYarnRMWebappEndpoints(hadoopConfigDir, useHttps);
         }
 
         public Task<IEnumerable<Uri>> GetUrlAsync()
         {
-            return Task.FromResult((IEnumerable<Uri>)_yarnRmUri);
-        }
-
-        private void LoadYarnConfiguration(string yarnConfigurationFile, bool useHttps)
-        {
-            var configRoot = XElement.Load(yarnConfigurationFile);
-
-            string propertyName = useHttps
-                ? YarnRmWebappHttpsAddressPropertyName
-                : YarnRmWebappHttpAddressPropertyName;
-
-            string prefix = useHttps ? "https" : "http";
-
-            var address = (string)configRoot.Elements("property")
-                .Where(x =>
-                    (string)x.Element("name") == propertyName)
-                .Select(x => x.Element("value")).FirstOrDefault();
-
-            address = address.TrimEnd('/') + @"/";
-
-            _yarnRmUri = new List<Uri> { new Uri(string.Format("{0}://{1}", prefix, address)) };
+            return Task.FromResult(_yarnRmUri);
         }
     }
 }
