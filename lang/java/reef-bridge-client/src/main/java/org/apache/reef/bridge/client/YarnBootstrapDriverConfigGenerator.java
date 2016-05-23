@@ -23,8 +23,10 @@ import org.apache.avro.io.JsonDecoder;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.reef.client.DriverRestartConfiguration;
 import org.apache.reef.client.parameters.DriverConfigurationProviders;
+import org.apache.reef.driver.parameters.DriverJobSubmissionDirectory;
 import org.apache.reef.io.TcpPortConfigurationProvider;
 import org.apache.reef.javabridge.generic.JobDriver;
+import org.apache.reef.javabridge.generic.Launch;
 import org.apache.reef.reef.bridge.client.avro.AvroAppSubmissionParameters;
 import org.apache.reef.reef.bridge.client.avro.AvroJobSubmissionParameters;
 import org.apache.reef.reef.bridge.client.avro.AvroYarnAppSubmissionParameters;
@@ -109,6 +111,8 @@ final class YarnBootstrapDriverConfigGenerator {
         .bindNamedParameter(TcpPortRangeTryCount.class, Integer.toString(appSubmissionParams.getTcpTryCount()))
         .bindNamedParameter(JobSubmissionDirectoryPrefix.class,
             yarnJobSubmissionParams.getJobSubmissionDirectoryPrefix().toString())
+        .bindNamedParameter(DriverJobSubmissionDirectory.class,
+            jobSubmissionParameters.getJobSubmissionFolder().toString())
         .build();
 
     final Configuration driverConfiguration = Configurations.merge(

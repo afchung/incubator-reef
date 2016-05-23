@@ -57,8 +57,10 @@ public final class DFSEvaluatorLogAppendWriter implements DFSEvaluatorLogWriter 
    */
   @Override
   public synchronized void writeToEvaluatorLog(final String formattedEntry) throws IOException {
+    LOG.log(Level.WARNING, "ENTERING WRITE TO EVALUATOR LOG.");
     final boolean fileCreated = this.fileSystem.exists(this.changelogPath);
 
+    LOG.log(Level.WARNING, "FILE CREATED? " + fileCreated + "!!!");
     try (
         final BufferedWriter bw = fileCreated ?
             new BufferedWriter(new OutputStreamWriter(
@@ -66,10 +68,12 @@ public final class DFSEvaluatorLogAppendWriter implements DFSEvaluatorLogWriter 
             new BufferedWriter(new OutputStreamWriter(
                 this.fileSystem.create(this.changelogPath), StandardCharsets.UTF_8))
     ) {
+      LOG.log(Level.WARNING, "WRITING ENTRY!!");
       bw.write(formattedEntry);
+      bw.flush();
       LOG.log(Level.WARNING, "WROTE ENTRY " + formattedEntry);
-    }
-  }
+}
+}
 
   /**
    * Closes the FileSystem.

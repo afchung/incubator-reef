@@ -74,11 +74,13 @@ public final class YarnDriverRuntimeRestartManager implements DriverRuntimeResta
                                           final ApplicationMasterRegistration registration,
                                           final YarnContainerManager yarnContainerManager,
                                           final RackNameFormatter rackNameFormatter) {
+    LOG.log(Level.WARNING, "YARNDRIVERRUNTIMERESTARTMANAGER CREATED!");
     this.registration = registration;
     this.evaluatorPreserver = evaluatorPreserver;
     this.reefEventHandlers = reefEventHandlers;
     this.yarnContainerManager = yarnContainerManager;
     this.rackNameFormatter = rackNameFormatter;
+    LOG.log(Level.WARNING, "YARNDRIVERRUNTIMERESTARTMANAGER DONE!");
   }
 
   /**
@@ -145,7 +147,9 @@ public final class YarnDriverRuntimeRestartManager implements DriverRuntimeResta
 
   @Override
   public void recordAllocatedEvaluator(final String id) {
+    LOG.log(Level.WARNING, "ENTERING YARN RECORDALLOCATEDEVALUATOR.");
     this.evaluatorPreserver.recordAllocatedEvaluator(id);
+    LOG.log(Level.WARNING, "EXITING YARN RECORDALLOCATEDEVALUATOR.");
   }
 
   @Override

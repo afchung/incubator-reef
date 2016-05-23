@@ -30,6 +30,8 @@ import org.apache.reef.driver.parameters.FailDriverOnEvaluatorLogErrors;
 import org.apache.reef.exception.DriverFatalRuntimeException;
 import org.apache.reef.runtime.common.driver.EvaluatorPreserver;
 import org.apache.reef.runtime.common.driver.evaluator.EvaluatorManager;
+import org.apache.reef.runtime.yarn.driver.parameters.JobSubmissionDirectory;
+import org.apache.reef.runtime.yarn.driver.parameters.JobSubmissionDirectoryPrefix;
 import org.apache.reef.runtime.yarn.util.YarnUtilities;
 import org.apache.reef.tang.annotations.Parameter;
 
@@ -74,9 +76,8 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
   @Inject
   private DFSEvaluatorPreserver(@Parameter(FailDriverOnEvaluatorLogErrors.class)
                                 final boolean failDriverOnEvaluatorLogErrors,
-                                @Parameter(DriverJobSubmissionDirectory.class)
+                                @Parameter(JobSubmissionDirectory.class)
                                 final String jobSubmissionDirectory) {
-
     LOG.log(Level.WARNING, "PRESERVER STARTED!!!!!!");
     this.failDriverOnEvaluatorLogErrors = failDriverOnEvaluatorLogErrors;
 
@@ -84,15 +85,9 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
       final org.apache.hadoop.conf.Configuration config = new org.apache.hadoop.conf.Configuration();
       this.fileSystem = FileSystem.get(config);
       this.changeLogLocation =
-          new Path(StringUtils.stripEnd(jobSubmissionDirectory, "/") + "/evaluatorsChangesLog");
+          new Path("/" + StringUtils.strip(jobSubmissionDirectory, "/") + "/evaluatorsChangesLog");
 
-      boolean appendSupported = config.getBoolean("dfs.support.append", false);
-
-      if (appendSupported) {
-        this.writer = new DFSEvaluatorLogAppendWriter(this.fileSystem, this.changeLogLocation);
-      } else {
-        this.writer = new DFSEvaluatorLogOverwriteWriter(this.fileSystem, this.changeLogLocation);
-      }
+      this.writer = new DFSEvaluatorLogOverwriteWriter(this.fileSystem, this.changeLogLocation);
     } catch (final IOException e) {
       final String errMsg = "Cannot read from log file with Exception " + e +
           ", evaluators will not be recovered.";
@@ -138,6 +133,8 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
         return expectedContainers;
       }
 
+      LOG.log(Level.WARNING, "I AM HERE!!!");
+
       if (!this.fileSystem.exists(this.changeLogLocation)) {
         LOG.log(Level.WARNING, "DOES NOT EXIST!!!");
 
@@ -149,8 +146,10 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
         final BufferedReader br = new BufferedReader(
             new InputStreamReader(this.fileSystem.open(this.changeLogLocation), StandardCharsets.UTF_8));
         int linesRead = 0;
+        LOG.log(Level.WARNING, "CREATED NEW BUFFERED READER!!!");
         String line = br.readLine();
         while (line != null) {
+          LOG.log(Level.WARNING, "YOYOYO!!!");
           linesRead++;
           if (line.startsWith(ADD_FLAG)) {
             final String containerId = line.substring(ADD_FLAG.length());
@@ -167,6 +166,8 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
                   "remove record for container + " + containerId);
             }
             expectedContainers.remove(containerId);
+          } else {
+            LOG.log(Level.SEVERE, "LINE IS: " + line);
           }
           line = br.readLine();
         }
@@ -174,6 +175,8 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
         br.close();
       }
     } catch (final IOException e) {
+      LOG.log(Level.WARNING, "IOEXCEPTION!!!");
+
       final String errMsg = "Cannot read from log file with Exception " + e +
           ", evaluators will not be recovered.";
 
@@ -193,9 +196,14 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
    */
   @Override
   public synchronized void recordAllocatedEvaluator(final String id) {
+    LOG.log(Level.WARNING, "ENTERING RECORDALLOCATEDEVALUATOR.");
     if (this.fileSystem != null && this.changeLogLocation != null) {
       final String entry = ADD_FLAG + id + System.lineSeparator();
       this.logContainerChange(entry);
+    } else if (this.fileSystem == null){
+      LOG.log(Level.WARNING, "VALUE OF FS IS NULL.");
+    } else {
+      LOG.log(Level.WARNING, "VALUE OF CHANGELOGLOCATION IS NULL.");
     }
   }
 
@@ -213,7 +221,9 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
 
   private void logContainerChange(final String entry) {
     try {
+      LOG.log(Level.WARNING, "ENTERING LOGCONTAINERCHANGE.");
       this.writer.writeToEvaluatorLog(entry);
+      LOG.log(Level.WARNING, "EXITING LOGCONTAINERCHANGE.");
     } catch (final IOException e) {
       final String errorMsg = "Unable to log the change of container [" + entry +
           "] to the container log. Driver restart won't work properly.";
@@ -239,6 +249,8 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
       } else {
         throw new DriverFatalRuntimeException("Driver failed on Evaluator log error.", e);
       }
+    } else {
+      LOG.log(Level.WARNING, errorMsg, e);
     }
   }
 

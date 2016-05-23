@@ -70,6 +70,9 @@ final class UploaderToJobFolder {
     final Path source = new Path(file.getAbsolutePath());
     final Path destination = new Path(this.jobSubmissionDirectory + "/" + file.getName());
     LOG.log(Level.FINE, "Uploading {0} to {1}", new Object[]{source, destination});
+    if (this.fileSystem.exists(destination)) {
+      this.fileSystem.delete(destination, true);
+    }
     this.fileSystem.copyFromLocalFile(false, true, source, destination);
     return destination;
   }
