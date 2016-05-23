@@ -77,6 +77,7 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
                                 @Parameter(DriverJobSubmissionDirectory.class)
                                 final String jobSubmissionDirectory) {
 
+    LOG.log(Level.WARNING, "PRESERVER STARTED!!!!!!");
     this.failDriverOnEvaluatorLogErrors = failDriverOnEvaluatorLogErrors;
 
     try {
@@ -128,21 +129,29 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
   @Override
   public synchronized Set<String> recoverEvaluators() {
     final Set<String> expectedContainers = new HashSet<>();
+    LOG.log(Level.WARNING, "CALLING!!!");
     try {
       if (this.fileSystem == null || this.changeLogLocation == null) {
         LOG.log(Level.WARNING, "Unable to recover evaluators due to failure to instantiate FileSystem. Returning an" +
             " empty set.");
+        LOG.log(Level.SEVERE, "RETURNING " + expectedContainers.size() + " CCCCCC");
         return expectedContainers;
       }
 
       if (!this.fileSystem.exists(this.changeLogLocation)) {
+        LOG.log(Level.WARNING, "DOES NOT EXIST!!!");
+
+        LOG.log(Level.SEVERE, "RETURNING " + expectedContainers.size() + " 11111");
         // empty set
         return expectedContainers;
       } else {
+        LOG.log(Level.WARNING, "READING!!!");
         final BufferedReader br = new BufferedReader(
             new InputStreamReader(this.fileSystem.open(this.changeLogLocation), StandardCharsets.UTF_8));
+        int linesRead = 0;
         String line = br.readLine();
         while (line != null) {
+          linesRead++;
           if (line.startsWith(ADD_FLAG)) {
             final String containerId = line.substring(ADD_FLAG.length());
             if (expectedContainers.contains(containerId)) {
@@ -161,6 +170,7 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
           }
           line = br.readLine();
         }
+        LOG.log(Level.WARNING, "READ " + linesRead + "LINES!!!");
         br.close();
       }
     } catch (final IOException e) {
@@ -170,7 +180,10 @@ public final class DFSEvaluatorPreserver implements EvaluatorPreserver, AutoClos
       final String fatalMsg = "Cannot read from evaluator log.";
 
       this.handleException(e, errMsg, fatalMsg);
+    } catch (final Exception e) {
+      LOG.log(Level.SEVERE, "UNEXPECTED EXCEPTION!!!");
     }
+    LOG.log(Level.SEVERE, "RETURNING " + expectedContainers.size() + " BBBBBBB");
     return expectedContainers;
   }
 

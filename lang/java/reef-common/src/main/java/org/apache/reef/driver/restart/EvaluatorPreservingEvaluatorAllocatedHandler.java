@@ -22,11 +22,15 @@ import org.apache.reef.driver.evaluator.AllocatedEvaluator;
 import org.apache.reef.wake.EventHandler;
 
 import javax.inject.Inject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Records allocated evaluators for recovery on driver restart by using a DriverRuntimeRestartManager.
  */
 public final class EvaluatorPreservingEvaluatorAllocatedHandler implements EventHandler<AllocatedEvaluator> {
+  private static final Logger LOG = Logger.getLogger(EvaluatorPreservingEvaluatorAllocatedHandler.class.getName());
+
   private final DriverRestartManager driverRestartManager;
 
   @Inject
@@ -40,6 +44,7 @@ public final class EvaluatorPreservingEvaluatorAllocatedHandler implements Event
    */
   @Override
   public void onNext(final AllocatedEvaluator value) {
+    LOG.log(Level.WARNING, "LOGGING ALLOCATED EVALUATOR " + value.getId());
     this.driverRestartManager.recordAllocatedEvaluator(value.getId());
   }
 }

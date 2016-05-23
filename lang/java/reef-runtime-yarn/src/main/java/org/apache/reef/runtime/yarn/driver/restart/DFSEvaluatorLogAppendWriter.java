@@ -26,12 +26,16 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The DFS evaluator logger that performs regular append. dfs.support.append should be true.
  */
 @Private
 public final class DFSEvaluatorLogAppendWriter implements DFSEvaluatorLogWriter {
+
+  private static final Logger LOG = Logger.getLogger(DFSEvaluatorLogAppendWriter.class.getName());
 
   private final FileSystem fileSystem;
 
@@ -40,6 +44,7 @@ public final class DFSEvaluatorLogAppendWriter implements DFSEvaluatorLogWriter 
   private boolean fsClosed = false;
 
   DFSEvaluatorLogAppendWriter(final FileSystem fileSystem, final Path changelogPath) {
+    LOG.log(Level.WARNING, "WRITER2 STARTED!!!");
     this.fileSystem = fileSystem;
     this.changelogPath = changelogPath;
   }
@@ -62,6 +67,7 @@ public final class DFSEvaluatorLogAppendWriter implements DFSEvaluatorLogWriter 
                 this.fileSystem.create(this.changelogPath), StandardCharsets.UTF_8))
     ) {
       bw.write(formattedEntry);
+      LOG.log(Level.WARNING, "WROTE ENTRY " + formattedEntry);
     }
   }
 

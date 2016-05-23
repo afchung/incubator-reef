@@ -273,6 +273,11 @@ final class YarnContainerManager
       LOG.log(Level.FINE, "YARN registration: {0}", registration);
       final FileSystem fs = FileSystem.get(this.yarnConf);
       final Path outputFileName = new Path(this.jobSubmissionDirectory, this.reefFileNames.getDriverHttpEndpoint());
+      if (fs.exists(outputFileName)) {
+        LOG.log(Level.WARNING, "DELETING!!!");
+        fs.delete(outputFileName, true);
+      }
+
       final FSDataOutputStream out = fs.create(outputFileName);
       out.writeBytes(this.trackingURLProvider.getTrackingUrl() + "\n");
       out.flush();

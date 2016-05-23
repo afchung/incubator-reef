@@ -26,6 +26,8 @@ import org.apache.reef.annotations.audience.Private;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The DFS evaluator logger that does not support append and does append by overwrite.
@@ -34,6 +36,8 @@ import java.nio.charset.StandardCharsets;
 @Private
 public final class DFSEvaluatorLogOverwriteWriter implements DFSEvaluatorLogWriter {
 
+  private static final Logger LOG = Logger.getLogger(DFSEvaluatorLogOverwriteWriter.class.getName());
+
   private final FileSystem fileSystem;
 
   private final Path changelogPath;
@@ -41,6 +45,7 @@ public final class DFSEvaluatorLogOverwriteWriter implements DFSEvaluatorLogWrit
   private boolean fsClosed = false;
 
   DFSEvaluatorLogOverwriteWriter(final FileSystem fileSystem, final Path changelogPath) {
+    LOG.log(Level.WARNING, "WRITER1 STARTED!!!");
     this.fileSystem = fileSystem;
     this.changelogPath = changelogPath;
   }
@@ -84,10 +89,14 @@ public final class DFSEvaluatorLogOverwriteWriter implements DFSEvaluatorLogWrit
     final String newContent = outputStream.toString("UTF-8") + appendEntry;
     this.fileSystem.delete(this.changelogPath, true);
 
+    LOG.log(Level.WARNING, "DELETED LOG");
+
     try (final FSDataOutputStream newOutput = this.fileSystem.create(this.changelogPath);
          final InputStream newInput = new ByteArrayInputStream(newContent.getBytes(StandardCharsets.UTF_8))) {
       IOUtils.copyBytes(newInput, newOutput, 4096, true);
     }
+
+    LOG.log(Level.WARNING, "WROTE ENTRY " + appendEntry);
   }
 
   /**
