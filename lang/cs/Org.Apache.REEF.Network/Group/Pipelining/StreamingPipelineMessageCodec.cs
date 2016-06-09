@@ -19,6 +19,8 @@ using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Wake.Remote;
 using System.Threading;
 using System.Threading.Tasks;
+using Org.Apache.REEF.Utilities;
+using Org.Apache.REEF.Wake.Remote.Errors;
 using Org.Apache.REEF.Wake.StreamingCodec;
 
 namespace Org.Apache.REEF.Network.Group.Pipelining
@@ -49,11 +51,19 @@ namespace Org.Apache.REEF.Network.Group.Pipelining
         /// </summary>
         /// <param name="reader">The reader from which to read</param>
         /// <returns>The Pipeline Message read from the reader</returns>
-        public PipelineMessage<T> Read(IDataReader reader)
+        public Optional<PipelineMessage<T>> Read(IDataReader reader)
         {
             var message = BaseCodec.Read(reader);
+            if (!message.IsPresent())
+            {
+                return Optional<PipelineMessage<T>>.Empty();
+            }
             var isLast = reader.ReadBoolean();
-            return new PipelineMessage<T>(message, isLast);
+            if (isLast == null)
+            {
+                throw new UnexpectedWriteFormatException();
+            }
+            return Optional<PipelineMessage<T>>.Of(new PipelineMessage<T>(message.Value, isLast.Value));
         }
 
         /// <summary>
@@ -73,11 +83,20 @@ namespace Org.Apache.REEF.Network.Group.Pipelining
         /// <param name="reader">The reader from which to read</param>
         /// <param name="token">Cancellation token</param>
         /// <returns>The Pipeline Message  read from the reader</returns>
-        public async Task<PipelineMessage<T>> ReadAsync(IDataReader reader, CancellationToken token)
+        public async Task<Optional<PipelineMessage<T>>> ReadAsync(IDataReader reader, CancellationToken token)
         {
             var message = await BaseCodec.ReadAsync(reader, token);
+            if (!message.IsPresent())
+            {
+                return Optional<PipelineMessage<T>>.Empty();
+            }
+
             var isLast = await reader.ReadBooleanAsync(token);
-            return new PipelineMessage<T>(message, isLast);
+            if (isLast == null)
+            {
+                throw new UnexpectedReadFormatException();
+            }
+            return Optional<PipelineMessage<T>>.Of(new PipelineMessage<T>(message.Value, isLast.Value));
         }
 
         /// <summary>

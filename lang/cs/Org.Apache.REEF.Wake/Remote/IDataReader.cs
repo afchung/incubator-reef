@@ -15,10 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -33,37 +29,37 @@ namespace Org.Apache.REEF.Wake.Remote
         /// Reads double
         /// </summary>
         /// <returns>read double</returns>
-        double ReadDouble();
+        double? ReadDouble();
 
         /// <summary>
         /// Reads float
         /// </summary>
         /// <returns>read float</returns>
-        float ReadFloat();
+        float? ReadFloat();
 
         /// <summary>
         /// Reads long
         /// </summary>
         /// <returns>read long</returns>
-        long ReadLong();
+        long? ReadLong();
 
         /// <summary>
         /// Reads bool
         /// </summary>
         /// <returns>read bool</returns>
-        bool ReadBoolean();
+        bool? ReadBoolean();
 
         /// <summary>
         /// Reads integer
         /// </summary>
         /// <returns>read integer</returns>
-        int ReadInt32();
+        int? ReadInt32();
 
         /// <summary>
         /// Reads short
         /// </summary>
         /// <returns>read short</returns>
-        short ReadInt16();
+        short? ReadInt16();
 
         /// <summary>
         /// Reads string
@@ -86,42 +82,42 @@ namespace Org.Apache.REEF.Wake.Remote
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads double</returns>
-        Task<double> ReadDoubleAsync(CancellationToken token);
+        Task<double?> ReadDoubleAsync(CancellationToken token);
 
         /// <summary>
         /// Reads float asynchronously
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads float</returns>
-        Task<float> ReadFloatAsync(CancellationToken token);
+        Task<float?> ReadFloatAsync(CancellationToken token);
 
         /// <summary>
         /// Reads long asynchronously
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads long</returns>
-        Task<long> ReadLongAsync(CancellationToken token);
+        Task<long?> ReadLongAsync(CancellationToken token);
 
         /// <summary>
         /// Reads bool asynchronously
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads bool</returns>
-        Task<bool> ReadBooleanAsync(CancellationToken token);
+        Task<bool?> ReadBooleanAsync(CancellationToken token);
 
         /// <summary>
         /// Reads integer asynchronously
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads integer</returns>
-        Task<int> ReadInt32Async(CancellationToken token);
+        Task<int?> ReadInt32Async(CancellationToken token);
 
         /// <summary>
         /// Reads short asynchronously
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads short</returns>
-        Task<short> ReadInt16Async(CancellationToken token);
+        Task<short?> ReadInt16Async(CancellationToken token);
 
         /// <summary>
         /// Reads string asynchronously

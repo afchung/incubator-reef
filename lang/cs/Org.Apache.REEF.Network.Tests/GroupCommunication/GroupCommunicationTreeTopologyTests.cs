@@ -637,8 +637,8 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
 
         private IConfiguration GetDefaultCodecConfig()
         {
-            return StreamingCodecConfiguration<int>.Conf
-                .Set(StreamingCodecConfiguration<int>.Codec, GenericType<IntStreamingCodec>.Class)
+            return StreamingCodecConfiguration<int?>.Conf
+                .Set(StreamingCodecConfiguration<int?>.Codec, GenericType<IntStreamingCodec>.Class)
                 .Build();
         }
 

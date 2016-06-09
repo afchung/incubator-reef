@@ -28,7 +28,7 @@ namespace Org.Apache.REEF.Network.Group.Config
     /// streaming codecs by taking streaming codec as input.
     /// </summary>
     /// <typeparam name="T">Generic type of message</typeparam>
-    public sealed class StreamingCodecConfiguration<T> : ConfigurationModuleBuilder
+    public sealed class StreamingCodecConfiguration<T> : ConfigurationModuleBuilder where T : struct 
     {
         /// <summary>
         /// RequiredImpl for Codec. Client needs to set implementation for this parameter

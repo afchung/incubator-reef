@@ -19,8 +19,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Org.Apache.REEF.Utilities.Diagnostics;
 using Org.Apache.REEF.Utilities.Logging;
+using Org.Apache.REEF.Wake.Remote.Errors;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
@@ -54,14 +54,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// Reads double
         /// </summary>
         /// <returns>read double</returns>
-        public double ReadDouble()
+        public double? ReadDouble()
         {
             byte[] doubleBytes = new byte[sizeof(double)];
             int readBytes = Read(ref doubleBytes, 0, sizeof(double));
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToDouble(doubleBytes, 0);
         }
@@ -70,14 +70,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// Reads float
         /// </summary>
         /// <returns>read float</returns>
-        public float ReadFloat()
+        public float? ReadFloat()
         {
             byte[] floatBytes = new byte[sizeof(float)];
             int readBytes = Read(ref floatBytes, 0, sizeof(float));
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToSingle(floatBytes, 0);
         }
@@ -86,14 +86,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// Reads long
         /// </summary>
         /// <returns>read long</returns>
-        public long ReadLong()
+        public long? ReadLong()
         {
             byte[] longBytes = new byte[sizeof(long)];
             int readBytes = Read(ref longBytes, 0, sizeof(long));
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToInt64(longBytes, 0);
         }
@@ -102,14 +102,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// Reads bool
         /// </summary>
         /// <returns>read bool</returns>
-        public bool ReadBoolean()
+        public bool? ReadBoolean()
         {
             byte[] boolBytes = new byte[sizeof(bool)];
             int readBytes = Read(ref boolBytes, 0, sizeof(bool));
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToBoolean(boolBytes, 0);
         }
@@ -118,14 +118,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// Reads integer
         /// </summary>
         /// <returns>read integer</returns>
-        public int ReadInt32()
+        public int? ReadInt32()
         {
             byte[] intBytes = new byte[sizeof(int)];
             int readBytes = Read(ref intBytes, 0, sizeof(int));
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
 
             return BitConverter.ToInt32(intBytes, 0);
@@ -135,14 +135,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// Reads short
         /// </summary>
         /// <returns>read short</returns>
-        public short ReadInt16()
+        public short? ReadInt16()
         {
             byte[] intBytes = new byte[sizeof(short)];
             int readBytes = Read(ref intBytes, 0, sizeof(short));
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToInt16(intBytes, 0);
         }
@@ -153,14 +153,19 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <returns>read string</returns>
         public string ReadString()
         {
-            int length = ReadInt32();
+            int? length = ReadInt32();
 
-            byte[] stringByte = new byte[length];
-            int readBytes = Read(ref stringByte, 0, stringByte.Length);
-
-            if (readBytes == -1)
+            if (length == null)
             {
                 return null;
+            }
+            
+            byte[] stringByte = new byte[length.Value];
+            int readBytes = Read(ref stringByte, 0, stringByte.Length);
+
+            if (readBytes == 0)
+            {
+                throw new UnexpectedReadFormatException();
             }
 
             char[] stringChar = new char[stringByte.Length / sizeof(char)];
@@ -190,7 +195,12 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                 if (bytesRead == 0)
                 {
                     // Read timed out or connection was closed
-                    return -1;
+                    if (totalBytesRead == 0)
+                    {
+                        return 0;
+                    }
+
+                    throw new UnexpectedReadFormatException();
                 }
 
                 totalBytesRead += bytesRead;
@@ -204,14 +214,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads double</returns>
-        public async Task<double> ReadDoubleAsync(CancellationToken token)
+        public async Task<double?> ReadDoubleAsync(CancellationToken token)
         {
             byte[] boolBytes = new byte[sizeof(double)];
             int readBytes = await ReadAsync(boolBytes, 0, sizeof(double), token);
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToDouble(boolBytes, 0);
         }
@@ -221,14 +231,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads float</returns>
-        public async Task<float> ReadFloatAsync(CancellationToken token)
+        public async Task<float?> ReadFloatAsync(CancellationToken token)
         {
             byte[] boolBytes = new byte[sizeof(float)];
             int readBytes = await ReadAsync(boolBytes, 0, sizeof(float), token);
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToSingle(boolBytes, 0);
         }
@@ -238,14 +248,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads long</returns>
-        public async Task<long> ReadLongAsync(CancellationToken token)
+        public async Task<long?> ReadLongAsync(CancellationToken token)
         {
             byte[] longBytes = new byte[sizeof(long)];
             int readBytes = await ReadAsync(longBytes, 0, sizeof(long), token);
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToInt64(longBytes, 0);
         }
@@ -255,14 +265,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads bool</returns>
-        public async Task<bool> ReadBooleanAsync(CancellationToken token)
+        public async Task<bool?> ReadBooleanAsync(CancellationToken token)
         {
             byte[] boolBytes = new byte[sizeof(bool)];
             int readBytes = await ReadAsync(boolBytes, 0, sizeof(bool), token);
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToBoolean(boolBytes, 0);
         }
@@ -272,14 +282,14 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads integer</returns>
-        public async Task<int> ReadInt32Async(CancellationToken token)
+        public async Task<int?> ReadInt32Async(CancellationToken token)
         {
             byte[] intBytes = new byte[sizeof(int)];
             int readBytes = await ReadAsync(intBytes, 0, sizeof(int), token);
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
             return BitConverter.ToInt32(intBytes, 0);
         }
@@ -289,16 +299,16 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="token">Cancellation token</param>
         /// <returns>Task handler that reads short</returns>
-        public async Task<short> ReadInt16Async(CancellationToken token)
+        public async Task<short?> ReadInt16Async(CancellationToken token)
         {
-            byte[] intBytes = new byte[sizeof(short)];
-            int readBytes = await ReadAsync(intBytes, 0, sizeof(short), token);
+            byte[] shortBytes = new byte[sizeof(short)];
+            int readBytes = await ReadAsync(shortBytes, 0, sizeof(short), token);
 
-            if (readBytes == -1)
+            if (readBytes == 0)
             {
-                Exceptions.Throw(new Exception("No bytes read"), Logger);
+                return null;
             }
-            return BitConverter.ToInt16(intBytes, 0);
+            return BitConverter.ToInt16(shortBytes, 0);
         }
 
         /// <summary>
@@ -308,14 +318,19 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <returns>Task handler that reads string</returns>
         public async Task<string> ReadStringAsync(CancellationToken token)
         {
-            int length = ReadInt32();
+            int? length = ReadInt32();
 
-            byte[] stringByte = new byte[length];
-            int readBytes = await ReadAsync(stringByte, 0, stringByte.Length, token);
-
-            if (readBytes == -1)
+            if (length == null)
             {
                 return null;
+            }
+
+            byte[] stringByte = new byte[length.Value];
+            int readBytes = await ReadAsync(stringByte, 0, stringByte.Length, token);
+
+            if (readBytes == 0)
+            {
+                throw new UnexpectedReadFormatException();
             }
 
             char[] stringChar = new char[stringByte.Length / sizeof(char)];
@@ -340,8 +355,13 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                 int bytesRead = await _stream.ReadAsync(buffer, totalBytesRead + index, bytesToRead - totalBytesRead, token);
                 if (bytesRead == 0)
                 {
-                    // Read timed out or connection was closed
-                    return -1;
+                    if (totalBytesRead == 0)
+                    {
+                        // Read timed out or connection was closed
+                        return 0;
+                    }
+                    
+                    throw new UnexpectedReadFormatException();
                 }
 
                 totalBytesRead += bytesRead;

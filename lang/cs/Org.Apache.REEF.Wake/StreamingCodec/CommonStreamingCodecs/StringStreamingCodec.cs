@@ -18,7 +18,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Wake.Remote;
+using Org.Apache.REEF.Wake.Remote.Errors;
 
 namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
 {
@@ -40,9 +42,9 @@ namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
         /// </summary>
         /// <param name="reader">The reader from which to read</param>
         /// <returns>The string read from the reader</returns>
-        public string Read(IDataReader reader)
+        public Optional<string> Read(IDataReader reader)
         {
-            return reader.ReadString();
+            return Optional<string>.OfNullable(reader.ReadString());
         }
 
         /// <summary>
@@ -52,6 +54,10 @@ namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
         /// <param name="writer">The writer to which to write</param>
         public void Write(string obj, IDataWriter writer)
         {
+            if (obj == null)
+            {
+                throw new UnexpectedWriteFormatException();
+            }
             writer.WriteString(obj);
         }
 
@@ -61,9 +67,9 @@ namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
         /// <param name="reader">The reader from which to read</param>
         /// <param name="token">Cancellation token</param>
         /// <returns>The string read from the reader</returns>
-        public async Task<string> ReadAsync(IDataReader reader, CancellationToken token)
+        public async Task<Optional<string>> ReadAsync(IDataReader reader, CancellationToken token)
         {
-            return await reader.ReadStringAsync(token);
+            return Optional<string>.OfNullable(await reader.ReadStringAsync(token));
         }
 
         /// <summary>
@@ -74,6 +80,10 @@ namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
         /// <param name="token">Cancellation token</param>
         public async Task WriteAsync(string obj, IDataWriter writer, CancellationToken token)
         {
+            if (obj == null)
+            {
+                throw new UnexpectedWriteFormatException();
+            }
             await writer.WriteStringAsync(obj, token);
         }
     }

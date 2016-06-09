@@ -15,18 +15,14 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Org.Apache.REEF.Tang.Annotations;
-using Org.Apache.REEF.Wake.Remote;
 
 namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
 {
     /// <summary>
     /// Streaming codec for float array
     /// </summary>
-    public sealed class FloatArrayStreamingCodec : IStreamingCodec<float[]>
+    public sealed class FloatArrayStreamingCodec : ArrayStreamingCodec<float>
     {
         /// <summary>
         /// Injectable constructor
@@ -34,74 +30,6 @@ namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
         [Inject]
         private FloatArrayStreamingCodec()
         {
-        }
-
-        /// <summary>
-        /// Instantiate the class from the reader.
-        /// </summary>
-        /// <param name="reader">The reader from which to read</param>
-        /// <returns>The float array read from the reader</returns>
-        public float[] Read(IDataReader reader)
-        {
-            int length = reader.ReadInt32();
-            byte[] buffer = new byte[sizeof(float) * length];
-            reader.Read(ref buffer, 0, buffer.Length);
-            float[] floatArr = new float[length];
-            Buffer.BlockCopy(buffer, 0, floatArr, 0, buffer.Length);
-            return floatArr;
-        }
-
-        /// <summary>
-        /// Writes the float array to the writer.
-        /// </summary>
-        /// <param name="obj">The float array to be encoded</param>
-        /// <param name="writer">The writer to which to write</param>
-        public void Write(float[] obj, IDataWriter writer)
-        {
-            if (obj == null)
-            {
-                throw new ArgumentNullException("obj", "float array is null");
-            }
-
-            writer.WriteInt32(obj.Length);
-            byte[] buffer = new byte[sizeof(float) * obj.Length];
-            Buffer.BlockCopy(obj, 0, buffer, 0, buffer.Length);
-            writer.Write(buffer, 0, buffer.Length);
-        }
-
-        /// <summary>
-        /// Instantiate the class from the reader.
-        /// </summary>
-        /// <param name="reader">The reader from which to read</param>
-        /// <param name="token">Cancellation token</param>
-        /// <returns>The float array read from the reader</returns>
-        public async Task<float[]> ReadAsync(IDataReader reader, CancellationToken token)
-        {
-            int length = await reader.ReadInt32Async(token);
-            byte[] buffer = new byte[sizeof(float) * length];
-            await reader.ReadAsync(buffer, 0, buffer.Length, token);
-            float[] floatArr = new float[length];
-            Buffer.BlockCopy(buffer, 0, floatArr, 0, sizeof(float) * length);
-            return floatArr;
-        }
-
-        /// <summary>
-        /// Writes the float array to the writer.
-        /// </summary>
-        /// <param name="obj">The float array to be encoded</param>
-        /// <param name="writer">The writer to which to write</param>
-        /// <param name="token">Cancellation token</param>
-        public async Task WriteAsync(float[] obj, IDataWriter writer, CancellationToken token)
-        {
-            if (obj == null)
-            {
-                throw new ArgumentNullException("obj", "float array is null");
-            }
-
-            await writer.WriteInt32Async(obj.Length, token);
-            byte[] buffer = new byte[sizeof(float) * obj.Length];
-            Buffer.BlockCopy(obj, 0, buffer, 0, sizeof(float) * obj.Length);
-            await writer.WriteAsync(buffer, 0, buffer.Length, token);
         }
     }
 }

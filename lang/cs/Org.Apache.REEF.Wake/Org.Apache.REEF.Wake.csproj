@@ -51,6 +51,8 @@ under the License.
     <Compile Include="IEventHandler.cs" />
     <Compile Include="IIdentifier.cs" />
     <Compile Include="IIdentifierFactory.cs" />
+    <Compile Include="Remote\Errors\UnexpectedReadFormatException.cs" />
+    <Compile Include="Remote\Errors\UnexpectedWriteFormatException.cs" />
     <Compile Include="Remote\IConnectionRetryHandler.cs" />
     <Compile Include="Remote\Impl\RemoteConnectionRetryHandler.cs" />
     <Compile Include="Remote\ILocalAddressProvider.cs" />
@@ -142,6 +144,7 @@ under the License.
     <Compile Include="RX\ISubject.cs" />
     <Compile Include="RX\ObserverCompletedException.cs" />
     <Compile Include="StreamingCodec\CodecToStreamingCodec.cs" />
+    <Compile Include="StreamingCodec\CommonStreamingCodecs\ArrayStreamingCodec.cs" />
     <Compile Include="StreamingCodec\CommonStreamingCodecs\DoubleArrayStreamingCodec.cs" />
     <Compile Include="StreamingCodec\CommonStreamingCodecs\DoubleStreamingCodec.cs" />
     <Compile Include="StreamingCodec\CommonStreamingCodecs\FloatArrayStreamingCodec.cs" />

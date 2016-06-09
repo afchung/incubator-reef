@@ -71,8 +71,8 @@ namespace Org.Apache.REEF.Network.Examples.GroupCommunication.ScatterReduceDrive
             _groupCommDriver = groupCommDriver;
             _evaluatorRequestor = evaluatorRequestor;
 
-            _codecConfig = StreamingCodecConfiguration<int>.Conf
-               .Set(StreamingCodecConfiguration<int>.Codec, GenericType<IntStreamingCodec>.Class)
+            _codecConfig = StreamingCodecConfiguration<int?>.Conf
+               .Set(StreamingCodecConfiguration<int?>.Codec, GenericType<IntStreamingCodec>.Class)
                .Build();
 
             IConfiguration reduceFunctionConfig = ReduceFunctionConfiguration<int>.Conf

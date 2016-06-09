@@ -60,11 +60,11 @@ namespace Org.Apache.REEF.IMRU.Examples.MapperCount
                             .Set(IMRUUpdateConfiguration<int, int, int>.UpdateFunction,
                                 GenericType<MapperCountUpdateFunction>.Class)
                             .Build())
-                    .SetMapInputCodecConfiguration(IMRUCodecConfiguration<int>.ConfigurationModule
-                        .Set(IMRUCodecConfiguration<int>.Codec, GenericType<IntStreamingCodec>.Class)
+                    .SetMapInputCodecConfiguration(IMRUCodecConfiguration<int?>.ConfigurationModule
+                        .Set(IMRUCodecConfiguration<int?>.Codec, GenericType<IntStreamingCodec>.Class)
                         .Build())
-                    .SetUpdateFunctionCodecsConfiguration(IMRUCodecConfiguration<int>.ConfigurationModule
-                        .Set(IMRUCodecConfiguration<int>.Codec, GenericType<IntStreamingCodec>.Class)
+                    .SetUpdateFunctionCodecsConfiguration(IMRUCodecConfiguration<int?>.ConfigurationModule
+                        .Set(IMRUCodecConfiguration<int?>.Codec, GenericType<IntStreamingCodec>.Class)
                         .Build())
                     .SetReduceFunctionConfiguration(IMRUReduceFunctionConfiguration<int>.ConfigurationModule
                         .Set(IMRUReduceFunctionConfiguration<int>.ReduceFunction,

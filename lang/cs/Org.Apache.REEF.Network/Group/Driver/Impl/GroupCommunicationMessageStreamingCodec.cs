@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Org.Apache.REEF.Wake.Remote;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Wake.StreamingCodec;
 
 namespace Org.Apache.REEF.Network.Group.Driver.Impl
@@ -104,10 +105,14 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
         /// <param name="reader">The reader from which to read </param>
         /// <param name="token">The cancellation token</param>
         /// <returns>The Group Communication Message</returns>
-        public async Task<GroupCommunicationMessage<T>> ReadAsync(IDataReader reader,
+        public async Task<Optional<GroupCommunicationMessage<T>>> ReadAsync(IDataReader reader,
             CancellationToken token)
         {
-            int metadataSize = await reader.ReadInt32Async(token);
+            int? metadataSize = await reader.ReadInt32Async(token);
+            if (metadataSize == null)
+            {
+                return Optional<GroupCommunicationMessage<T>>.Empty();
+            }
             byte[] metadata = new byte[metadataSize];
             await reader.ReadAsync(metadata, 0, metadataSize, token);
             var res = GenerateMetaDataDecoding(metadata);

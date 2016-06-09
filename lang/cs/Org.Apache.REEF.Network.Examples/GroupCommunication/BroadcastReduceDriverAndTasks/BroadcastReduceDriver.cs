@@ -84,8 +84,8 @@ namespace Org.Apache.REEF.Network.Examples.GroupCommunication.BroadcastReduceDri
                     portRange.ToString(CultureInfo.InvariantCulture))
                 .Build();
 
-            _codecConfig = StreamingCodecConfiguration<int>.Conf
-                .Set(StreamingCodecConfiguration<int>.Codec, GenericType<IntStreamingCodec>.Class)
+            _codecConfig = StreamingCodecConfiguration<int?>.Conf
+                .Set(StreamingCodecConfiguration<int?>.Codec, GenericType<IntStreamingCodec>.Class)
                 .Build();
 
             IConfiguration reduceFunctionConfig = ReduceFunctionConfiguration<int>.Conf

@@ -18,6 +18,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Wake.Remote;
 
 namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
@@ -40,9 +41,10 @@ namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
         /// </summary>
         /// <param name="reader">The reader from which to read</param>
         /// <returns>The double read from the reader</returns>
-        public double Read(IDataReader reader)
+        public Optional<double> Read(IDataReader reader)
         {
-            return reader.ReadDouble();
+            var d = reader.ReadDouble();
+            return d == null ? Optional<double>.Empty() : Optional<double>.Of(d.Value);
         }
 
         /// <summary>
@@ -61,9 +63,10 @@ namespace Org.Apache.REEF.Wake.StreamingCodec.CommonStreamingCodecs
         /// <param name="reader">The reader from which to read</param>
         /// <param name="token">Cancellation token</param>
         /// <returns>The double read from the reader</returns>
-        public async Task<double> ReadAsync(IDataReader reader, CancellationToken token)
+        public async Task<Optional<double>> ReadAsync(IDataReader reader, CancellationToken token)
         {
-            return await reader.ReadDoubleAsync(token);
+            var d = await reader.ReadDoubleAsync(token);
+            return d == null ? Optional<double>.Empty() : Optional<double>.Of(d.Value);
         }
 
         /// <summary>

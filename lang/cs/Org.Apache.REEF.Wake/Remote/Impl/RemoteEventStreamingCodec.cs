@@ -17,6 +17,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Wake.StreamingCodec;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
@@ -39,9 +40,15 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         /// <param name="reader">The reader from which to read </param>
         /// <returns>The remote event</returns>
-        public IRemoteEvent<T> Read(IDataReader reader)
+        public Optional<IRemoteEvent<T>> Read(IDataReader reader)
         {
-            return new RemoteEvent<T>(null, null, _codec.Read(reader));
+            var message = _codec.Read(reader);
+            if (message.IsPresent())
+            {
+                Optional<IRemoteEvent<T>>.Of(new RemoteEvent<T>(null, null, message.Value));
+            }
+
+            return Optional<IRemoteEvent<T>>.Empty();
         }
 
         /// <summary>
@@ -60,10 +67,15 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <param name="reader">The reader from which to read </param>
         /// <param name="token">The cancellation token</param>
         /// <returns>The remote event</returns>
-        public async Task<IRemoteEvent<T>> ReadAsync(IDataReader reader, CancellationToken token)
+        public async Task<Optional<IRemoteEvent<T>>> ReadAsync(IDataReader reader, CancellationToken token)
         {
-            T message = await _codec.ReadAsync(reader, token);
-            return new RemoteEvent<T>(null, null, message);     
+            var message = await _codec.ReadAsync(reader, token);
+            if (message.IsPresent())
+            {
+                return Optional<IRemoteEvent<T>>.Of(new RemoteEvent<T>(null, null, message.Value));     
+            }
+
+            return Optional<IRemoteEvent<T>>.Empty();
         }
 
         /// <summary>

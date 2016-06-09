@@ -17,6 +17,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Wake.Remote;
 
 namespace Org.Apache.REEF.Wake.StreamingCodec
@@ -24,14 +25,14 @@ namespace Org.Apache.REEF.Wake.StreamingCodec
     /// <summary>
     /// Codec Interface that external users should implement to directly write to the stream
     /// </summary>
-    public interface IStreamingCodec<T>
+    public interface IStreamingCodec<T> 
     {
         /// <summary>
         /// Instantiate the class from the reader.
         /// </summary>
         /// <param name="reader">The reader from which to read</param>
         /// <returns>The instance of type T read from the reader</returns>
-        T Read(IDataReader reader);
+        Optional<T> Read(IDataReader reader);
 
         /// <summary>
         /// Writes the class fields to the writer.
@@ -46,7 +47,7 @@ namespace Org.Apache.REEF.Wake.StreamingCodec
         /// <param name="reader">The reader from which to read</param>
         /// <param name="token">Cancellation token</param>
         /// <returns>The instance of type T read from the reader</returns>
-        Task<T> ReadAsync(IDataReader reader, CancellationToken token);
+        Task<Optional<T>> ReadAsync(IDataReader reader, CancellationToken token);
 
         /// <summary>
         /// Writes the class fields to the writer.

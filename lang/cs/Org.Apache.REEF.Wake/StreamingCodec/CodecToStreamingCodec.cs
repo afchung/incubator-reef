@@ -18,7 +18,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Wake.Remote;
+using Org.Apache.REEF.Wake.Remote.Errors;
 
 namespace Org.Apache.REEF.Wake.StreamingCodec
 {
@@ -36,12 +38,20 @@ namespace Org.Apache.REEF.Wake.StreamingCodec
             _codec = codec;
         }
 
-        public T Read(IDataReader reader)
+        public Optional<T> Read(IDataReader reader)
         {
-            int length = reader.ReadInt32();
-            byte[] byteArr = new byte[length];
-            reader.Read(ref byteArr, 0, length);
-            return _codec.Decode(byteArr);
+            int? length = reader.ReadInt32();
+            if (length == null)
+            {
+                return Optional<T>.Empty();
+            }
+
+            byte[] byteArr = new byte[length.Value];
+            if (reader.Read(ref byteArr, 0, length.Value) == 0)
+            {
+                throw new UnexpectedReadFormatException();
+            }
+            return Optional<T>.Of(_codec.Decode(byteArr));
         }
 
         public void Write(T obj, IDataWriter writer)
@@ -51,12 +61,20 @@ namespace Org.Apache.REEF.Wake.StreamingCodec
             writer.Write(byteArr, 0, byteArr.Length);
         }
 
-        public async Task<T> ReadAsync(IDataReader reader, CancellationToken token)
+        public async Task<Optional<T>> ReadAsync(IDataReader reader, CancellationToken token)
         {
-            int length = await reader.ReadInt32Async(token);
-            byte[] byteArr = new byte[length];
-            await reader.ReadAsync(byteArr, 0, length, token);
-            return _codec.Decode(byteArr);
+            int? length = await reader.ReadInt32Async(token);
+            if (length == null)
+            {
+                return Optional<T>.Empty();
+            }
+
+            byte[] byteArr = new byte[length.Value];
+            if (await reader.ReadAsync(byteArr, 0, length.Value, token) == 0)
+            {
+                throw new UnexpectedReadFormatException();
+            }
+            return Optional<T>.Of(_codec.Decode(byteArr));
         }
 
         public async Task WriteAsync(T obj, IDataWriter writer, CancellationToken token)
