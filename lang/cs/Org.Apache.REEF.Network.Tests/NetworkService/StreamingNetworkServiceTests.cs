@@ -64,30 +64,30 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                 int nameServerPort = endpoint.Port;
                 string nameServerAddr = endpoint.Address.ToString();
 
-                var handlerConf1 =
+                var observerFactoryConf1 =
                     TangFactory.GetTang()
                         .NewConfigurationBuilder()
-                        .BindImplementation(GenericType<IObserver<NsMessage<string>>>.Class,
-                            GenericType<NetworkMessageHandler>.Class)
+                        .BindImplementation(GenericType<IObserverFactory<NsMessage<string>>>.Class,
+                            GenericType<NetworkMessageHandlerFactory>.Class)
                         .Build();
 
-                var handlerConf2 =
+                var observerFactoryConf2 =
                     TangFactory.GetTang()
                         .NewConfigurationBuilder()
-                        .BindImplementation(GenericType<IObserver<NsMessage<string>>>.Class,
-                            GenericType<MessageHandler>.Class)
+                        .BindImplementation(GenericType<IObserverFactory<NsMessage<string>>>.Class,
+                            GenericType<MessageHandlerFactory>.Class)
                         .Build();
 
                 var networkServiceInjection1 = BuildNetworkService(networkServicePort1, nameServerPort, nameServerAddr,
-                    handlerConf1);
+                    observerFactoryConf1);
 
                 var networkServiceInjection2 = BuildNetworkService(networkServicePort2, nameServerPort, nameServerAddr,
-                   handlerConf2);
+                   observerFactoryConf2);
 
                 using (INetworkService<string> networkService1 = networkServiceInjection1.GetInstance<StreamingNetworkService<string>>())
                 using (INetworkService<string> networkService2 = networkServiceInjection2.GetInstance<StreamingNetworkService<string>>())
                 {
-                    queue = networkServiceInjection2.GetInstance<MessageHandler>().Queue;
+                    queue = networkServiceInjection2.GetInstance<MessageHandlerFactory>().Queue;
                     IIdentifier id1 = new StringIdentifier("service1");
                     IIdentifier id2 = new StringIdentifier("service2");
                     networkService1.Register(id1);
@@ -129,8 +129,8 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                 var handlerConf =
                     TangFactory.GetTang()
                         .NewConfigurationBuilder()
-                        .BindImplementation(GenericType<IObserver<NsMessage<string>>>.Class,
-                            GenericType<MessageHandler>.Class)
+                        .BindImplementation(GenericType<IObserverFactory<NsMessage<string>>>.Class,
+                            GenericType<MessageHandlerFactory>.Class)
                         .Build();
 
                 var networkServiceInjection1 = BuildNetworkService(networkServicePort1, nameServerPort, nameServerAddr,
@@ -142,8 +142,8 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                 using (INetworkService<string> networkService1 = networkServiceInjection1.GetInstance<StreamingNetworkService<string>>())
                 using (INetworkService<string> networkService2 = networkServiceInjection2.GetInstance<StreamingNetworkService<string>>())
                 {
-                    queue1 = networkServiceInjection1.GetInstance<MessageHandler>().Queue;
-                    queue2 = networkServiceInjection2.GetInstance<MessageHandler>().Queue;
+                    queue1 = networkServiceInjection1.GetInstance<MessageHandlerFactory>().Queue;
+                    queue2 = networkServiceInjection2.GetInstance<MessageHandlerFactory>().Queue;
 
                     IIdentifier id1 = new StringIdentifier("service1");
                     IIdentifier id2 = new StringIdentifier("service2");
@@ -297,7 +297,27 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                 await writer.WriteStringAsync(obj.Value1, token);
                 await writer.WriteStringAsync(obj.Value2, token);
             }
-        } 
+        }
+
+        private class MessageHandlerFactory : IObserverFactory<NsMessage<string>>
+        {
+            private readonly BlockingCollection<string> _queue = new BlockingCollection<string>();
+            
+            [Inject]
+            private MessageHandlerFactory()
+            {
+            }
+
+            public IObserver<NsMessage<string>> Create()
+            {
+                return new MessageHandler(_queue);
+            }
+
+            public BlockingCollection<string> Queue
+            {
+                get { return _queue; }
+            } 
+        }
 
         /// <summary>
         /// The observer to handle incoming messages for string
@@ -306,15 +326,9 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
         {
             private readonly BlockingCollection<string> _queue;
 
-            public BlockingCollection<string> Queue
+            internal MessageHandler(BlockingCollection<string> queue)
             {
-                get { return _queue; }
-            } 
-
-            [Inject]
-            private MessageHandler()
-            {
-                _queue = new BlockingCollection<string>();
+                _queue = queue;
             }
 
             public void OnNext(NsMessage<string> value)
@@ -333,16 +347,24 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
             }
         }
 
+        private class NetworkMessageHandlerFactory : IObserverFactory<NsMessage<string>>
+        {
+            [Inject]
+            private NetworkMessageHandlerFactory()
+            {
+            }
+
+            public IObserver<NsMessage<string>> Create()
+            {
+                return new NetworkMessageHandler();
+            }
+        }
+
         /// <summary>
         /// The network handler to handle incoming Streaming NsMessages
         /// </summary>
         private class NetworkMessageHandler : IObserver<NsMessage<string>>
         {
-            [Inject]
-            public NetworkMessageHandler()
-            {
-            }
-
             public void OnNext(NsMessage<string> value)
             {
             }

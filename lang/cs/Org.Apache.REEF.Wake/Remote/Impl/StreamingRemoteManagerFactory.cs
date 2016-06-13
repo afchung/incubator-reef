@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System.Collections.Generic;
 using System.Net;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Interface;
@@ -47,10 +48,12 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <typeparam name="T">Type of message</typeparam>
         /// <param name="localAddress">local IP address</param>
         /// <param name="codec">codec for message type T</param>
+        /// <param name="factories"></param>
         /// <returns>IRemoteManager instance</returns>
-        public IRemoteManager<T> GetInstance<T>(IPAddress localAddress, IStreamingCodec<T> codec)
+        public IRemoteManager<T> GetInstance<T>(IPAddress localAddress, IStreamingCodec<T> codec, ISet<NetworkObserverFactory<T>> factories = null)
         {
-            return new StreamingRemoteManager<T>(localAddress, _tcpPortProvider, codec, _tcpClientFactory);
+            return new StreamingRemoteManager<T>(
+                localAddress, _tcpPortProvider, codec, _tcpClientFactory, factories);
         }
     }
 }

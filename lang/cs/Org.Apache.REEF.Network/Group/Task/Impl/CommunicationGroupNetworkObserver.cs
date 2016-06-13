@@ -51,7 +51,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// will be invoked</param>
         /// <param name="observer">The writable handler to invoke when messages are sent
         /// to the operator specified by operatorName</param>
-        void ICommunicationGroupNetworkObserver.Register(string operatorName, IObserver<GeneralGroupCommunicationMessage> observer)
+        public void Register(string operatorName, IObserver<GeneralGroupCommunicationMessage> observer)
         {
             if (string.IsNullOrEmpty(operatorName))
             {

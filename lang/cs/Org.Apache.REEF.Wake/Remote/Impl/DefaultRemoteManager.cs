@@ -19,7 +19,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using Org.Apache.REEF.Utilities.Logging;
-using Org.Apache.REEF.Wake.Util;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
@@ -265,7 +264,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                 throw new ArgumentNullException("observer");
             }
 
-            return _observerContainer.RegisterObserver(observer);
+            return _observerContainer.RegisterUniversalObserver(observer);
         }
 
         /// <summary>

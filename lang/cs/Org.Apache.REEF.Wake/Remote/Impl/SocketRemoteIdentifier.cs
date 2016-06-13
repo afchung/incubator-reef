@@ -15,8 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System;
 using System.Globalization;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using Org.Apache.REEF.Utilities.Diagnostics;
 using Org.Apache.REEF.Utilities.Logging;
@@ -28,20 +30,34 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     /// </summary>
     public sealed class SocketRemoteIdentifier : IRemoteIdentifier
     {
+        private static readonly string SocketProtocol = "socket://";
         private static readonly Logger LOGGER = Logger.GetLogger(typeof(SocketRemoteIdentifier));
         private readonly IPEndPoint _addr;
+
+        public static SocketRemoteIdentifier FromString(string str)
+        {
+            var socketProtoIdx = str.IndexOf(SocketProtocol, StringComparison.InvariantCultureIgnoreCase);
+            if (socketProtoIdx > 0)
+            {
+                throw new ArgumentException("Invalid Socket format. Format must be of socket://host:port, or simply host:port");
+            }
+
+            var strToParse = socketProtoIdx == 0 ? str.Substring(SocketProtocol.Length) : str;
+
+            return new SocketRemoteIdentifier(strToParse);
+        }
 
         public SocketRemoteIdentifier(IPEndPoint addr)
         {
             _addr = addr;
         }
 
-        public SocketRemoteIdentifier(string str)
+        private SocketRemoteIdentifier(string str)
         {
-            int index = str.IndexOf(":", System.StringComparison.Ordinal);
+            int index = str.IndexOf(":", StringComparison.InvariantCultureIgnoreCase);
             if (index <= 0)
             {
-                Exceptions.Throw(new RemoteRuntimeException("Invalid name " + str), LOGGER); 
+                throw new ArgumentException("Invalid Socket format. Format must be of socket://host:port, or simply host:port");
             }
             string host = str.Substring(0, index);
             int port = int.Parse(str.Substring(index + 1), CultureInfo.InvariantCulture);
@@ -66,7 +82,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         public override string ToString()
         {
             StringBuilder builder = new StringBuilder();
-            builder.Append("socket://");
+            builder.Append(SocketProtocol);
             builder.Append(_addr);
             return builder.ToString();
         }

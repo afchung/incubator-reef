@@ -440,7 +440,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// Sends the list of messages to the Task represented by the given NodeStruct.
         /// </summary>
         /// <param name="messages">The list of messages to send</param>
-        /// <param name="msgType">The message type</param>
         /// <param name="node">The NodeStruct representing the Task to send to</param>
         private void SendToNode(IList<T> messages, NodeStruct<T> node)
         {

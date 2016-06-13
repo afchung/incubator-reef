@@ -17,18 +17,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Net;
 using Org.Apache.REEF.Common.Io;
 using Org.Apache.REEF.Network.NetworkService.Codec;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Exceptions;
-using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Utilities.Logging;
 using Org.Apache.REEF.Wake;
 using Org.Apache.REEF.Wake.Remote;
 using Org.Apache.REEF.Wake.Remote.Impl;
-using Org.Apache.REEF.Wake.StreamingCodec;
-using Org.Apache.REEF.Wake.Util;
 
 namespace Org.Apache.REEF.Network.NetworkService
 {
@@ -42,37 +38,28 @@ namespace Org.Apache.REEF.Network.NetworkService
 
         private readonly IRemoteManager<NsMessage<T>> _remoteManager;
         private IIdentifier _localIdentifier;
-        private readonly IDisposable _messageHandlerDisposable;
         private readonly Dictionary<IIdentifier, IConnection<T>> _connectionMap;
         private readonly INameClient _nameClient;
 
         /// <summary>
         /// Create a new Writable NetworkService.
         /// </summary>
-        /// <param name="messageHandler">The observer to handle incoming messages</param>
-        /// <param name="idFactory">The factory used to create IIdentifiers</param>
+        /// <param name="factory">The factory.</param>
         /// <param name="nameClient">The name client used to register Ids</param>
         /// <param name="remoteManagerFactory">Writable RemoteManagerFactory to create a 
         /// Writable RemoteManager</param>
         /// <param name="codec">Codec for Network Service message</param>
         /// <param name="localAddressProvider">The local address provider</param>
-        /// <param name="injector">Fork of the injector that created the Network service</param>
         [Inject]
         private StreamingNetworkService(
-            IObserver<NsMessage<T>> messageHandler,
-            IIdentifierFactory idFactory,
+            NetworkObserverFactory<NsMessage<T>> factory,
             INameClient nameClient,
             StreamingRemoteManagerFactory remoteManagerFactory,
             NsMessageStreamingCodec<T> codec,
-            ILocalAddressProvider localAddressProvider,
-            IInjector injector)
+            ILocalAddressProvider localAddressProvider)
         {
-            _remoteManager = remoteManagerFactory.GetInstance(localAddressProvider.LocalAddress, codec);
-
-            // Create and register incoming message handler
-            // TODO[REEF-419] This should use the TcpPortProvider mechanism
-            var anyEndpoint = new IPEndPoint(IPAddress.Any, 0);
-            _messageHandlerDisposable = _remoteManager.RegisterObserver(anyEndpoint, messageHandler);
+            _remoteManager = remoteManagerFactory.GetInstance(
+                localAddressProvider.LocalAddress, codec, new HashSet<NetworkObserverFactory<NsMessage<T>>> { factory });
 
             _nameClient = nameClient;
             _connectionMap = new Dictionary<IIdentifier, IConnection<T>>();
@@ -142,7 +129,6 @@ namespace Org.Apache.REEF.Network.NetworkService
 
             NamingClient.Unregister(_localIdentifier.ToString());
             _localIdentifier = null;
-            _messageHandlerDisposable.Dispose();
         }
 
         /// <summary>

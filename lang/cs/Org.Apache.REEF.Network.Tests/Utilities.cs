@@ -16,11 +16,30 @@
 // under the License.
 
 using System;
+using Org.Apache.REEF.Wake;
 
-namespace Org.Apache.REEF.Wake
+namespace Org.Apache.REEF.Network.Tests
 {
-    public interface IObserverFactory<in T>
+    public static class Utilities
     {
-        IObserver<T> Create();
+        public static IObserverFactory<T> CreateNetworkObserverFactory<T>(Func<IObserver<T>> func)
+        {
+            return new SimpleObserverFactory<T>(func);
+        }
+
+        private sealed class SimpleObserverFactory<T> : IObserverFactory<T>
+        {
+            private readonly Func<IObserver<T>> _func;
+
+            internal SimpleObserverFactory(Func<IObserver<T>> func)
+            {
+                _func = func;
+            }
+
+            public IObserver<T> Create()
+            {
+                return _func();
+            }
+        }
     }
 }

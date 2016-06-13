@@ -46,6 +46,7 @@ using Org.Apache.REEF.Tang.Implementations.Configuration;
 using Org.Apache.REEF.Tang.Implementations.Tang;
 using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Tang.Util;
+using Org.Apache.REEF.Wake;
 using Org.Apache.REEF.Wake.Remote;
 using Org.Apache.REEF.Wake.Remote.Impl;
 using Org.Apache.REEF.Wake.StreamingCodec;
@@ -68,13 +69,13 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
                 BlockingCollection<GeneralGroupCommunicationMessage> messages2 =
                     new BlockingCollection<GeneralGroupCommunicationMessage>();
 
-                var handler1 =
-                    Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages1.Add(msg.Data.First()));
-                var handler2 =
-                    Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages2.Add(msg.Data.First()));
+                var networkObserverFactory1 =
+                    Utilities.CreateNetworkObserverFactory(() => Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages1.Add(msg.Data.First())));
+                var networkObserverFactory2 =
+                    Utilities.CreateNetworkObserverFactory(() => Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages2.Add(msg.Data.First())));
 
-                var networkServiceInjector1 = BuildNetworkServiceInjector(endpoint, handler1);
-                var networkServiceInjector2 = BuildNetworkServiceInjector(endpoint, handler2);
+                var networkServiceInjector1 = BuildNetworkServiceInjector(endpoint, networkObserverFactory1);
+                var networkServiceInjector2 = BuildNetworkServiceInjector(endpoint, networkObserverFactory2);
 
                 var networkService1 = 
                     networkServiceInjector1.GetInstance<StreamingNetworkService<GeneralGroupCommunicationMessage>>();
@@ -876,7 +877,7 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
         }
 
         public static IInjector BuildNetworkServiceInjector(
-            IPEndPoint nameServerEndpoint, IObserver<NsMessage<GeneralGroupCommunicationMessage>> handler)
+            IPEndPoint nameServerEndpoint, IObserverFactory<NsMessage<GeneralGroupCommunicationMessage>> handler)
         {
             var config = TangFactory.GetTang().NewConfigurationBuilder()
                 .BindNamedParameter(typeof(NamingConfigurationOptions.NameServerAddress),
@@ -896,7 +897,7 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
 
             var injector = TangFactory.GetTang().NewInjector(config);
             injector.BindVolatileInstance(
-                GenericType<IObserver<NsMessage<GeneralGroupCommunicationMessage>>>.Class, handler);
+                GenericType<IObserverFactory<NsMessage<GeneralGroupCommunicationMessage>>>.Class, handler);
 
             return injector;
         }
