@@ -56,6 +56,7 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.CommunicationGroupName))] string groupName,
             [Parameter(typeof(GroupCommConfigurationOptions.Initialize))] bool initialize,
             OperatorTopology<PipelineMessage<T>> topology,
+            CommunicationGroupContainer container,
             ICommunicationGroupNetworkObserver networkHandler,
             IPipelineDataConverter<T> dataConverter)
         {
@@ -66,6 +67,7 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
             _topology = topology;
             _initialize = initialize;
 
+            container.RegisterCommunicationGroupHandler(topology);
             var msgHandler = Observer.Create<GeneralGroupCommunicationMessage>(message => topology.OnNext(message));
             networkHandler.Register(operatorName, msgHandler);
         }

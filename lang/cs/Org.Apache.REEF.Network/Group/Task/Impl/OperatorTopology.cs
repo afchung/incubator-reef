@@ -40,7 +40,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     /// Communication Group.
     /// </summary>
     /// <typeparam name="T">The message type</typeparam>
-    public sealed class OperatorTopology<T> : IOperatorTopology<T>, IObserver<GeneralGroupCommunicationMessage>
+    public sealed class OperatorTopology<T> : IOperatorTopology<T>
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(OperatorTopology<>));
 
@@ -58,6 +58,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         private readonly Sender _sender;
         private readonly BlockingCollection<NodeStruct<T>> _nodesWithData;
         private readonly object _thisLock = new object();
+        private readonly CommunicationGroupContainer _container;
 
         /// <summary>
         /// Creates a new OperatorTopology object.
@@ -70,6 +71,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="sleepTime">Sleep time between retry wating for registration</param>
         /// <param name="rootId">The identifier for the root Task in the topology graph</param>
         /// <param name="childIds">The set of child Task identifiers in the topology graph</param>
+        /// <param name="container"></param>
         /// <param name="networkService">The network service</param>
         /// <param name="sender">The Sender used to do point to point communication</param>
         [Inject]
@@ -82,6 +84,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.SleepTimeWaitingForRegistration))] int sleepTime,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyRootTaskId))] string rootId,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyChildTaskIds))] ISet<string> childIds,
+            CommunicationGroupContainer container,
             StreamingNetworkService<GeneralGroupCommunicationMessage> networkService,
             Sender sender)
         {
@@ -96,6 +99,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _nodesWithData = new BlockingCollection<NodeStruct<T>>();
             _children = new List<NodeStruct<T>>();
             _idToNodeMap = new Dictionary<string, NodeStruct<T>>();
+            _container = container;
 
             if (_selfId.Equals(rootId))
             {
@@ -104,11 +108,16 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             else
             {
                 _parent = new NodeStruct<T>(rootId);
+                _container.RegisterCommunicationGroupHandler(
+                    groupName, operatorName, rootId, new NodeMessageObserver<T>(_nodesWithData, _parent));
+
                 _idToNodeMap[rootId] = _parent;
             }
             foreach (var childId in childIds)
             {
                 var node = new NodeStruct<T>(childId);
+                _container.RegisterCommunicationGroupHandler(
+                    groupName, operatorName, rootId, new NodeMessageObserver<T>(_nodesWithData, node));
                 _children.Add(node);
                 _idToNodeMap[childId] = node;
             }
@@ -135,42 +144,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                         WaitForTaskRegistration(child.Identifier, _retryCount);
                     }
                 }
-            }
-        }
-
-        /// <summary>
-        /// Handles the incoming GroupCommunicationMessage.
-        /// Updates the sending node's message queue.
-        /// </summary>
-        /// <param name="gcm">The incoming message</param>
-        public void OnNext(GeneralGroupCommunicationMessage gcm)
-        {
-            if (gcm == null)
-            {
-                throw new ArgumentNullException("gcm");
-            }
-            if (gcm.Source == null)
-            {
-                throw new ArgumentException("Message must have a source");
-            }
-
-            var sourceNode = FindNode(gcm.Source);
-            if (sourceNode == null)
-            {
-                throw new IllegalStateException("Received message from invalid task id: " + gcm.Source);
-            }
-
-            lock (_thisLock)
-            {
-                _nodesWithData.Add(sourceNode);
-                var message = gcm as GroupCommunicationMessage<T>;
-
-                if (message == null)
-                {
-                    throw new NullReferenceException("message passed not of type GroupCommunicationMessage");
-                }
-
-                sourceNode.AddData(message);
             }
         }
 
@@ -345,14 +318,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             return reduceFunction.Reduce(receivedData);
         }
 
-        public void OnError(Exception error)
-        {
-        }
-
-        public void OnCompleted()
-        {
-        }
-
         public bool HasChildren()
         {
             return _children.Count > 0;
@@ -365,7 +330,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <returns>A Vector of NodeStruct with incoming data.</returns>
         private IEnumerable<NodeStruct<T>> GetNodeWithData(IEnumerable<string> nodeSetIdentifier)
         {
-            CancellationTokenSource timeoutSource = new CancellationTokenSource(_timeout);
             List<NodeStruct<T>> nodesSubsetWithData = new List<NodeStruct<T>>();
 
             try

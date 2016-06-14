@@ -37,7 +37,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             return _groupDictionary.TryGetValue(groupName, out handler);
         }
 
-        public void RegisterCommunicationGroupHandler(string groupName, IObserver<GeneralGroupCommunicationMessage> handler)
+        public void RegisterCommunicationGroupHandler(
+            string groupName, string operatorName, string source, IObserver<GeneralGroupCommunicationMessage> handler)
         {
             _groupDictionary[groupName] = handler;
         }
