@@ -58,7 +58,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             {
                 GeneralGroupCommunicationMessage gcm = nsMessage.Data.First();
                 IObserver<GeneralGroupCommunicationMessage> handler;
-                if (!_commGroupContainer.GetCommunicationGroupHandlerByName(gcm.GroupName, out handler))
+                if (!_commGroupContainer.GetCommunicationGroupHandlerByName(gcm.GroupName, gcm.OperatorName, gcm.Source, out handler))
                 {
                     throw new ApplicationException("Group Communication Network Handler received message for nonexistant group");
                 }

@@ -117,6 +117,12 @@ namespace Org.Apache.REEF.Network.NetworkService
             Logger.Log(Level.Verbose, "End of Registering id {0} with network service.", id);
         }
 
+        public void RegisterObserver(IIdentifier id, IObserver<NsMessage<T>> observer)
+        {
+            var ipEndpoint = NamingClient.Lookup(id.ToString());
+            _remoteManager.RegisterObserver(ipEndpoint, observer);
+        }
+
         /// <summary>
         /// Unregister the identifier for the NetworkService with the NameService.
         /// </summary>

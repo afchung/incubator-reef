@@ -24,23 +24,24 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
     internal sealed class CommunicationGroupContainer
     {
-        private readonly IDictionary<string, IObserver<GeneralGroupCommunicationMessage>> _groupDictionary = 
-            new Dictionary<string, IObserver<GeneralGroupCommunicationMessage>>();
+        private readonly IDictionary<Tuple<string, string, string>, IObserver<GeneralGroupCommunicationMessage>> _groupDictionary = 
+            new Dictionary<Tuple<string, string, string>, IObserver<GeneralGroupCommunicationMessage>>();
         
         [Inject]
         private CommunicationGroupContainer()
         {
         }
 
-        public bool GetCommunicationGroupHandlerByName(string groupName, out IObserver<GeneralGroupCommunicationMessage> handler)
+        public bool GetCommunicationGroupHandlerByName(
+            string groupName, string operatorName, string source, out IObserver<GeneralGroupCommunicationMessage> handler)
         {
-            return _groupDictionary.TryGetValue(groupName, out handler);
+            return _groupDictionary.TryGetValue(new Tuple<string, string, string>(groupName, operatorName, source), out handler);
         }
 
         public void RegisterCommunicationGroupHandler(
             string groupName, string operatorName, string source, IObserver<GeneralGroupCommunicationMessage> handler)
         {
-            _groupDictionary[groupName] = handler;
+            _groupDictionary[new Tuple<string, string, string>(groupName, operatorName, source)] = handler;
         }
     }
 }

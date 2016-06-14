@@ -328,69 +328,38 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// </summary>
         /// <param name="nodeSetIdentifier">Candidate set of nodes from which data is to be received</param>
         /// <returns>A Vector of NodeStruct with incoming data.</returns>
-        private IEnumerable<NodeStruct<T>> GetNodeWithData(IEnumerable<string> nodeSetIdentifier)
+        private IEnumerable<NodeStruct<T>> GetNodeWithData(ICollection<string> nodeSetIdentifier)
         {
-            List<NodeStruct<T>> nodesSubsetWithData = new List<NodeStruct<T>>();
+            var nodesSubsetWithData = new List<NodeStruct<T>>();
+            var shouldBlock = true;
+            var shouldContinue = true;
 
-            try
+            while (shouldContinue)
             {
-                lock (_thisLock)
-                {
-                    foreach (var identifier in nodeSetIdentifier)
-                    {
-                        if (!_idToNodeMap.ContainsKey(identifier))
-                        {
-                            throw new Exception("Trying to get data from the node not present in the node map");
-                        }
-
-                        if (_idToNodeMap[identifier].HasMessage())
-                        {
-                            nodesSubsetWithData.Add(_idToNodeMap[identifier]);
-                        }
-                    }
-
-                    if (nodesSubsetWithData.Count > 0)
-                    {
-                        return nodesSubsetWithData;
-                    }
-
-                    while (_nodesWithData.Count != 0)
-                    {
-                        _nodesWithData.Take();
-                    }
-                }
-
-                var potentialNode = _nodesWithData.Take();
-
-                while (!nodeSetIdentifier.Contains(potentialNode.Identifier))
+                NodeStruct<T> potentialNode;
+                if (shouldBlock)
                 {
                     potentialNode = _nodesWithData.Take();
                 }
+                else
+                {
+                    shouldContinue = _nodesWithData.TryTake(out potentialNode);
+                }
 
-                return new NodeStruct<T>[] { potentialNode };
+                if (shouldContinue && nodeSetIdentifier.Contains(potentialNode.Identifier))
+                {
+                    nodesSubsetWithData.Add(potentialNode);
+                    shouldBlock = false;
+                }
             }
-            catch (OperationCanceledException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
-            catch (ObjectDisposedException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
-            catch (InvalidOperationException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
+
+            return nodesSubsetWithData;
         }
 
         /// <summary>
         /// Sends the message to the Task represented by the given NodeStruct.
         /// </summary>
         /// <param name="message">The message to send</param>
-        /// <param name="msgType">The message type</param>
         /// <param name="node">The NodeStruct representing the Task to send to</param>
         private void SendToNode(T message, NodeStruct<T> node)
         {
