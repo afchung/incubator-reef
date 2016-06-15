@@ -23,7 +23,9 @@ option java_generate_equals_and_hash = true;
 
 message WakeMessagePBuf {
   required bytes data = 1;
-  required int64 seq = 2; 
+  required int64 seq = 2;
+  required string source = 3;
+  required string sink = 4;
 }
 
 message WakeTuplePBuf {

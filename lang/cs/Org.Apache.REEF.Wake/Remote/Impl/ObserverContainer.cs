@@ -19,6 +19,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
+using Org.Apache.REEF.Utilities.Logging;
 using Org.Apache.REEF.Wake.Util;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
@@ -105,6 +106,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             foreach (var universalObserver in _universalObservers)
             {
                 // IObserver was registered by event type
+                Logger.GetLogger("HELLOLOGGER").Log(Level.Error, "AAAAA " + remoteEvent.RemoteEndPoint);
                 IRemoteIdentifier id = new SocketRemoteIdentifier(remoteEvent.RemoteEndPoint);
                 IRemoteMessage<T> remoteMessage = new DefaultRemoteMessage<T>(id, value);
                 universalObserver.OnNext(remoteMessage);

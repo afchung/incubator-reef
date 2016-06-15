@@ -23,6 +23,9 @@ import org.apache.reef.wake.remote.Encoder;
 import org.apache.reef.wake.remote.exception.RemoteRuntimeException;
 import org.apache.reef.wake.remote.proto.WakeRemoteProtos.WakeMessagePBuf;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+
 /**
  * Remote event encoder using the WakeMessage protocol buffer.
  *
@@ -55,10 +58,15 @@ public class RemoteEventEncoder<T> implements Encoder<RemoteEvent<T>> {
     }
 
     final WakeMessagePBuf.Builder builder = WakeMessagePBuf.newBuilder();
+    builder.setSink(toString((InetSocketAddress)obj.remoteAddress()));
+    builder.setSource(toString((InetSocketAddress)obj.localAddress()));
     builder.setSeq(obj.getSeq());
     builder.setData(ByteString.copyFrom(encoder.encode(obj.getEvent())));
 
     return builder.build().toByteArray();
   }
 
+  private static String toString(final InetSocketAddress addr) {
+    return addr.getAddress().getHostAddress() + ":" + addr.getPort();
+  }
 }

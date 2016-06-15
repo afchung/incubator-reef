@@ -23,6 +23,9 @@ import org.apache.reef.wake.remote.Decoder;
 import org.apache.reef.wake.remote.exception.RemoteRuntimeException;
 import org.apache.reef.wake.remote.proto.WakeRemoteProtos.WakeMessagePBuf;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+
 /**
  * Remote event decoder using the WakeMessage protocol buffer.
  *
@@ -53,10 +56,17 @@ public class RemoteEventDecoder<T> implements Decoder<RemoteEvent<T>> {
     final WakeMessagePBuf pbuf;
     try {
       pbuf = WakeMessagePBuf.parseFrom(data);
-      return new RemoteEvent<T>(null, null, pbuf.getSeq(), decoder.decode(pbuf.getData().toByteArray()));
+      return new RemoteEvent<T>(fromString(pbuf.getSink()), fromString(pbuf.getSource()),
+          pbuf.getSeq(), decoder.decode(pbuf.getData().toByteArray()));
     } catch (final InvalidProtocolBufferException e) {
       throw new RemoteRuntimeException(e);
     }
   }
 
+  private static InetSocketAddress fromString(final String str) {
+    final String[] pair = str.split(":");
+    final String addr = pair[0];
+    final int port = Integer.parseInt(pair[1]);
+    return new InetSocketAddress(addr, port);
+  }
 }
