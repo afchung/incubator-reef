@@ -29,7 +29,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     /// </summary>
     internal sealed class ObserverContainer<T> : IObserver<TransportEvent<IRemoteEvent<T>>>
     {
-        private readonly ConcurrentDictionary<IPEndPoint, IObserver<T>> _endpointMap;
+        private readonly ConcurrentDictionary<IPEndPoint, ConcurrentDictionary<IObserver<T>, byte>> _endpointMap;
         private readonly ISet<IObserver<IRemoteMessage<T>>> _universalObservers = new HashSet<IObserver<IRemoteMessage<T>>>();
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// </summary>
         public ObserverContainer()
         {
-            _endpointMap = new ConcurrentDictionary<IPEndPoint, IObserver<T>>(new IPEndPointComparer());
+            _endpointMap = new ConcurrentDictionary<IPEndPoint, ConcurrentDictionary<IObserver<T>, byte>>(new IPEndPointComparer());
         }
 
         /// <summary>
@@ -56,8 +56,21 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                 return Disposable.Create(() => _universalObservers.Remove(universalObserver));
             }
 
-            _endpointMap[remoteEndpoint] = observer;
-            return Disposable.Create(() => _endpointMap.TryRemove(remoteEndpoint, out observer));
+            if (!_endpointMap.ContainsKey(remoteEndpoint))
+            {
+                _endpointMap.TryAdd(remoteEndpoint, new ConcurrentDictionary<IObserver<T>, byte>());
+            }
+
+            _endpointMap[remoteEndpoint].TryAdd(observer, new byte());
+            return Disposable.Create(() =>
+            {
+                ConcurrentDictionary<IObserver<T>, byte> set;
+                if (_endpointMap.TryGetValue(remoteEndpoint, out set))
+                {
+                    byte outByte;
+                    set.TryRemove(observer, out outByte);
+                }
+            });
         }
 
         /// <summary>
@@ -98,12 +111,15 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                 handled = true;
             }
 
-            IObserver<T> observer1;
-            if (_endpointMap.TryGetValue(remoteEvent.RemoteEndPoint, out observer1))
+            ConcurrentDictionary<IObserver<T>, byte> observerSet;
+            if (_endpointMap.TryGetValue(remoteEvent.RemoteEndPoint, out observerSet))
             {
-                // IObserver was registered by IPEndpoint
-                observer1.OnNext(value);
-                handled = true;
+                foreach (var observer in observerSet.Keys)
+                {
+                    // IObserver was registered by IPEndpoint
+                    observer.OnNext(value);
+                    handled = true;
+                }
             }
 
             if (!handled)

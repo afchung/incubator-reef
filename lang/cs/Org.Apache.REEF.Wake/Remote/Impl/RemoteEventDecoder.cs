@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System.Net;
 using Org.Apache.REEF.Wake.Remote.Proto;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
@@ -31,7 +32,15 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         public IRemoteEvent<T> Decode(byte[] data)
         {
             WakeMessagePBuf pbuf = WakeMessagePBuf.Deserialize(data);
-            return new RemoteEvent<T>(null, null, pbuf.seq, _decoder.Decode(pbuf.data));
+
+            return new RemoteEvent<T>(
+                DecodeIPEndpoint(pbuf.sink), DecodeIPEndpoint(pbuf.source), pbuf.seq, _decoder.Decode(pbuf.data));
+        }
+
+        private static IPEndPoint DecodeIPEndpoint(string endpointStr)
+        {
+            var pair = endpointStr.Split(':');
+            return new IPEndPoint(IPAddress.Parse(pair[0]), int.Parse(pair[1]));
         }
     }
 }

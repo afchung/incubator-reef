@@ -31,6 +31,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         public byte[] Encode(IRemoteEvent<T> obj)
         {
             WakeMessagePBuf pbuf = new WakeMessagePBuf();
+            pbuf.source = obj.LocalEndPoint.Address + ":" + obj.LocalEndPoint.Port;
+            pbuf.sink = obj.RemoteEndPoint.Address + ":" + obj.RemoteEndPoint.Port;
             pbuf.data = _encoder.Encode(obj.Value);
             pbuf.seq = obj.Sequence;
             return pbuf.Serialize();

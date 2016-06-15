@@ -219,20 +219,23 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
         /// operator configuration set.</returns>
         public IConfiguration GetGroupCommTaskConfiguration(string taskId)
         {
-            var confBuilder = TangFactory.GetTang().NewConfigurationBuilder();
-
-            foreach (ICommunicationGroupDriver commGroup in _commGroups.Values)
+            lock (_groupsLock)
             {
-                var taskConf = commGroup.GetGroupTaskConfiguration(taskId);
-                if (taskConf != null)
+                var confBuilder = TangFactory.GetTang().NewConfigurationBuilder();
+            
+                foreach (ICommunicationGroupDriver commGroup in _commGroups.Values)
                 {
-                    confBuilder.BindSetEntry<GroupCommConfigurationOptions.SerializedGroupConfigs, string>(
-                        GenericType<GroupCommConfigurationOptions.SerializedGroupConfigs>.Class,
-                        _configSerializer.ToString(taskConf));
+                    var taskConf = commGroup.GetGroupTaskConfiguration(taskId);
+                    if (taskConf != null)
+                    {
+                        confBuilder.BindSetEntry<GroupCommConfigurationOptions.SerializedGroupConfigs, string>(
+                            GenericType<GroupCommConfigurationOptions.SerializedGroupConfigs>.Class,
+                            _configSerializer.ToString(taskConf));
+                    }
                 }
-            }
 
-            return confBuilder.Build();
+                return confBuilder.Build();
+            }
         }
 
         /// <summary>

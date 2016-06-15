@@ -46,7 +46,6 @@ using Org.Apache.REEF.Tang.Implementations.Configuration;
 using Org.Apache.REEF.Tang.Implementations.Tang;
 using Org.Apache.REEF.Tang.Interface;
 using Org.Apache.REEF.Tang.Util;
-using Org.Apache.REEF.Wake;
 using Org.Apache.REEF.Wake.Remote;
 using Org.Apache.REEF.Wake.Remote.Impl;
 using Org.Apache.REEF.Wake.StreamingCodec;
@@ -843,7 +842,6 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
 
         public static List<ICommunicationGroupClient> CommGroupClients(string groupName, int numTasks, IGroupCommDriver groupCommDriver, ICommunicationGroupDriver commGroupDriver, IConfiguration userServiceConfig)
         {
-            List<ICommunicationGroupClient> commGroups = new List<ICommunicationGroupClient>();
             IConfiguration serviceConfig = groupCommDriver.GetServiceConfiguration();
             serviceConfig = Configurations.Merge(serviceConfig, userServiceConfig);
 
@@ -861,24 +859,33 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
                 partialConfigs.Add(partialTaskConfig);
             }
 
+            ConcurrentDictionary<string, ICommunicationGroupClient> clientConfigurations = new ConcurrentDictionary<string, ICommunicationGroupClient>();
+            Parallel.ForEach(Enumerable.Range(0, numTasks),
+                i =>
+                {
+                    // get task configuration at driver side
+                    string taskId = "task" + i;
+                    IConfiguration groupCommTaskConfig = groupCommDriver.GetGroupCommTaskConfiguration(taskId);
+                    IConfiguration mergedConf = Configurations.Merge(groupCommTaskConfig, partialConfigs[i], serviceConfig);
+
+                    var conf = TangFactory.GetTang()
+                        .NewConfigurationBuilder(mergedConf)
+                        .BindNamedParameter(typeof(GroupCommConfigurationOptions.Initialize), "true")
+                        .Build();
+                    IInjector injector = TangFactory.GetTang().NewInjector(conf);
+
+                    // simulate injection at evaluator side
+                    IGroupCommClient groupCommClient = injector.GetInstance<IGroupCommClient>();
+                    clientConfigurations.TryAdd(taskId, groupCommClient.GetCommunicationGroup(groupName));
+                });
+
+            var list = new List<ICommunicationGroupClient>();
             for (int i = 0; i < numTasks; i++)
             {
-                // get task configuration at driver side
-                string taskId = "task" + i;
-                IConfiguration groupCommTaskConfig = groupCommDriver.GetGroupCommTaskConfiguration(taskId);
-                IConfiguration mergedConf = Configurations.Merge(groupCommTaskConfig, partialConfigs[i], serviceConfig);
-
-                var conf = TangFactory.GetTang()
-                    .NewConfigurationBuilder(mergedConf)
-                    .BindNamedParameter(typeof(GroupCommConfigurationOptions.Initialize), "false")
-                    .Build();
-                IInjector injector = TangFactory.GetTang().NewInjector(conf);
-
-                // simulate injection at evaluator side
-                IGroupCommClient groupCommClient = injector.GetInstance<IGroupCommClient>();
-                commGroups.Add(groupCommClient.GetCommunicationGroup(groupName));
+                list.Add(clientConfigurations["task" + i]);
             }
-            return commGroups;
+
+            return list;
         }
 
         public static IInjector BuildNetworkServiceInjector(IPEndPoint nameServerEndpoint)

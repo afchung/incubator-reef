@@ -50,7 +50,7 @@ namespace Org.Apache.REEF.Network.Naming
         {
             NameAssignment assignment = new NameAssignment(id, endpoint);
             _client.Send(new NamingRegisterRequest(assignment));
-            _registerResponseQueue.Take();
+            var t = _registerResponseQueue.Take();
         }
 
         /// <summary>

@@ -29,6 +29,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     internal sealed class NodeStruct<T>
     {
         private readonly BlockingCollection<GroupCommunicationMessage<T>> _messageQueue;
+        private readonly Guid _guid = Guid.NewGuid();
 
         /// <summary>
         /// Creates a new NodeStruct.
