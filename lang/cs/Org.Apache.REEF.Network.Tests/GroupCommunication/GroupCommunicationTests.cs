@@ -69,20 +69,25 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
                 BlockingCollection<GeneralGroupCommunicationMessage> messages2 =
                     new BlockingCollection<GeneralGroupCommunicationMessage>();
 
-                var networkObserverFactory1 =
-                    Utilities.CreateNetworkObserverFactory(() => Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages1.Add(msg.Data.First())));
-                var networkObserverFactory2 =
-                    Utilities.CreateNetworkObserverFactory(() => Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages2.Add(msg.Data.First())));
+                var handler1 = Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages1.Add(msg.Data.First()));
+                var handler2 = Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages2.Add(msg.Data.First()));
 
-                var networkServiceInjector1 = BuildNetworkServiceInjector(endpoint, networkObserverFactory1);
-                var networkServiceInjector2 = BuildNetworkServiceInjector(endpoint, networkObserverFactory2);
+                var networkServiceInjector1 = BuildNetworkServiceInjector(endpoint);
+                var networkServiceInjector2 = BuildNetworkServiceInjector(endpoint);
 
                 var networkService1 = 
                     networkServiceInjector1.GetInstance<StreamingNetworkService<GeneralGroupCommunicationMessage>>();
                 var networkService2 = 
                     networkServiceInjector2.GetInstance<StreamingNetworkService<GeneralGroupCommunicationMessage>>();
-                networkService1.Register(new StringIdentifier("id1"));
-                networkService2.Register(new StringIdentifier("id2"));
+
+                var id1 = new StringIdentifier("id1");
+                var id2 = new StringIdentifier("id2");
+
+                networkService1.Register(id1);
+                networkService2.Register(id2);
+
+                networkService1.RegisterObserver(id2, handler1);
+                networkService2.RegisterObserver(id1, handler2);
 
                 Sender sender1 = networkServiceInjector1.GetInstance<Sender>();
                 Sender sender2 = networkServiceInjector2.GetInstance<Sender>();
@@ -876,8 +881,7 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
             return commGroups;
         }
 
-        public static IInjector BuildNetworkServiceInjector(
-            IPEndPoint nameServerEndpoint, IObserverFactory<NsMessage<GeneralGroupCommunicationMessage>> handler)
+        public static IInjector BuildNetworkServiceInjector(IPEndPoint nameServerEndpoint)
         {
             var config = TangFactory.GetTang().NewConfigurationBuilder()
                 .BindNamedParameter(typeof(NamingConfigurationOptions.NameServerAddress),
@@ -895,11 +899,7 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
 
             config = Configurations.Merge(config, codecConfig);
 
-            var injector = TangFactory.GetTang().NewInjector(config);
-            injector.BindVolatileInstance(
-                GenericType<IObserverFactory<NsMessage<GeneralGroupCommunicationMessage>>>.Class, handler);
-
-            return injector;
+            return TangFactory.GetTang().NewInjector(config);
         }
 
         private GroupCommunicationMessage<string> CreateGcmStringType(string message, string from, string to)

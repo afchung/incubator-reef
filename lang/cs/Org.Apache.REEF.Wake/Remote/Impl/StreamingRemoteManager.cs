@@ -16,7 +16,6 @@
 // under the License.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using Org.Apache.REEF.Wake.StreamingCodec;
@@ -34,7 +33,6 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         private readonly Dictionary<IPEndPoint, ProxyObserver> _cachedClients;
         private readonly IStreamingCodec<IRemoteEvent<T>> _remoteEventCodec;
         private readonly ITcpClientConnectionFactory _tcpClientFactory;
-        private readonly NetworkObserverFactoryObserver _networkObserverFactoryObserver;
 
         /// <summary>
         /// Constructs a DefaultRemoteManager listening on the specified address and
@@ -44,30 +42,21 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <param name="tcpPortProvider">Tcp port provider</param>
         /// <param name="streamingCodec">Streaming codec</param>
         /// <param name="tcpClientFactory">provides TcpClient for given endpoint</param>
-        /// <param name="factories"></param>
         internal StreamingRemoteManager(
             IPAddress localAddress,
             ITcpPortProvider tcpPortProvider,
             IStreamingCodec<T> streamingCodec,
-            ITcpClientConnectionFactory tcpClientFactory,
-            ISet<NetworkObserverFactory<T>> factories = null)
+            ITcpClientConnectionFactory tcpClientFactory)
         {
             if (localAddress == null)
             {
                 throw new ArgumentNullException("localAddress");
             }
 
-            if (factories == null)
-            {
-                factories = new HashSet<NetworkObserverFactory<T>>();
-            }
-
             _tcpClientFactory = tcpClientFactory;
             _observerContainer = new ObserverContainer<T>();
             _cachedClients = new Dictionary<IPEndPoint, ProxyObserver>();
             _remoteEventCodec = new RemoteEventStreamingCodec<T>(streamingCodec);
-            _networkObserverFactoryObserver = new NetworkObserverFactoryObserver(factories, _observerContainer);
-            _observerContainer.RegisterUniversalObserver(_networkObserverFactoryObserver);
 
             // Begin to listen for incoming messages
             _server = new StreamingTransportServer<IRemoteEvent<T>>(localAddress,
@@ -182,7 +171,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
                     _remoteEventCodec,
                     _tcpClientFactory);
 
-            ProxyObserver remoteObserver = new ProxyObserver(client);
+            ProxyObserver remoteObserver = new ProxyObserver(
+                new SocketRemoteIdentifier(LocalEndpoint), client);
             return remoteObserver;
         }
 
@@ -254,60 +244,6 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             return _observerContainer.RegisterUniversalObserver(observer);
         }
 
-        private sealed class NetworkObserverFactoryObserver : IObserver<IRemoteMessage<T>>, IDisposable
-        {
-            private readonly ObserverContainer<T> _container;
-            private readonly ISet<NetworkObserverFactory<T>> _factories;
-            private readonly ConcurrentDictionary<IPEndPoint, IObserver<T>> _registeredEndpoints = 
-                new ConcurrentDictionary<IPEndPoint, IObserver<T>>();
-
-            internal NetworkObserverFactoryObserver(ISet<NetworkObserverFactory<T>> factories, ObserverContainer<T> container)
-            {
-                _factories = factories;
-                _container = container;
-            }
-
-            public void OnNext(IRemoteMessage<T> value)
-            {
-                var socketRemoteId = value.Identifier as SocketRemoteIdentifier;
-                if (socketRemoteId == null)
-                {
-                    throw new ApplicationException("Currently only the SocketRemoteIdentifier is supported.");
-                }
-
-                var ipEndpoint = socketRemoteId.Addr;
-
-                foreach (var factory in _factories)
-                {
-                    _registeredEndpoints.GetOrAdd(ipEndpoint,
-                        endpoint =>
-                        {
-                            var newObserver = factory.OnNewClient();
-                            factory.OnNewClientRegistered(
-                                _container.RegisterObserver(ipEndpoint, newObserver));
-
-                            return newObserver;
-                        });
-                }
-            }
-
-            public void OnError(Exception error)
-            {
-            }
-
-            public void OnCompleted()
-            {
-            }
-
-            public void Dispose()
-            {
-                foreach (var factory in _factories)
-                {
-                    factory.Dispose();
-                }
-            }
-        }
-
         /// <summary>
         /// Release all resources for the DefaultRemoteManager.
         /// </summary>
@@ -322,8 +258,6 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             {
                 _server.Dispose();
             }
-
-            _networkObserverFactoryObserver.Dispose();
         }
 
         /// <summary>
@@ -332,14 +266,17 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         private class ProxyObserver : IRemoteObserver<T>
         {
             private readonly StreamingTransportClient<IRemoteEvent<T>> _client;
+            private readonly SocketRemoteIdentifier _myId;
 
             /// <summary>
             /// Create new ProxyObserver
             /// </summary>
+            /// <param name="myId"></param>
             /// <param name="client">The connected WritableTransport client used to send
             /// messages to remote host</param>
-            public ProxyObserver(StreamingTransportClient<IRemoteEvent<T>> client)
+            public ProxyObserver(SocketRemoteIdentifier myId, StreamingTransportClient<IRemoteEvent<T>> client)
             {
+                _myId = myId;
                 _client = client;
             }
 
@@ -349,7 +286,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             /// <param name="message">The message to send</param>
             public void OnNext(T message)
             {
-                IRemoteEvent<T> remoteEvent = new RemoteEvent<T>(_client.Link.LocalEndpoint,
+                IRemoteEvent<T> remoteEvent = new RemoteEvent<T>(
+                    _myId.Addr,
                     _client.Link.RemoteEndpoint,
                     message);
 

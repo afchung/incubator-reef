@@ -50,7 +50,6 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
         /// <param name="initialize">Require Topology Initialize to be called to wait for all task being registered. 
         /// Default is true. For unit testing, it can be set to false.</param>
         /// <param name="topology">The Task's operator topology graph</param>
-        /// <param name="networkHandler">The handler used to handle incoming messages</param>
         /// <param name="reduceFunction">The function used to reduce the incoming messages</param>
         /// <param name="dataConverter">The converter used to convert original
         /// message to pipelined ones and vice versa.</param>
@@ -60,7 +59,6 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.CommunicationGroupName))] string groupName,
             [Parameter(typeof(GroupCommConfigurationOptions.Initialize))] bool initialize,
             OperatorTopology<PipelineMessage<T>> topology,
-            ICommunicationGroupNetworkObserver networkHandler,
             IReduceFunction<T> reduceFunction,
             IPipelineDataConverter<T> dataConverter)
         {
@@ -73,9 +71,6 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
             _pipelinedReduceFunc = new PipelinedReduceFunction<T>(ReduceFunction);
             _topology = topology;
             _initialize = initialize;
-
-            var msgHandler = Observer.Create<GeneralGroupCommunicationMessage>(message => topology.OnNext(message));
-            networkHandler.Register(operatorName, msgHandler);
 
             PipelineDataConverter = dataConverter;
         }

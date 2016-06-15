@@ -44,7 +44,6 @@ namespace Org.Apache.REEF.Network.NetworkService
         /// <summary>
         /// Create a new Writable NetworkService.
         /// </summary>
-        /// <param name="factory">The factory.</param>
         /// <param name="nameClient">The name client used to register Ids</param>
         /// <param name="remoteManagerFactory">Writable RemoteManagerFactory to create a 
         /// Writable RemoteManager</param>
@@ -52,14 +51,12 @@ namespace Org.Apache.REEF.Network.NetworkService
         /// <param name="localAddressProvider">The local address provider</param>
         [Inject]
         private StreamingNetworkService(
-            NetworkObserverFactory<NsMessage<T>> factory,
             INameClient nameClient,
             StreamingRemoteManagerFactory remoteManagerFactory,
             NsMessageStreamingCodec<T> codec,
             ILocalAddressProvider localAddressProvider)
         {
-            _remoteManager = remoteManagerFactory.GetInstance(
-                localAddressProvider.LocalAddress, codec, new HashSet<NetworkObserverFactory<NsMessage<T>>> { factory });
+            _remoteManager = remoteManagerFactory.GetInstance(localAddressProvider.LocalAddress, codec);
 
             _nameClient = nameClient;
             _connectionMap = new Dictionary<IIdentifier, IConnection<T>>();
@@ -117,10 +114,16 @@ namespace Org.Apache.REEF.Network.NetworkService
             Logger.Log(Level.Verbose, "End of Registering id {0} with network service.", id);
         }
 
-        public void RegisterObserver(IIdentifier id, IObserver<NsMessage<T>> observer)
+        public bool RegisterObserver(IIdentifier id, IObserver<NsMessage<T>> observer)
         {
             var ipEndpoint = NamingClient.Lookup(id.ToString());
+            if (ipEndpoint == null)
+            {
+                return false;
+            }
+
             _remoteManager.RegisterObserver(ipEndpoint, observer);
+            return true;
         }
 
         /// <summary>

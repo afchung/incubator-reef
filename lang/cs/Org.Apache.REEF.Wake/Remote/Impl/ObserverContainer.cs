@@ -83,8 +83,6 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         public void OnNext(TransportEvent<IRemoteEvent<T>> transportEvent)
         {
             IRemoteEvent<T> remoteEvent = transportEvent.Data;
-            remoteEvent.LocalEndPoint = transportEvent.Link.LocalEndpoint;
-            remoteEvent.RemoteEndPoint = transportEvent.Link.RemoteEndpoint;
             T value = remoteEvent.Value;
             bool handled = false;
 

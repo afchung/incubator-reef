@@ -20,7 +20,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Org.Apache.REEF.Common.Io;
 using Org.Apache.REEF.Common.Tasks;
 using Org.Apache.REEF.Network.Group.Config;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
@@ -30,6 +29,7 @@ using Org.Apache.REEF.Network.NetworkService;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Exceptions;
 using Org.Apache.REEF.Utilities.Logging;
+using Org.Apache.REEF.Wake.Remote.Impl;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
@@ -47,18 +47,16 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         private readonly string _groupName;
         private readonly string _operatorName;
         private readonly string _selfId;
-        private readonly int _timeout;
         private readonly int _retryCount;
         private readonly int _sleepTime;
 
+        private readonly long _timeout;
         private readonly NodeStruct<T> _parent;
         private readonly List<NodeStruct<T>> _children;
         private readonly Dictionary<string, NodeStruct<T>> _idToNodeMap;
-        private readonly INameClient _nameClient;
+        private readonly StreamingNetworkService<GeneralGroupCommunicationMessage> _networkService;
         private readonly Sender _sender;
         private readonly BlockingCollection<NodeStruct<T>> _nodesWithData;
-        private readonly object _thisLock = new object();
-        private readonly CommunicationGroupContainer _container;
 
         /// <summary>
         /// Creates a new OperatorTopology object.
@@ -71,7 +69,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="sleepTime">Sleep time between retry wating for registration</param>
         /// <param name="rootId">The identifier for the root Task in the topology graph</param>
         /// <param name="childIds">The set of child Task identifiers in the topology graph</param>
-        /// <param name="container"></param>
         /// <param name="networkService">The network service</param>
         /// <param name="sender">The Sender used to do point to point communication</param>
         [Inject]
@@ -84,7 +81,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.SleepTimeWaitingForRegistration))] int sleepTime,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyRootTaskId))] string rootId,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyChildTaskIds))] ISet<string> childIds,
-            CommunicationGroupContainer container,
             StreamingNetworkService<GeneralGroupCommunicationMessage> networkService,
             Sender sender)
         {
@@ -94,12 +90,11 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _timeout = timeout;
             _retryCount = retryCount;
             _sleepTime = sleepTime;
-            _nameClient = networkService.NamingClient;
+            _networkService = networkService;
             _sender = sender;
             _nodesWithData = new BlockingCollection<NodeStruct<T>>();
             _children = new List<NodeStruct<T>>();
             _idToNodeMap = new Dictionary<string, NodeStruct<T>>();
-            _container = container;
 
             if (_selfId.Equals(rootId))
             {
@@ -108,16 +103,11 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             else
             {
                 _parent = new NodeStruct<T>(rootId);
-                _container.RegisterCommunicationGroupHandler(
-                    groupName, operatorName, rootId, new NodeMessageObserver<T>(_nodesWithData, _parent));
-
                 _idToNodeMap[rootId] = _parent;
             }
             foreach (var childId in childIds)
             {
                 var node = new NodeStruct<T>(childId);
-                _container.RegisterCommunicationGroupHandler(
-                    groupName, operatorName, rootId, new NodeMessageObserver<T>(_nodesWithData, node));
                 _children.Add(node);
                 _idToNodeMap[childId] = node;
             }
@@ -134,14 +124,14 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             {
                 if (_parent != null)
                 {
-                    WaitForTaskRegistration(_parent.Identifier, _retryCount);
+                    WaitForTaskRegistration(_parent.Identifier, _retryCount, _parent);
                 }
 
                 if (_children.Count > 0)
                 {
                     foreach (var child in _children)
                     {
-                        WaitForTaskRegistration(child.Identifier, _retryCount);
+                        WaitForTaskRegistration(child.Identifier, _retryCount, child);
                     }
                 }
             }
@@ -439,12 +429,14 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// </summary>
         /// <param name="identifier">The identifier to look up</param>
         /// <param name="retries">The number of times to retry the lookup operation</param>
-        private void WaitForTaskRegistration(string identifier, int retries)
+        /// <param name="node">The node to register.</param>
+        private void WaitForTaskRegistration(string identifier, int retries, NodeStruct<T> node)
         {
             for (int i = 0; i < retries; i++)
             {
-                System.Net.IPEndPoint endPoint;
-                if ((endPoint = _nameClient.Lookup(identifier)) != null)
+                if (_networkService.RegisterObserver(
+                        new StringIdentifier(identifier), 
+                        new NodeMessageObserver<T>(_nodesWithData, node)))
                 {
                     return;
                 }

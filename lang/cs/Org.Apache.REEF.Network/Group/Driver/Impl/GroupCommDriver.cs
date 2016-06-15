@@ -196,9 +196,6 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
                 .Build();
 
             return TangFactory.GetTang().NewConfigurationBuilder(serviceConfig)
-                .BindImplementation(
-                    GenericType<IObserverFactory<NsMessage<GeneralGroupCommunicationMessage>>>.Class,
-                    GenericType<GroupCommNetworkObserverFactory>.Class)
                 .BindNamedParameter<NamingConfigurationOptions.NameServerAddress, string>(
                     GenericType<NamingConfigurationOptions.NameServerAddress>.Class,
                     _nameServerAddr)
