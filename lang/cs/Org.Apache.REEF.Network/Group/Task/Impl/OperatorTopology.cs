@@ -29,7 +29,7 @@ using Org.Apache.REEF.Network.NetworkService;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Exceptions;
 using Org.Apache.REEF.Utilities.Logging;
-using Org.Apache.REEF.Wake.Remote.Impl;
+using Org.Apache.REEF.Wake.Remote;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
@@ -57,6 +57,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         private readonly StreamingNetworkService<GeneralGroupCommunicationMessage> _networkService;
         private readonly Sender _sender;
         private readonly BlockingCollection<NodeStruct<T>> _nodesWithData;
+        private readonly IRemoteManager<NsMessage<GeneralGroupCommunicationMessage>> _remoteManager;
 
         /// <summary>
         /// Creates a new OperatorTopology object.
@@ -71,6 +72,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="childIds">The set of child Task identifiers in the topology graph</param>
         /// <param name="networkService">The network service</param>
         /// <param name="sender">The Sender used to do point to point communication</param>
+        /// <param name="remoteManager"></param>
         [Inject]
         private OperatorTopology(
             [Parameter(typeof(GroupCommConfigurationOptions.OperatorName))] string operatorName,
@@ -82,7 +84,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyRootTaskId))] string rootId,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyChildTaskIds))] ISet<string> childIds,
             StreamingNetworkService<GeneralGroupCommunicationMessage> networkService,
-            Sender sender)
+            Sender sender,
+            IRemoteManager<NsMessage<GeneralGroupCommunicationMessage>> remoteManager)
         {
             _operatorName = operatorName;
             _groupName = groupName;
@@ -95,6 +98,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _nodesWithData = new BlockingCollection<NodeStruct<T>>();
             _children = new List<NodeStruct<T>>();
             _idToNodeMap = new Dictionary<string, NodeStruct<T>>();
+            _remoteManager = remoteManager;
 
             if (_selfId.Equals(rootId))
             {
@@ -102,12 +106,12 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             }
             else
             {
-                _parent = new NodeStruct<T>(rootId);
+                _parent = new NodeStruct<T>(rootId, groupName);
                 _idToNodeMap[rootId] = _parent;
             }
             foreach (var childId in childIds)
             {
-                var node = new NodeStruct<T>(childId);
+                var node = new NodeStruct<T>(childId, groupName);
                 _children.Add(node);
                 _idToNodeMap[childId] = node;
             }
@@ -462,10 +466,10 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         {
             for (int i = 0; i < retries; i++)
             {
-                if (_networkService.RegisterObserver(
-                        new StringIdentifier(identifier), 
-                        new NodeMessageObserver<T>(_nodesWithData, node)))
+                var ipEndpoint = _networkService.NamingClient.Lookup(identifier);
+                if (ipEndpoint != null)
                 {
+                    _remoteManager.RegisterObserver(ipEndpoint, new NodeMessageObserver<T>(_nodesWithData, node));
                     return;
                 }
 

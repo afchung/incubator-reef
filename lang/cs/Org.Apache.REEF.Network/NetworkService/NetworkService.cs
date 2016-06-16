@@ -124,19 +124,6 @@ namespace Org.Apache.REEF.Network.NetworkService
             LOGGER.Log(Level.Verbose, "End of Registering id {0} with network service.", id);
         }
 
-        public bool RegisterObserver(IIdentifier id, IObserver<NsMessage<T>> observer)
-        {
-            var ipEndpoint = NamingClient.Lookup(id.ToString());
-            if (ipEndpoint == null)
-            {
-                return false;
-            }
-
-            _remoteManager.RegisterObserver(ipEndpoint, observer);
-
-            return true;
-        }
-
         /// <summary>
         /// Unregister the identifier for the NetworkService with the NameService.
         /// </summary>

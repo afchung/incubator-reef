@@ -15,7 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System;
 using System.Collections.Concurrent;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
 
@@ -29,15 +28,17 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     internal sealed class NodeStruct<T>
     {
         private readonly BlockingCollection<GroupCommunicationMessage<T>> _messageQueue;
-        private readonly Guid _guid = Guid.NewGuid();
+        private readonly string _groupName;
 
         /// <summary>
         /// Creates a new NodeStruct.
         /// </summary>
         /// <param name="id">The Task identifier</param>
-        internal NodeStruct(string id)
+        /// <param name="groupName"></param>
+        internal NodeStruct(string id, string groupName)
         {
             Identifier = id;
+            _groupName = groupName;
             _messageQueue = new BlockingCollection<GroupCommunicationMessage<T>>();
         }
 
@@ -46,6 +47,11 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// messages in the message queue.
         /// </summary>
         internal string Identifier { get; private set; }
+
+        internal string GroupName
+        {
+            get { return _groupName; }
+        }
 
         /// <summary>
         /// Gets the first message in the message queue.

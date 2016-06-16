@@ -17,13 +17,11 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
-using Org.Apache.REEF.Network.NetworkService;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
-    internal sealed class NodeMessageObserver<T> : IObserver<NsMessage<GeneralGroupCommunicationMessage>>
+    internal sealed class NodeMessageObserver<T> : IObserver<GroupCommunicationMessage<T>>
     {
         private readonly BlockingCollection<NodeStruct<T>> _queue;
         private readonly NodeStruct<T> _nodeStruct;
@@ -34,13 +32,10 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _nodeStruct = nodeStruct;
         }
 
-        public void OnNext(NsMessage<GeneralGroupCommunicationMessage> value)
+        public void OnNext(GroupCommunicationMessage<T> value)
         {
-            foreach (var message in value.Data.OfType<GroupCommunicationMessage<T>>())
-            {
-                _nodeStruct.AddData(message);
-                _queue.Add(_nodeStruct);
-            }
+            _nodeStruct.AddData(value);
+            _queue.Add(_nodeStruct);
         }
 
         public void OnError(Exception error)
@@ -51,6 +46,11 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         public void OnCompleted()
         {
             throw new NotImplementedException();
+        }
+
+        internal string GroupName
+        {
+            get { return _nodeStruct.GroupName; }
         }
     }
 }

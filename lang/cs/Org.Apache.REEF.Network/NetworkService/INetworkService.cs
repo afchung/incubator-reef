@@ -46,8 +46,6 @@ namespace Org.Apache.REEF.Network.NetworkService
         /// <param name="id">The identifier to register</param>
         void Register(IIdentifier id);
 
-        bool RegisterObserver(IIdentifier id, IObserver<NsMessage<T>> observer);
-
         /// <summary>
         /// Unregister the identifier for the NetworkService with the NameService.
         /// </summary>
