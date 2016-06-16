@@ -107,9 +107,6 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
             int networkServicePort1 = NetworkUtils.GenerateRandomPort(6000, 7000);
             int networkServicePort2 = NetworkUtils.GenerateRandomPort(7001, 8000);
 
-            BlockingCollection<string> queue1;
-            BlockingCollection<string> queue2;
-
             using (var nameServer = NameServerTests.BuildNameServer())
             {
                 IPEndPoint endpoint = nameServer.LocalEndpoint;
@@ -122,9 +119,10 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                 using (INetworkService<string> networkService1 = networkServiceInjection1.GetInstance<StreamingNetworkService<string>>())
                 using (INetworkService<string> networkService2 = networkServiceInjection2.GetInstance<StreamingNetworkService<string>>())
                 {
-                    var handler = new MessageHandler();
-                    queue1 = handler.Queue;
-                    queue2 = handler.Queue;
+                    var handler1 = new MessageHandler();
+                    var handler2 = new MessageHandler();
+                    var queue1 = handler1.Queue;
+                    var queue2 = handler2.Queue;
 
                     IIdentifier id1 = new StringIdentifier("service1");
                     IIdentifier id2 = new StringIdentifier("service2");
@@ -132,8 +130,8 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                     networkService1.Register(id1);
                     networkService2.Register(id2);
 
-                    networkService1.RegisterObserver(id2, handler);
-                    networkService2.RegisterObserver(id1, handler);
+                    networkService1.RegisterObserver(id2, handler1);
+                    networkService2.RegisterObserver(id1, handler2);
 
                     using (IConnection<string> connection1 = networkService1.NewConnection(id2))
                     using (IConnection<string> connection2 = networkService2.NewConnection(id1))

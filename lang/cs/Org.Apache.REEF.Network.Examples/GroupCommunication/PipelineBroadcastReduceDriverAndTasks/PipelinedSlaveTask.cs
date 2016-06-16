@@ -89,6 +89,7 @@ namespace Org.Apache.REEF.Network.Examples.GroupCommunication.PipelineBroadcastR
 
                 reduceTime.Start();
                 _triangleNumberSender.Send(resArr);
+                Logger.Log(Level.Info, "SENT!!!");
                 reduceTime.Stop();
 
                 if (i >= 1)

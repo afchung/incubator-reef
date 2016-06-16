@@ -117,7 +117,9 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
             {
                 if (_topology.HasChildren())
                 {
+                    Logger.Log(Level.Info, "RECEIVING FROM CHILDREN!!!");
                     var reducedValueOfChildren = _topology.ReceiveFromChildren(_pipelinedReduceFunc);
+                    Logger.Log(Level.Info, "RECEIVED FROM CHILDREN!!!");
 
                     var mergeddData = new List<PipelineMessage<T>> { message };
 
@@ -127,11 +129,15 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
                     }
 
                     var reducedValue = _pipelinedReduceFunc.Reduce(mergeddData);
+                    Logger.Log(Level.Info, "SENDING TO PARENT!!!");
                     _topology.SendToParent(reducedValue, MessageType.Data);
+                    Logger.Log(Level.Info, "SENT TO PARENT!!!");
                 }
                 else
                 {
+                    Logger.Log(Level.Info, "SENDING TO PARENT!!!");
                     _topology.SendToParent(message, MessageType.Data);
+                    Logger.Log(Level.Info, "SENT TO PARENT!!!");
                 }
             }
         }

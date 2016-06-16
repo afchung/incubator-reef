@@ -320,30 +320,57 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <returns>A Vector of NodeStruct with incoming data.</returns>
         private IEnumerable<NodeStruct<T>> GetNodeWithData(ICollection<string> nodeSetIdentifier)
         {
-            var nodesSubsetWithData = new List<NodeStruct<T>>();
-            var shouldBlock = true;
-            var shouldContinue = true;
+            List<NodeStruct<T>> nodesSubsetWithData = new List<NodeStruct<T>>();
 
-            while (shouldContinue)
+            try
             {
-                NodeStruct<T> potentialNode;
-                if (shouldBlock)
+                foreach (var identifier in nodeSetIdentifier)
+                {
+                    if (!_idToNodeMap.ContainsKey(identifier))
+                    {
+                        throw new Exception("Trying to get data from the node not present in the node map");
+                    }
+
+                    if (_idToNodeMap[identifier].HasMessage())
+                    {
+                        nodesSubsetWithData.Add(_idToNodeMap[identifier]);
+                    }
+                }
+
+                if (nodesSubsetWithData.Count > 0)
+                {
+                    return nodesSubsetWithData;
+                }
+
+                while (_nodesWithData.Count != 0)
+                {
+                    _nodesWithData.Take();
+                }
+
+                var potentialNode = _nodesWithData.Take();
+
+                while (!nodeSetIdentifier.Contains(potentialNode.Identifier))
                 {
                     potentialNode = _nodesWithData.Take();
                 }
-                else
-                {
-                    shouldContinue = _nodesWithData.TryTake(out potentialNode);
-                }
 
-                if (shouldContinue && nodeSetIdentifier.Contains(potentialNode.Identifier))
-                {
-                    nodesSubsetWithData.Add(potentialNode);
-                    shouldBlock = false;
-                }
+                return new NodeStruct<T>[] { potentialNode };
             }
-
-            return nodesSubsetWithData;
+            catch (OperationCanceledException)
+            {
+                Logger.Log(Level.Error, "No data to read from child");
+                throw;
+            }
+            catch (ObjectDisposedException)
+            {
+                Logger.Log(Level.Error, "No data to read from child");
+                throw;
+            }
+            catch (InvalidOperationException)
+            {
+                Logger.Log(Level.Error, "No data to read from child");
+                throw;
+            }
         }
 
         /// <summary>
@@ -356,6 +383,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             GeneralGroupCommunicationMessage gcm = new GroupCommunicationMessage<T>(_groupName, _operatorName,
                 _selfId, node.Identifier, message);
 
+            Logger.Log(Level.Info, "SENDTONODE ID: " + node.Identifier + " MY ID: " + _selfId);
             _sender.Send(gcm);
         }
 
