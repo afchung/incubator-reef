@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Org.Apache.REEF.Wake.StreamingCodec;
@@ -32,8 +33,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         internal RemoteEventStreamingCodec(IStreamingCodec<T> codec)
         {
             _codec = codec;
-        } 
-        
+        }
+
         /// <summary>
         /// Read the class fields.
         /// </summary>
@@ -41,7 +42,9 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <returns>The remote event</returns>
         public IRemoteEvent<T> Read(IDataReader reader)
         {
-            return new RemoteEvent<T>(null, null, _codec.Read(reader));
+            var remoteEndpoint = ReadIPEndpoint(reader);
+            var localEndpoint = ReadIPEndpoint(reader);
+            return new RemoteEvent<T>(localEndpoint, remoteEndpoint, _codec.Read(reader));
         }
 
         /// <summary>
@@ -51,6 +54,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <param name="writer">The writer to which to write</param>
         public void Write(IRemoteEvent<T> value, IDataWriter writer)
         {
+            WriteIPEndpoint(writer, value.LocalEndPoint);
+            WriteIPEndpoint(writer, value.RemoteEndPoint);
             _codec.Write(value.Value, writer);
         }
 
@@ -62,8 +67,10 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <returns>The remote event</returns>
         public async Task<IRemoteEvent<T>> ReadAsync(IDataReader reader, CancellationToken token)
         {
+            var remoteEndpoint = await ReadIPEndpointAsync(reader, token);
+            var localEndpoint = await ReadIPEndpointAsync(reader, token);
             T message = await _codec.ReadAsync(reader, token);
-            return new RemoteEvent<T>(null, null, message);     
+            return new RemoteEvent<T>(localEndpoint, remoteEndpoint, message);
         }
 
         /// <summary>
@@ -74,7 +81,37 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <param name="token">The cancellation token</param>
         public async Task WriteAsync(IRemoteEvent<T> value, IDataWriter writer, CancellationToken token)
         {
-            await _codec.WriteAsync(value.Value, writer, token);        
+            await WriteIPEndpointAsync(writer, value.LocalEndPoint, token);
+            await WriteIPEndpointAsync(writer, value.RemoteEndPoint, token);
+            await _codec.WriteAsync(value.Value, writer, token);
+        }
+
+        private static IPEndPoint ReadIPEndpoint(IDataReader reader)
+        {
+            var addrStr = reader.ReadString();
+            var ipAddr = IPAddress.Parse(addrStr);
+            var port = reader.ReadInt32();
+            return new IPEndPoint(ipAddr, port);
+        }
+
+        private static async Task<IPEndPoint> ReadIPEndpointAsync(IDataReader reader, CancellationToken token)
+        {
+            var addrStr = await reader.ReadStringAsync(token);
+            var ipAddr = IPAddress.Parse(addrStr);
+            var port = await reader.ReadInt32Async(token);
+            return new IPEndPoint(ipAddr, port);
+        }
+
+        private static void WriteIPEndpoint(IDataWriter writer, IPEndPoint endpoint)
+        {
+            writer.WriteString(endpoint.Address.ToString());
+            writer.WriteInt32(endpoint.Port);
+        }
+
+        private static async Task WriteIPEndpointAsync(IDataWriter writer, IPEndPoint endpoint, CancellationToken token)
+        {
+            await writer.WriteStringAsync(endpoint.Address.ToString(), token);
+            await writer.WriteInt32Async(endpoint.Port, token);
         }
     }
 }
