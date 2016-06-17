@@ -47,7 +47,7 @@ namespace Org.Apache.REEF.Wake.Remote.Proto
       set { _seq = value; }
     }
     private string _source = "";
-    [global::ProtoBuf.ProtoMember(3, IsRequired = false, Name=@"source", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    [global::ProtoBuf.ProtoMember(3, IsRequired = true, Name=@"source", DataFormat = global::ProtoBuf.DataFormat.Default)]
     [global::System.ComponentModel.DefaultValue("")]
     public string source
     {
@@ -55,7 +55,7 @@ namespace Org.Apache.REEF.Wake.Remote.Proto
       set { _source = value; }
     }
     private string _sink = "";
-    [global::ProtoBuf.ProtoMember(4, IsRequired = false, Name=@"sink", DataFormat = global::ProtoBuf.DataFormat.Default)]
+    [global::ProtoBuf.ProtoMember(4, IsRequired = true, Name=@"sink", DataFormat = global::ProtoBuf.DataFormat.Default)]
     [global::System.ComponentModel.DefaultValue("")]
     public string sink
     {

@@ -19,9 +19,13 @@
 package org.apache.reef.wake.remote.impl;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.lang.IllegalClassException;
 import org.apache.reef.wake.remote.Encoder;
 import org.apache.reef.wake.remote.exception.RemoteRuntimeException;
 import org.apache.reef.wake.remote.proto.WakeRemoteProtos.WakeMessagePBuf;
+
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 
 /**
  * Remote event encoder using the WakeMessage protocol buffer.
@@ -55,10 +59,20 @@ public class RemoteEventEncoder<T> implements Encoder<RemoteEvent<T>> {
     }
 
     final WakeMessagePBuf.Builder builder = WakeMessagePBuf.newBuilder();
+    builder.setSource(SocketAddressToString(obj.localAddress()));
+    builder.setSink(SocketAddressToString(obj.remoteAddress()));
     builder.setSeq(obj.getSeq());
     builder.setData(ByteString.copyFrom(encoder.encode(obj.getEvent())));
 
     return builder.build().toByteArray();
   }
 
+  private static String SocketAddressToString(final SocketAddress socketAddress) {
+    if (!(socketAddress instanceof InetSocketAddress)) {
+      throw new IllegalClassException("Currently on InetSocketAddress is supported in RemoteEventEncoder.");
+    }
+
+    final InetSocketAddress inetSocketAddress = (InetSocketAddress)socketAddress;
+    return inetSocketAddress.getAddress().getHostAddress() + ':' + inetSocketAddress.getPort();
+  }
 }

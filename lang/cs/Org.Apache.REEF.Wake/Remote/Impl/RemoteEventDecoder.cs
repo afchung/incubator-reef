@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System;
+using System.Net;
 using Org.Apache.REEF.Wake.Remote.Proto;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
@@ -31,7 +33,26 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         public IRemoteEvent<T> Decode(byte[] data)
         {
             WakeMessagePBuf pbuf = WakeMessagePBuf.Deserialize(data);
-            return new RemoteEvent<T>(null, null, pbuf.seq, _decoder.Decode(pbuf.data));
+            return new RemoteEvent<T>(
+                IPEndpointFromString(pbuf.sink), IPEndpointFromString(pbuf.source), pbuf.seq, _decoder.Decode(pbuf.data));
+        }
+
+        private static IPEndPoint IPEndpointFromString(string ipEndpointStr)
+        {
+            var pair = ipEndpointStr.Split(':');
+            if (pair.Length != 2)
+            {
+                throw new ArgumentException("Expected IPEndpoint string to be of format host:port.");
+            }
+
+            try
+            {
+                return new IPEndPoint(IPAddress.Parse(pair[0]), int.Parse(pair[1]));
+            }
+            catch (Exception e)
+            {
+                throw new ArgumentException("IPEndpoint string must be of format host:port, where port is an integer.", e);
+            }
         }
     }
 }

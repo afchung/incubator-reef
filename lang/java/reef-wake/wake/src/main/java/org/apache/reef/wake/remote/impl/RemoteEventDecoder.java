@@ -23,6 +23,9 @@ import org.apache.reef.wake.remote.Decoder;
 import org.apache.reef.wake.remote.exception.RemoteRuntimeException;
 import org.apache.reef.wake.remote.proto.WakeRemoteProtos.WakeMessagePBuf;
 
+import java.net.InetSocketAddress;
+import java.util.IllegalFormatException;
+
 /**
  * Remote event decoder using the WakeMessage protocol buffer.
  *
@@ -53,10 +56,30 @@ public class RemoteEventDecoder<T> implements Decoder<RemoteEvent<T>> {
     final WakeMessagePBuf pbuf;
     try {
       pbuf = WakeMessagePBuf.parseFrom(data);
-      return new RemoteEvent<T>(null, null, pbuf.getSeq(), decoder.decode(pbuf.getData().toByteArray()));
+      return new RemoteEvent<>(
+          inetSocketAddressFromString(pbuf.getSink()),
+          inetSocketAddressFromString(pbuf.getSource()),
+          pbuf.getSeq(),
+          decoder.decode(pbuf.getData().toByteArray()));
     } catch (final InvalidProtocolBufferException e) {
       throw new RemoteRuntimeException(e);
     }
   }
 
+  private static InetSocketAddress inetSocketAddressFromString(final String inetSocketAddressStr) {
+    final String[] pair = inetSocketAddressStr.split(":");
+    if (pair.length != 2) {
+      throw new IllegalArgumentException("Expected InetSocketAddress string to be of format host:port.");
+    }
+
+    final String addr = pair[0];
+    final int port;
+    try {
+      port = Integer.parseInt(pair[1]);
+    } catch(final NumberFormatException e) {
+      throw new IllegalArgumentException("Expected port to be an integer.", e);
+    }
+
+    return new InetSocketAddress(addr, port);
+  }
 }
