@@ -45,13 +45,15 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="taskId">The identifier for this task</param>
         /// <param name="networkService">The writable network service used to send messages</param>
         /// <param name="configSerializer">Used to deserialize Group Communication configuration</param>
+        /// <param name="registrar"></param>
         /// <param name="injector">injector forked from the injector that creates this instance</param>
         [Inject]
-        public GroupCommClient(
+        private GroupCommClient(
             [Parameter(typeof(GroupCommConfigurationOptions.SerializedGroupConfigs))] ISet<string> groupConfigs,
             [Parameter(typeof(TaskConfigurationOptions.Identifier))] string taskId,
             StreamingNetworkService<GeneralGroupCommunicationMessage> networkService,
             AvroConfigurationSerializer configSerializer,
+            EndpointObserverRegistrar registrar,
             IInjector injector)
         {
             _commGroups = new Dictionary<string, ICommunicationGroupClientInternal>();

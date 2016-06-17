@@ -20,6 +20,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using Org.Apache.REEF.Common.Io;
 using Org.Apache.REEF.Common.Tasks;
 using Org.Apache.REEF.Network.Group.Config;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
@@ -54,10 +56,10 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         private readonly NodeStruct<T> _parent;
         private readonly List<NodeStruct<T>> _children;
         private readonly Dictionary<string, NodeStruct<T>> _idToNodeMap;
-        private readonly StreamingNetworkService<GeneralGroupCommunicationMessage> _networkService;
         private readonly Sender _sender;
-        private readonly BlockingCollection<NodeStruct<T>> _nodesWithData;
         private readonly IRemoteManager<NsMessage<GeneralGroupCommunicationMessage>> _remoteManager;
+        private readonly EndpointObserverRegistrar _registrar;
+        private readonly INameClient _nameClient;
 
         /// <summary>
         /// Creates a new OperatorTopology object.
@@ -70,9 +72,9 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="sleepTime">Sleep time between retry wating for registration</param>
         /// <param name="rootId">The identifier for the root Task in the topology graph</param>
         /// <param name="childIds">The set of child Task identifiers in the topology graph</param>
-        /// <param name="networkService">The network service</param>
         /// <param name="sender">The Sender used to do point to point communication</param>
-        /// <param name="remoteManager"></param>
+        /// <param name="networkService"></param>
+        /// <param name="registrar"></param>
         [Inject]
         private OperatorTopology(
             [Parameter(typeof(GroupCommConfigurationOptions.OperatorName))] string operatorName,
@@ -83,9 +85,9 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.SleepTimeWaitingForRegistration))] int sleepTime,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyRootTaskId))] string rootId,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyChildTaskIds))] ISet<string> childIds,
-            StreamingNetworkService<GeneralGroupCommunicationMessage> networkService,
             Sender sender,
-            IRemoteManager<NsMessage<GeneralGroupCommunicationMessage>> remoteManager)
+            StreamingNetworkService<GeneralGroupCommunicationMessage> networkService,
+            EndpointObserverRegistrar registrar)
         {
             _operatorName = operatorName;
             _groupName = groupName;
@@ -93,12 +95,12 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _timeout = timeout;
             _retryCount = retryCount;
             _sleepTime = sleepTime;
-            _networkService = networkService;
             _sender = sender;
-            _nodesWithData = new BlockingCollection<NodeStruct<T>>();
             _children = new List<NodeStruct<T>>();
             _idToNodeMap = new Dictionary<string, NodeStruct<T>>();
-            _remoteManager = remoteManager;
+            _nameClient = networkService.NamingClient;
+            _remoteManager = networkService.RemoteManager;
+            _registrar = registrar;
 
             if (_selfId.Equals(rootId))
             {
@@ -128,14 +130,15 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             {
                 if (_parent != null)
                 {
-                    WaitForTaskRegistration(_parent.Identifier, _retryCount, _parent);
+                    WaitForTaskRegistration(_parent.Identifier, _retryCount, new NodeMessageObserver<T>(_parent));
                 }
 
                 if (_children.Count > 0)
                 {
                     foreach (var child in _children)
                     {
-                        WaitForTaskRegistration(child.Identifier, _retryCount, child);
+                        WaitForTaskRegistration(
+                            child.Identifier, _retryCount, new NodeMessageObserver<T>(child));
                     }
                 }
             }
@@ -289,25 +292,13 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                 throw new ArgumentNullException("reduceFunction");
             }
 
-            var receivedData = new List<T>();
-            var childrenToReceiveFrom = new HashSet<string>(_children.Select(node => node.Identifier));
+            var receivedData = new ConcurrentQueue<T>();
 
-            while (childrenToReceiveFrom.Count > 0)
-            {
-                var childrenWithData = GetNodeWithData(childrenToReceiveFrom);
-
-                foreach (var child in childrenWithData)
+            Parallel.ForEach(_children,
+                child =>
                 {
-                    T[] data = ReceiveFromNode(child);
-                    if (data == null || data.Length != 1)
-                    {
-                        throw new InvalidOperationException("Received invalid data from child with id: " + child.Identifier);
-                    }
-
-                    receivedData.Add(data[0]);
-                    childrenToReceiveFrom.Remove(child.Identifier);
-                }
-            }
+                    receivedData.Enqueue(child.GetData()[0]);
+                });
 
             return reduceFunction.Reduce(receivedData);
         }
@@ -315,66 +306,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         public bool HasChildren()
         {
             return _children.Count > 0;
-        }
-
-        /// <summary>
-        /// Get a set of nodes containing an incoming message and belonging to candidate set of nodes.
-        /// </summary>
-        /// <param name="nodeSetIdentifier">Candidate set of nodes from which data is to be received</param>
-        /// <returns>A Vector of NodeStruct with incoming data.</returns>
-        private IEnumerable<NodeStruct<T>> GetNodeWithData(ICollection<string> nodeSetIdentifier)
-        {
-            List<NodeStruct<T>> nodesSubsetWithData = new List<NodeStruct<T>>();
-
-            try
-            {
-                foreach (var identifier in nodeSetIdentifier)
-                {
-                    if (!_idToNodeMap.ContainsKey(identifier))
-                    {
-                        throw new Exception("Trying to get data from the node not present in the node map");
-                    }
-
-                    if (_idToNodeMap[identifier].HasMessage())
-                    {
-                        nodesSubsetWithData.Add(_idToNodeMap[identifier]);
-                    }
-                }
-
-                if (nodesSubsetWithData.Count > 0)
-                {
-                    return nodesSubsetWithData;
-                }
-
-                while (_nodesWithData.Count != 0)
-                {
-                    _nodesWithData.Take();
-                }
-
-                var potentialNode = _nodesWithData.Take();
-
-                while (!nodeSetIdentifier.Contains(potentialNode.Identifier))
-                {
-                    potentialNode = _nodesWithData.Take();
-                }
-
-                return new NodeStruct<T>[] { potentialNode };
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
-            catch (ObjectDisposedException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
-            catch (InvalidOperationException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
         }
 
         /// <summary>
@@ -403,6 +334,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             GroupCommunicationMessage<T> gcm = new GroupCommunicationMessage<T>(_groupName, _operatorName,
                 _selfId, node.Identifier, encodedMessages);
 
+            Logger.Log(Level.Info, "SENDTONODE ID: " + node.Identifier + " MY ID: " + _selfId);
             _sender.Send(gcm);
         }
 
@@ -461,15 +393,15 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// </summary>
         /// <param name="identifier">The identifier to look up</param>
         /// <param name="retries">The number of times to retry the lookup operation</param>
-        /// <param name="node">The node to register.</param>
-        private void WaitForTaskRegistration(string identifier, int retries, NodeStruct<T> node)
+        /// <param name="nodeMessageObserver"></param>
+        private void WaitForTaskRegistration(string identifier, int retries, NodeMessageObserver<T> nodeMessageObserver)
         {
             for (int i = 0; i < retries; i++)
             {
-                var ipEndpoint = _networkService.NamingClient.Lookup(identifier);
+                var ipEndpoint = _nameClient.Lookup(identifier);
                 if (ipEndpoint != null)
                 {
-                    _remoteManager.RegisterObserver(ipEndpoint, new NodeMessageObserver<T>(_nodesWithData, node));
+                    _registrar.RegisterEndpointAndObserver<T>(_remoteManager, ipEndpoint, nodeMessageObserver);
                     return;
                 }
 

@@ -71,8 +71,8 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
                 var handler1 = Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages1.Add(msg.Data.First()));
                 var handler2 = Observer.Create<NsMessage<GeneralGroupCommunicationMessage>>(msg => messages2.Add(msg.Data.First()));
 
-                var networkServiceInjector1 = BuildNetworkServiceInjector(endpoint);
-                var networkServiceInjector2 = BuildNetworkServiceInjector(endpoint);
+                var networkServiceInjector1 = BuildNetworkServiceInjector(endpoint, handler1);
+                var networkServiceInjector2 = BuildNetworkServiceInjector(endpoint, handler2);
 
                 var networkService1 = 
                     networkServiceInjector1.GetInstance<StreamingNetworkService<GeneralGroupCommunicationMessage>>();
@@ -84,9 +84,6 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
 
                 networkService1.Register(id1);
                 networkService2.Register(id2);
-
-                networkService1.RegisterObserver(id2, handler1);
-                networkService2.RegisterObserver(id1, handler2);
 
                 Sender sender1 = networkServiceInjector1.GetInstance<Sender>();
                 Sender sender2 = networkServiceInjector2.GetInstance<Sender>();
@@ -888,7 +885,8 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
             return list;
         }
 
-        public static IInjector BuildNetworkServiceInjector(IPEndPoint nameServerEndpoint)
+        public static IInjector BuildNetworkServiceInjector(
+            IPEndPoint nameServerEndpoint, IObserver<NsMessage<GeneralGroupCommunicationMessage>> handler)
         {
             var config = TangFactory.GetTang().NewConfigurationBuilder()
                 .BindNamedParameter(typeof(NamingConfigurationOptions.NameServerAddress),
@@ -906,7 +904,11 @@ namespace Org.Apache.REEF.Network.Tests.GroupCommunication
 
             config = Configurations.Merge(config, codecConfig);
 
-            return TangFactory.GetTang().NewInjector(config);
+            var injector = TangFactory.GetTang().NewInjector(config);
+            injector.BindVolatileInstance(
+                GenericType<IObserver<NsMessage<GeneralGroupCommunicationMessage>>>.Class, handler);
+
+            return injector;
         }
 
         private GroupCommunicationMessage<string> CreateGcmStringType(string message, string from, string to)

@@ -86,8 +86,10 @@ under the License.
     <Compile Include="Group\Operators\IOperatorSpec.cs" />
     <Compile Include="Group\Pipelining\StreamingPipelineMessageCodec.cs" />
     <Compile Include="Group\Task\ICommunicationGroupClientInternal.cs" />
-    <Compile Include="Group\Task\Impl\GroupCommunicationObserverRegistrar.cs" />
+    <Compile Include="Group\Task\Impl\EndpointObserver.cs" />
+    <Compile Include="Group\Task\Impl\EndpointObserverRegistrar.cs" />
     <Compile Include="Group\Task\Impl\NodeMessageObserver.cs" />
+    <Compile Include="Group\Task\Impl\IObserverProxy.cs" />
     <Compile Include="Group\Task\IOperatorTopology.cs" />
     <Compile Include="Group\Operators\IReduceFunction.cs" />
     <Compile Include="Group\Operators\IReduceReceiver.cs" />

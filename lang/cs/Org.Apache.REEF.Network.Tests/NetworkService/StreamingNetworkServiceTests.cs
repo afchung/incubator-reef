@@ -64,24 +64,34 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                 int nameServerPort = endpoint.Port;
                 string nameServerAddr = endpoint.Address.ToString();
 
-                var networkServiceInjection1 = BuildNetworkService(networkServicePort1, nameServerPort, nameServerAddr);
+                var handlerConf1 =
+                    TangFactory.GetTang()
+                        .NewConfigurationBuilder()
+                        .BindImplementation(GenericType<IObserver<NsMessage<string>>>.Class,
+                            GenericType<NetworkMessageHandler>.Class)
+                        .Build();
 
-                var networkServiceInjection2 = BuildNetworkService(networkServicePort2, nameServerPort, nameServerAddr);
+                var handlerConf2 =
+                    TangFactory.GetTang()
+                        .NewConfigurationBuilder()
+                        .BindImplementation(GenericType<IObserver<NsMessage<string>>>.Class,
+                            GenericType<MessageHandler>.Class)
+                        .Build();
+
+                var networkServiceInjection1 = BuildNetworkService(networkServicePort1, nameServerPort, nameServerAddr,
+                    handlerConf1);
+
+                var networkServiceInjection2 = BuildNetworkService(networkServicePort2, nameServerPort, nameServerAddr,
+                   handlerConf2);
 
                 using (INetworkService<string> networkService1 = networkServiceInjection1.GetInstance<StreamingNetworkService<string>>())
                 using (INetworkService<string> networkService2 = networkServiceInjection2.GetInstance<StreamingNetworkService<string>>())
                 {
-                    var handler1 = new NetworkMessageHandler();
-                    var handler2 = new MessageHandler();
-                    queue = handler2.Queue;
-
+                    queue = networkServiceInjection2.GetInstance<MessageHandler>().Queue;
                     IIdentifier id1 = new StringIdentifier("service1");
                     IIdentifier id2 = new StringIdentifier("service2");
                     networkService1.Register(id1);
                     networkService2.Register(id2);
-
-                    networkService1.RegisterObserver(id2, handler1);
-                    networkService2.RegisterObserver(id1, handler2);
 
                     using (IConnection<string> connection = networkService1.NewConnection(id2))
                     {
@@ -107,31 +117,38 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
             int networkServicePort1 = NetworkUtils.GenerateRandomPort(6000, 7000);
             int networkServicePort2 = NetworkUtils.GenerateRandomPort(7001, 8000);
 
+            BlockingCollection<string> queue1;
+            BlockingCollection<string> queue2;
+
             using (var nameServer = NameServerTests.BuildNameServer())
             {
                 IPEndPoint endpoint = nameServer.LocalEndpoint;
                 int nameServerPort = endpoint.Port;
                 string nameServerAddr = endpoint.Address.ToString();
 
-                var networkServiceInjection1 = BuildNetworkService(networkServicePort1, nameServerPort, nameServerAddr);
-                var networkServiceInjection2 = BuildNetworkService(networkServicePort2, nameServerPort, nameServerAddr);
+                var handlerConf =
+                    TangFactory.GetTang()
+                        .NewConfigurationBuilder()
+                        .BindImplementation(GenericType<IObserver<NsMessage<string>>>.Class,
+                            GenericType<MessageHandler>.Class)
+                        .Build();
+
+                var networkServiceInjection1 = BuildNetworkService(networkServicePort1, nameServerPort, nameServerAddr,
+                    handlerConf);
+
+                var networkServiceInjection2 = BuildNetworkService(networkServicePort2, nameServerPort, nameServerAddr,
+                   handlerConf);
 
                 using (INetworkService<string> networkService1 = networkServiceInjection1.GetInstance<StreamingNetworkService<string>>())
                 using (INetworkService<string> networkService2 = networkServiceInjection2.GetInstance<StreamingNetworkService<string>>())
                 {
-                    var handler1 = new MessageHandler();
-                    var handler2 = new MessageHandler();
-                    var queue1 = handler1.Queue;
-                    var queue2 = handler2.Queue;
+                    queue1 = networkServiceInjection1.GetInstance<MessageHandler>().Queue;
+                    queue2 = networkServiceInjection2.GetInstance<MessageHandler>().Queue;
 
                     IIdentifier id1 = new StringIdentifier("service1");
                     IIdentifier id2 = new StringIdentifier("service2");
-                    
                     networkService1.Register(id1);
                     networkService2.Register(id2);
-
-                    networkService1.RegisterObserver(id2, handler1);
-                    networkService2.RegisterObserver(id1, handler2);
 
                     using (IConnection<string> connection1 = networkService1.NewConnection(id2))
                     using (IConnection<string> connection2 = networkService2.NewConnection(id1))
@@ -166,7 +183,7 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
                 .BindImplementation(GenericType<IStreamingCodec<B>>.Class, GenericType<BStreamingCodec>.Class)
                 .Build();
             IInjector injector = TangFactory.GetTang().NewInjector(conf);
-            
+
             StreamingCodecFunctionCache<A> cache = new StreamingCodecFunctionCache<A>(injector);
 
             var readFunc = cache.ReadFunction(typeof(B));
@@ -187,10 +204,10 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
             val.Value1 = "helloasync";
             val.Value2 = "reefasync";
             CancellationToken token = new CancellationToken();
-            
+
             var asyncResult = writeAsyncFunc.BeginInvoke(val, writer, token, null, null);
             writeAsyncFunc.EndInvoke(asyncResult);
-            
+
             stream.Position = 0;
             A res = readFunc(reader);
             B resB1 = res as B;
@@ -198,7 +215,7 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
             asyncResult = readAsyncFunc.BeginInvoke(reader, token, null, null);
             res = readAsyncFunc.EndInvoke(asyncResult);
             B resB2 = res as B;
-            
+
             Assert.Equal("hello", resB1.Value1);
             Assert.Equal("reef", resB1.Value2);
             Assert.Equal("helloasync", resB2.Value1);
@@ -211,13 +228,15 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
         /// <param name="networkServicePort">The port that the NetworkService will listen on</param>
         /// <param name="nameServicePort">The port of the NameServer</param>
         /// <param name="nameServiceAddr">The ip address of the NameServer</param>
+        /// <param name="handlerConf">The configuration of observer to handle incoming messages</param>
         /// <returns></returns>
         private IInjector BuildNetworkService(
             int networkServicePort,
             int nameServicePort,
-            string nameServiceAddr)
+            string nameServiceAddr,
+            IConfiguration handlerConf)
         {
-            var networkServiceConf = TangFactory.GetTang().NewConfigurationBuilder()
+            var networkServiceConf = TangFactory.GetTang().NewConfigurationBuilder(handlerConf)
                 .BindNamedParameter<NetworkServiceOptions.NetworkServicePort, int>(
                     GenericType<NetworkServiceOptions.NetworkServicePort>.Class,
                     networkServicePort.ToString(CultureInfo.CurrentCulture))
@@ -285,16 +304,18 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
         /// </summary>
         private class MessageHandler : IObserver<NsMessage<string>>
         {
-            private readonly BlockingCollection<string> _queue = new BlockingCollection<string>();
-
-            internal MessageHandler()
-            {
-            }
+            private readonly BlockingCollection<string> _queue;
 
             public BlockingCollection<string> Queue
             {
                 get { return _queue; }
-            } 
+            }
+
+            [Inject]
+            private MessageHandler()
+            {
+                _queue = new BlockingCollection<string>();
+            }
 
             public void OnNext(NsMessage<string> value)
             {
@@ -317,6 +338,11 @@ namespace Org.Apache.REEF.Network.Tests.NetworkService
         /// </summary>
         private class NetworkMessageHandler : IObserver<NsMessage<string>>
         {
+            [Inject]
+            public NetworkMessageHandler()
+            {
+            }
+
             public void OnNext(NsMessage<string> value)
             {
             }

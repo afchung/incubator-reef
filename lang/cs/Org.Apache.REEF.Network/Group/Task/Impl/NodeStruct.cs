@@ -17,6 +17,7 @@
 
 using System.Collections.Concurrent;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
+using Org.Apache.REEF.Utilities.Logging;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
@@ -27,6 +28,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     /// <typeparam name="T"> Generic type of message</typeparam>
     internal sealed class NodeStruct<T>
     {
+        private static readonly Logger Logger = Logger.GetLogger(typeof(NodeStruct<>));
+
         private readonly BlockingCollection<GroupCommunicationMessage<T>> _messageQueue;
         private readonly string _groupName;
 
@@ -59,7 +62,15 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <returns>The first available message.</returns>
         internal T[] GetData()
         {
-            return _messageQueue.Take().Data;
+            try
+            {
+                Logger.Log(Level.Info, "TAKING DATA FROM NODESTRUCT ID " + Identifier + " GROUP " + GroupName + "!!!");
+                return _messageQueue.Take().Data;
+            }
+            finally
+            {
+                Logger.Log(Level.Info, "DONE TAKING DATA FROM NODESTRUCT ID " + Identifier + " GROUP " + GroupName + "!!!");
+            }
         }
 
         /// <summary>
@@ -68,23 +79,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="gcm">The incoming message</param>
         internal void AddData(GroupCommunicationMessage<T> gcm)
         {
+            Logger.Log(Level.Info, "ADDING DATA TO NODESTRUCT ID " + Identifier + " GROUP " + GroupName + "!!!");
             _messageQueue.Add(gcm);
-        }
-
-        /// <summary>
-        /// Tells whether there is a message in queue or not.
-        /// </summary>
-        /// <returns>True if queue is non empty, false otherwise.</returns>
-        internal bool HasMessage()
-        {
-            if (_messageQueue.Count != 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
     }
 }

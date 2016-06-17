@@ -40,7 +40,7 @@ namespace Org.Apache.REEF.Tests.Functional.Group
             const int numTasks = 9;
             string testFolder = DefaultRuntimeFolder + TestId;
             TestBroadcastAndReduce(false, numTasks, testFolder);
-            ValidateSuccessForLocalRuntime(100, testFolder: testFolder);
+            ValidateSuccessForLocalRuntime(numTasks, testFolder: testFolder);
             CleanUp(testFolder);
         }
 

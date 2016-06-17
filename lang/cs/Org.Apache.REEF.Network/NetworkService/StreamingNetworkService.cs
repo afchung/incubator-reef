@@ -17,10 +17,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
 using Org.Apache.REEF.Common.Io;
 using Org.Apache.REEF.Network.NetworkService.Codec;
 using Org.Apache.REEF.Tang.Annotations;
 using Org.Apache.REEF.Tang.Exceptions;
+using Org.Apache.REEF.Utilities;
 using Org.Apache.REEF.Utilities.Logging;
 using Org.Apache.REEF.Wake;
 using Org.Apache.REEF.Wake.Remote;
@@ -44,6 +46,7 @@ namespace Org.Apache.REEF.Network.NetworkService
         /// <summary>
         /// Create a new Writable NetworkService.
         /// </summary>
+        /// <param name="messageHandler"></param>
         /// <param name="nameClient">The name client used to register Ids</param>
         /// <param name="remoteManagerFactory">Writable RemoteManagerFactory to create a 
         /// Writable RemoteManager</param>
@@ -51,12 +54,38 @@ namespace Org.Apache.REEF.Network.NetworkService
         /// <param name="localAddressProvider">The local address provider</param>
         [Inject]
         private StreamingNetworkService(
+            IObserver<NsMessage<T>> messageHandler,
+            INameClient nameClient,
+            StreamingRemoteManagerFactory remoteManagerFactory,
+            NsMessageStreamingCodec<T> codec,
+            ILocalAddressProvider localAddressProvider)
+            : this(Optional<IObserver<NsMessage<T>>>.Of(messageHandler), nameClient, remoteManagerFactory, codec, localAddressProvider)
+        {
+        }
+
+        [Inject]
+        private StreamingNetworkService(
+            INameClient nameClient,
+            StreamingRemoteManagerFactory remoteManagerFactory,
+            NsMessageStreamingCodec<T> codec,
+            ILocalAddressProvider localAddressProvider) 
+            : this(Optional<IObserver<NsMessage<T>>>.Empty(), nameClient, remoteManagerFactory, codec, localAddressProvider)
+        {
+        }
+
+        private StreamingNetworkService(
+            Optional<IObserver<NsMessage<T>>> messageHandler,
             INameClient nameClient,
             StreamingRemoteManagerFactory remoteManagerFactory,
             NsMessageStreamingCodec<T> codec,
             ILocalAddressProvider localAddressProvider)
         {
             _remoteManager = remoteManagerFactory.GetInstance(localAddressProvider.LocalAddress, codec);
+
+            if (messageHandler.IsPresent())
+            {
+                _remoteManager.RegisterObserver(new IPEndPoint(IPAddress.Any, 0), messageHandler.Value);
+            }
 
             _nameClient = nameClient;
             _connectionMap = new Dictionary<IIdentifier, IConnection<T>>();
@@ -70,6 +99,11 @@ namespace Org.Apache.REEF.Network.NetworkService
         public INameClient NamingClient
         {
             get { return _nameClient; }
+        }
+
+        public IRemoteManager<NsMessage<T>> RemoteManager
+        {
+            get { return _remoteManager; }
         }
 
         /// <summary>

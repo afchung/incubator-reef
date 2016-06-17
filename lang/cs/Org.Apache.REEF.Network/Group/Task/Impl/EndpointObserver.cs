@@ -17,25 +17,18 @@
 
 using System;
 using System.Collections.Concurrent;
-using System.Linq;
 using System.Reactive.Disposables;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
 using Org.Apache.REEF.Network.NetworkService;
-using Org.Apache.REEF.Tang.Annotations;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
-    internal sealed class GroupCommunicationObserverRegistrar<T> : IObserver<NsMessage<GeneralGroupCommunicationMessage>>
+    internal class EndpointObserver : IObserverProxy<NsMessage<GeneralGroupCommunicationMessage>>
     {
-        private readonly ConcurrentDictionary<NodeMessageObserver<T>, byte> _observers = 
-            new ConcurrentDictionary<NodeMessageObserver<T>, byte>();
+        private readonly ConcurrentDictionary<IObserver<NsMessage<GeneralGroupCommunicationMessage>>, byte> _observers =
+            new ConcurrentDictionary<IObserver<NsMessage<GeneralGroupCommunicationMessage>>, byte>();
 
-        [Inject]
-        private GroupCommunicationObserverRegistrar()
-        {
-        } 
-
-        public IDisposable Subscribe(NodeMessageObserver<T> observer)
+        public IDisposable Subscribe(IObserver<NsMessage<GeneralGroupCommunicationMessage>> observer)
         {
             _observers.TryAdd(observer, new byte());
 
@@ -48,15 +41,9 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
 
         public void OnNext(NsMessage<GeneralGroupCommunicationMessage> value)
         {
-            foreach (var message in value.Data.OfType<GroupCommunicationMessage<T>>())
+            foreach (var observer in _observers.Keys)
             {
-                foreach (var observer in _observers.Keys)
-                {
-                    if (observer.GroupName.Equals(message.GroupName) && message.)
-                    {
-                        observer.OnNext(message);
-                    }
-                }
+                observer.OnNext(value);
             }
         }
 
