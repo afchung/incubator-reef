@@ -27,8 +27,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     internal sealed class EndpointObserverRegistrar
     {
         private readonly object _lock = new object();
-        private readonly IDictionary<IPEndPoint, IObserverProxy<NsMessage<GeneralGroupCommunicationMessage>>> _endpointMap =
-            new Dictionary<IPEndPoint, IObserverProxy<NsMessage<GeneralGroupCommunicationMessage>>>();
+        private readonly IDictionary<IPEndPoint, EndpointObserver> _endpointMap =
+            new Dictionary<IPEndPoint, EndpointObserver>();
         
         [Inject]
         private EndpointObserverRegistrar()
@@ -49,6 +49,17 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                 }
 
                 _endpointMap[endpoint].Subscribe(nodeMessageObserver);
+            }
+        }
+
+        public void CompleteSubscription()
+        {
+            lock (_lock)
+            {
+                foreach (var endpointObserver in _endpointMap.Values)
+                {
+                    endpointObserver.CompleteSubscription();
+                }
             }
         }
     }

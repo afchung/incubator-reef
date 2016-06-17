@@ -186,7 +186,16 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             {
                 while (!token.IsCancellationRequested)
                 {
-                    T message = await link.ReadAsync(token);
+                    T message;
+                    try
+                    {
+                        message = await link.ReadAsync(token);
+                    }
+                    catch (Exception e)
+                    {
+                        LOGGER.Log(Level.Error, "ERROR IN PROCESSCLIENT!" + e);
+                        break;
+                    }
 
                     if (message == null)
                     {

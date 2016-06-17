@@ -37,6 +37,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     {
         private static readonly Logger LOGGER = Logger.GetLogger(typeof(CommunicationGroupClient));
         private readonly Dictionary<string, object> _operators;
+        private readonly EndpointObserverRegistrar _registrar;
 
         /// <summary>
         /// Creates a new CommunicationGroupClient.
@@ -50,7 +51,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.CommunicationGroupName))] string groupName,
             [Parameter(typeof(GroupCommConfigurationOptions.SerializedOperatorConfigs))] ISet<string> operatorConfigs,
             AvroConfigurationSerializer configSerializer,
-            IInjector injector)
+            IInjector injector,
+            EndpointObserverRegistrar registrar)
         {
             _operators = new Dictionary<string, object>();
 
@@ -71,6 +73,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                 var operatorObj = operatorInjector.GetInstance(groupCommOperatorInterface);
                 _operators.Add(operatorName, operatorObj);
             }
+
+            _registrar = registrar;
         }
 
         /// <summary>
@@ -179,6 +183,8 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                 var method = op.GetType().GetMethod("Org.Apache.REEF.Network.Group.Operators.IGroupCommOperatorInternal.WaitForRegistration", BindingFlags.NonPublic | BindingFlags.Instance);
                 method.Invoke(op, null);
             }
+
+            _registrar.CompleteSubscription();
         }
     }
 }

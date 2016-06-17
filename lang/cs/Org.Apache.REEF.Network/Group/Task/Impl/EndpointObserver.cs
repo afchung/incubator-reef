@@ -18,15 +18,21 @@
 using System;
 using System.Collections.Concurrent;
 using System.Reactive.Disposables;
+using System.Threading;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
 using Org.Apache.REEF.Network.NetworkService;
+using Org.Apache.REEF.Utilities.Logging;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
     internal class EndpointObserver : IObserverProxy<NsMessage<GeneralGroupCommunicationMessage>>
     {
+        private static readonly Logger Logger = REEF.Utilities.Logging.Logger.GetLogger(typeof(EndpointObserver));
+
         private readonly ConcurrentDictionary<IObserver<NsMessage<GeneralGroupCommunicationMessage>>, byte> _observers =
             new ConcurrentDictionary<IObserver<NsMessage<GeneralGroupCommunicationMessage>>, byte>();
+
+        private readonly ManualResetEventSlim _subscriptionEvent = new ManualResetEventSlim();
 
         public IDisposable Subscribe(IObserver<NsMessage<GeneralGroupCommunicationMessage>> observer)
         {
@@ -41,10 +47,18 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
 
         public void OnNext(NsMessage<GeneralGroupCommunicationMessage> value)
         {
+            Logger.Log(Level.Error, "GETTING MESSAGE!!!");
+            _subscriptionEvent.Wait();
             foreach (var observer in _observers.Keys)
             {
+                Logger.Log(Level.Error, "RELAYING!!!");
                 observer.OnNext(value);
             }
+        }
+
+        public void CompleteSubscription()
+        {
+            _subscriptionEvent.Set();
         }
 
         public void OnError(Exception error)

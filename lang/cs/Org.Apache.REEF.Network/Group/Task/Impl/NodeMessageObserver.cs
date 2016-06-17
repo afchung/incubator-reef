@@ -18,11 +18,13 @@
 using System;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
 using Org.Apache.REEF.Network.NetworkService;
+using Org.Apache.REEF.Utilities.Logging;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
     internal sealed class NodeMessageObserver<T> : IObserver<NsMessage<GeneralGroupCommunicationMessage>>
     {
+        private static readonly Logger Logger = Logger.GetLogger(typeof(NodeMessageObserver<>));
         private readonly NodeStruct<T> _nodeStruct;
 
         internal NodeMessageObserver(
@@ -36,9 +38,18 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             foreach (var data in value.Data)
             {
                 var gcMessage = data as GroupCommunicationMessage<T>;
-                if (gcMessage != null && gcMessage.GroupName.Equals(_nodeStruct.GroupName))
+                if (gcMessage != null)
                 {
-                    _nodeStruct.AddData(gcMessage);
+                    Logger.Log(Level.Error, "GOT MESSAGE FROM " + gcMessage.Source);
+                    if (gcMessage.GroupName.Equals(_nodeStruct.GroupName))
+                    {
+                        Logger.Log(Level.Error, "SAME GROUP!!!");
+                        _nodeStruct.AddData(gcMessage);
+                    }
+                    else
+                    {
+                        Logger.Log(Level.Error, "NOT THE SAME GROUP!!!");
+                    }
                 }
             }
         }

@@ -336,6 +336,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
 
             Logger.Log(Level.Info, "SENDTONODE ID: " + node.Identifier + " MY ID: " + _selfId);
             _sender.Send(gcm);
+            Logger.Log(Level.Info, "SENTTONODE ID: " + node.Identifier + " MY ID: " + _selfId);
         }
 
         /// <summary>
@@ -363,6 +364,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
 
         private void ScatterHelper(IList<T> messages, List<NodeStruct<T>> order, int count)
         {
+            Logger.Log(Level.Info, "SCATTERING TO " + order.Count + " CHILDREN!!!");
             if (count <= 0)
             {
                 throw new ArgumentException("Count must be positive");
@@ -401,7 +403,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                 var ipEndpoint = _nameClient.Lookup(identifier);
                 if (ipEndpoint != null)
                 {
-                    _registrar.RegisterEndpointAndObserver<T>(_remoteManager, ipEndpoint, nodeMessageObserver);
+                    _registrar.RegisterEndpointAndObserver(_remoteManager, ipEndpoint, nodeMessageObserver);
                     return;
                 }
 
