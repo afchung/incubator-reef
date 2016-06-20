@@ -21,7 +21,7 @@ using Org.Apache.REEF.Wake.Remote.Proto;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
-    public class RemoteEventDecoder<T> : IDecoder<IRemoteEvent<T>>
+    internal sealed class RemoteEventDecoder<T> : IDecoder<IRemoteEvent<T>>
     {
         private readonly IDecoder<T> _decoder;
 
@@ -39,6 +39,11 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
 
         private static IPEndPoint IPEndpointFromString(string ipEndpointStr)
         {
+            if (string.IsNullOrWhiteSpace(ipEndpointStr))
+            {
+                return null;
+            }
+
             var pair = ipEndpointStr.Split(':');
             if (pair.Length != 2)
             {

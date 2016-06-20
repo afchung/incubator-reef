@@ -28,18 +28,16 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     /// </summary>
     internal sealed class ObserverContainer<T> : IObserver<TransportEvent<IRemoteEvent<T>>>
     {
-        private readonly ConcurrentDictionary<IPEndPoint, IObserver<T>> _endpointMap;
-        private readonly ConcurrentDictionary<Type, IObserver<IRemoteMessage<T>>> _typeMap;
-        private IObserver<T> _universalObserver;
+        private readonly ConcurrentDictionary<ILink<IRemoteEvent<T>>, IPEndPoint> _linkMap = 
+            new ConcurrentDictionary<ILink<IRemoteEvent<T>>,IPEndPoint>();
 
-        /// <summary>
-        /// Constructs a new ObserverContainer used to manage remote IObservers.
-        /// </summary>
-        public ObserverContainer()
-        {
-            _endpointMap = new ConcurrentDictionary<IPEndPoint, IObserver<T>>(new IPEndPointComparer());
-            _typeMap = new ConcurrentDictionary<Type, IObserver<IRemoteMessage<T>>>();
-        }
+        private readonly ConcurrentDictionary<IPEndPoint, IObserver<T>> _endpointMap = 
+            new ConcurrentDictionary<IPEndPoint,IObserver<T>>();
+
+        private readonly ConcurrentDictionary<Type, IObserver<IRemoteMessage<T>>> _typeMap =
+            new ConcurrentDictionary<Type,IObserver<IRemoteMessage<T>>>();
+
+        private IObserver<T> _universalObserver;
 
         /// <summary>
         /// Registers an IObserver used to handle incoming messages from the remote host
@@ -78,9 +76,11 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <param name="transportEvent">The incoming remote event</param>
         public void OnNext(TransportEvent<IRemoteEvent<T>> transportEvent)
         {
-            IRemoteEvent<T> remoteEvent = transportEvent.Data;
-            remoteEvent.LocalEndPoint = transportEvent.Link.LocalEndpoint;
-            remoteEvent.RemoteEndPoint = transportEvent.Link.RemoteEndpoint;
+            // The first RemoteEvent from a given link always has a non-null endpoint.
+            var clientEndpoint = _linkMap.GetOrAdd(transportEvent.Link, transportEvent.Data.LocalEndPoint);
+            IRemoteEvent<T> remoteEvent = new RemoteEvent<T>(
+                transportEvent.Link.LocalEndpoint, clientEndpoint, transportEvent.Data.Sequence, transportEvent.Data.Value);
+
             T value = remoteEvent.Value;
             bool handled = false;
 

@@ -18,6 +18,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using Org.Apache.REEF.Wake.StreamingCodec;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
@@ -264,6 +265,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         private class ProxyObserver : IRemoteObserver<T>
         {
             private readonly StreamingTransportClient<IRemoteEvent<T>> _client;
+            private int _isFirstMessage = 1;
+            private int _messageCount = 0;
 
             /// <summary>
             /// Create new ProxyObserver
@@ -281,9 +284,11 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             /// <param name="message">The message to send</param>
             public void OnNext(T message)
             {
-                IRemoteEvent<T> remoteEvent = new RemoteEvent<T>(_client.Link.LocalEndpoint,
-                    _client.Link.RemoteEndpoint,
-                    message);
+                var messageCount = Interlocked.Increment(ref _messageCount);
+
+                IRemoteEvent<T> remoteEvent = (Interlocked.Exchange(ref _isFirstMessage, 0) == 1)
+                    ? new RemoteEvent<T>(_client.Link.LocalEndpoint, _client.Link.RemoteEndpoint, message)
+                    : new RemoteEvent<T>(messageCount, message);
 
                 _client.Send(remoteEvent);
             }

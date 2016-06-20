@@ -59,15 +59,19 @@ public class RemoteEventEncoder<T> implements Encoder<RemoteEvent<T>> {
     }
 
     final WakeMessagePBuf.Builder builder = WakeMessagePBuf.newBuilder();
-    builder.setSource(SocketAddressToString(obj.localAddress()));
-    builder.setSink(SocketAddressToString(obj.remoteAddress()));
+    builder.setSource(socketAddressToString(obj.localAddress()));
+    builder.setSink(socketAddressToString(obj.remoteAddress()));
     builder.setSeq(obj.getSeq());
     builder.setData(ByteString.copyFrom(encoder.encode(obj.getEvent())));
 
     return builder.build().toByteArray();
   }
 
-  private static String SocketAddressToString(final SocketAddress socketAddress) {
+  private static String socketAddressToString(final SocketAddress socketAddress) {
+    if (socketAddress == null) {
+      return null;
+    }
+
     if (!(socketAddress instanceof InetSocketAddress)) {
       throw new IllegalClassException("Currently on InetSocketAddress is supported in RemoteEventEncoder.");
     }

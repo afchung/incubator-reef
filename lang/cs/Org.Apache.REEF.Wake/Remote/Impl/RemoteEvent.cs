@@ -15,14 +15,31 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System;
 using System.Net;
-using Org.Apache.REEF.Tang.Annotations;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
-    public class RemoteEvent<T> : IRemoteEvent<T>
+    internal sealed class RemoteEvent<T> : IRemoteEvent<T>
     {
+        /// <summary>
+        /// Constructor for the first RemoteEvent on the sending side.
+        /// </summary>
+        public RemoteEvent(IPEndPoint localEndpoint, IPEndPoint remoteEndpoint, T value)
+            : this(localEndpoint, remoteEndpoint, 0, value)
+        {
+        }
+
+        /// <summary>
+        /// Constructor for subsequent RemoteEvents on the sending side.
+        /// </summary>
+        public RemoteEvent(long seq, T value)
+            : this(null, null, seq, value)
+        {
+        }
+
+        /// <summary>
+        /// Constructor for Decoder.
+        /// </summary>
         public RemoteEvent(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint, long seq, T value)
         {
             LocalEndPoint = localEndPoint;
@@ -31,25 +48,12 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             Sequence = seq;
         }
 
-        public RemoteEvent(IPEndPoint localEndpoint, IPEndPoint remoteEndpoint, T value)
-        {
-            LocalEndPoint = localEndpoint;
-            RemoteEndPoint = remoteEndpoint;
-            Value = value;
-        }
+        public IPEndPoint LocalEndPoint { get; private set; }
 
-        [Inject]
-        public RemoteEvent()
-        {
-        }
+        public IPEndPoint RemoteEndPoint { get; private set; }
 
-        public IPEndPoint LocalEndPoint { get; set; }
+        public T Value { get; private set; }
 
-        public IPEndPoint RemoteEndPoint { get; set; }
-
-        public T Value { get; set; }
-
-        [Obsolete("This field is used in Java code only; keeping it for consistency across Language. See [REEF-445]", false)]
-        public long Sequence { get; set; }
+        public long Sequence { get; private set; }
     }
 }

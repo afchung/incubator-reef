@@ -18,8 +18,8 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Threading;
 using Org.Apache.REEF.Utilities.Logging;
-using Org.Apache.REEF.Wake.Util;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
@@ -194,15 +194,13 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
 
         private ProxyObserver CreateRemoteObserver(IPEndPoint remoteEndpoint)
         {
-            TransportClient<IRemoteEvent<T>> client =
-                new TransportClient<IRemoteEvent<T>>(remoteEndpoint, _codec, _observerContainer, _tcpClientFactory);
-            var msg = string.Format("NewClientConnection: Local {0} connected to Remote {1}",
-                client.Link.LocalEndpoint.ToString(),
-                client.Link.RemoteEndpoint.ToString());
-            LOGGER.Log(Level.Info, msg);
+            var client = new TransportClient<IRemoteEvent<T>>(
+                remoteEndpoint, _codec, _observerContainer, _tcpClientFactory);
 
-            ProxyObserver remoteObserver = new ProxyObserver(client);
-            return remoteObserver;
+            LOGGER.Log(Level.Info, 
+                "NewClientConnection: Local {0} connected to Remote {1}", client.Link.LocalEndpoint, client.Link.RemoteEndpoint);
+
+            return new ProxyObserver(client);
         }
 
         /// <summary>
@@ -290,7 +288,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         private class ProxyObserver : IRemoteObserver<T>
         {
             private readonly TransportClient<IRemoteEvent<T>> _client;
-            private int _messageCount;
+            private int _isFirstMessage = 1;
+            private int _messageCount = 0;
 
             /// <summary>
             /// Create new ProxyObserver
@@ -300,7 +299,6 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             public ProxyObserver(TransportClient<IRemoteEvent<T>> client)
             {
                 _client = client;
-                _messageCount = 0;
             }
 
             /// <summary>
@@ -309,12 +307,12 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             /// <param name="message">The message to send</param>
             public void OnNext(T message)
             {
-                IRemoteEvent<T> remoteEvent = new RemoteEvent<T>(_client.Link.LocalEndpoint, _client.Link.RemoteEndpoint, message)
-                {
-                    Sequence = _messageCount
-                };
+                var messageCount = Interlocked.Increment(ref _messageCount);
 
-                _messageCount++;
+                IRemoteEvent<T> remoteEvent = (Interlocked.Exchange(ref _isFirstMessage, 0) == 1)
+                    ? new RemoteEvent<T>(_client.Link.LocalEndpoint, _client.Link.RemoteEndpoint, message)
+                    : new RemoteEvent<T>(messageCount, message);
+
                 _client.Send(remoteEvent);
             }
 

@@ -24,7 +24,6 @@ import org.apache.reef.wake.remote.exception.RemoteRuntimeException;
 import org.apache.reef.wake.remote.proto.WakeRemoteProtos.WakeMessagePBuf;
 
 import java.net.InetSocketAddress;
-import java.util.IllegalFormatException;
 
 /**
  * Remote event decoder using the WakeMessage protocol buffer.

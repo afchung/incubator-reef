@@ -15,11 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System.Net;
 using Org.Apache.REEF.Wake.Remote.Proto;
 
 namespace Org.Apache.REEF.Wake.Remote.Impl
 {
-    public class RemoteEventEncoder<T> : IEncoder<IRemoteEvent<T>>
+    internal sealed class RemoteEventEncoder<T> : IEncoder<IRemoteEvent<T>>
     {
         private readonly IEncoder<T> _encoder;
 
@@ -30,12 +31,23 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
 
         public byte[] Encode(IRemoteEvent<T> obj)
         {
-            WakeMessagePBuf pbuf = new WakeMessagePBuf();
-            pbuf.source = obj.LocalEndPoint.Address + ":" + obj.LocalEndPoint.Port;
-            pbuf.sink = obj.RemoteEndPoint.Address + ":" + obj.RemoteEndPoint.Port;
-            pbuf.data = _encoder.Encode(obj.Value);
-            pbuf.seq = obj.Sequence;
-            return pbuf.Serialize();
+            return new WakeMessagePBuf
+            {
+                source = EncodeIPEndpoint(obj.LocalEndPoint),
+                sink = EncodeIPEndpoint(obj.RemoteEndPoint),
+                data = _encoder.Encode(obj.Value),
+                seq = obj.Sequence,
+            }.Serialize();
+        }
+
+        private static string EncodeIPEndpoint(IPEndPoint endpoint)
+        {
+            if (endpoint == null)
+            {
+                return null;
+            }
+
+            return endpoint.Address + ":" + endpoint.Port;
         }
     }
 }

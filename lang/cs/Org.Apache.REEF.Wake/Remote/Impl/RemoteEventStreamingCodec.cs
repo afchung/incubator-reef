@@ -97,6 +97,11 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         private static async Task<IPEndPoint> ReadIPEndpointAsync(IDataReader reader, CancellationToken token)
         {
             var addrStr = await reader.ReadStringAsync(token);
+            if (string.IsNullOrWhiteSpace(addrStr))
+            {
+                return null;
+            }
+
             var ipAddr = IPAddress.Parse(addrStr);
             var port = await reader.ReadInt32Async(token);
             return new IPEndPoint(ipAddr, port);
@@ -104,14 +109,22 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
 
         private static void WriteIPEndpoint(IDataWriter writer, IPEndPoint endpoint)
         {
-            writer.WriteString(endpoint.Address.ToString());
-            writer.WriteInt32(endpoint.Port);
+            var addrStr = endpoint == null ? string.Empty : endpoint.Address.ToString();
+            writer.WriteString(addrStr);
+            if (endpoint != null)
+            {
+                writer.WriteInt32(endpoint.Port);
+            }
         }
 
         private static async Task WriteIPEndpointAsync(IDataWriter writer, IPEndPoint endpoint, CancellationToken token)
         {
-            await writer.WriteStringAsync(endpoint.Address.ToString(), token);
-            await writer.WriteInt32Async(endpoint.Port, token);
+            var addrStr = endpoint == null ? string.Empty : endpoint.Address.ToString();
+            await writer.WriteStringAsync(addrStr, token);
+            if (endpoint != null)
+            {
+                await writer.WriteInt32Async(endpoint.Port, token);
+            }
         }
     }
 }

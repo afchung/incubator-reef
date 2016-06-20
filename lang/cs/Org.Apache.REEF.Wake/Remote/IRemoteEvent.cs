@@ -19,11 +19,11 @@ using System.Net;
 
 namespace Org.Apache.REEF.Wake.Remote
 {
-    public interface IRemoteEvent<T>
+    internal interface IRemoteEvent<T>
     {
-        IPEndPoint LocalEndPoint { get; set; }
+        IPEndPoint LocalEndPoint { get; }
 
-        IPEndPoint RemoteEndPoint { get; set; }
+        IPEndPoint RemoteEndPoint { get; }
 
         T Value { get; }
 
