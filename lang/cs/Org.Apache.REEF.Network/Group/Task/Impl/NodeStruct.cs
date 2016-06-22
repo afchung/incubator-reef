@@ -15,8 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-using System;
-using System.Collections.Concurrent;
+using System.Threading.Tasks.Dataflow;
 using Org.Apache.REEF.Network.Group.Driver.Impl;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
@@ -28,7 +27,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     /// <typeparam name="T"> Generic type of message</typeparam>
     internal sealed class NodeStruct<T>
     {
-        private readonly BlockingCollection<GroupCommunicationMessage<T>> _messageQueue;
+        private readonly BufferBlock<GroupCommunicationMessage<T>> _messageQueue;
 
         /// <summary>
         /// Creates a new NodeStruct.
@@ -37,7 +36,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         internal NodeStruct(string id)
         {
             Identifier = id;
-            _messageQueue = new BlockingCollection<GroupCommunicationMessage<T>>();
+            _messageQueue = new BufferBlock<GroupCommunicationMessage<T>>();
         }
 
         /// <summary>
@@ -50,9 +49,9 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// Gets the first message in the message queue.
         /// </summary>
         /// <returns>The first available message.</returns>
-        internal T[] GetData()
+        internal async System.Threading.Tasks.Task<T[]> GetDataAsync()
         {
-            return _messageQueue.Take().Data;
+            return (await _messageQueue.ReceiveAsync()).Data;
         }
 
         /// <summary>
@@ -61,23 +60,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="gcm">The incoming message</param>
         internal void AddData(GroupCommunicationMessage<T> gcm)
         {
-            _messageQueue.Add(gcm);
-        }
-
-        /// <summary>
-        /// Tells whether there is a message in queue or not.
-        /// </summary>
-        /// <returns>True if queue is non empty, false otherwise.</returns>
-        internal bool HasMessage()
-        {
-            if (_messageQueue.Count != 0)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            _messageQueue.Post(gcm);
         }
     }
 }

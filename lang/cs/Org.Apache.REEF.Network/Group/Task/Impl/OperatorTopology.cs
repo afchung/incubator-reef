@@ -20,6 +20,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Org.Apache.REEF.Common.Io;
 using Org.Apache.REEF.Common.Tasks;
 using Org.Apache.REEF.Network.Group.Config;
@@ -289,7 +290,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <returns>The parent Task's message</returns>
         public T ReceiveFromParent()
         {
-            T[] data = ReceiveFromNode(_parent);
+            T[] data = _parent.GetDataAsync().Result;
             if (data == null || data.Length != 1)
             {
                 throw new InvalidOperationException("Cannot receive data from parent node");
@@ -300,7 +301,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
 
         public IList<T> ReceiveListFromParent()
         {
-            T[] data = ReceiveFromNode(_parent);
+            var data = _parent.GetDataAsync().GetAwaiter().GetResult();
             if (data == null || data.Length == 0)
             {
                 throw new InvalidOperationException("Cannot receive data from parent node");
@@ -322,25 +323,13 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                 throw new ArgumentNullException("reduceFunction");
             }
 
-            var receivedData = new List<T>();
-            var childrenToReceiveFrom = new HashSet<string>(_children.Select(node => node.Identifier));
+            var receivedData = new ConcurrentQueue<T>();
 
-            while (childrenToReceiveFrom.Count > 0)
+            System.Threading.Tasks.Task.WaitAll(_children.Select(child1 => System.Threading.Tasks.Task.Run(async () =>
             {
-                var childrenWithData = GetNodeWithData(childrenToReceiveFrom);
-
-                foreach (var child in childrenWithData)
-                {
-                    T[] data = ReceiveFromNode(child);
-                    if (data == null || data.Length != 1)
-                    {
-                        throw new InvalidOperationException("Received invalid data from child with id: " + child.Identifier);
-                    }
-
-                    receivedData.Add(data[0]);
-                    childrenToReceiveFrom.Remove(child.Identifier);
-                }
-            }
+                var data = (await child1.GetDataAsync()).First();
+                receivedData.Enqueue(data);
+            })).ToArray());
 
             return reduceFunction.Reduce(receivedData);
         }
@@ -359,74 +348,9 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         }
 
         /// <summary>
-        /// Get a set of nodes containing an incoming message and belonging to candidate set of nodes.
-        /// </summary>
-        /// <param name="nodeSetIdentifier">Candidate set of nodes from which data is to be received</param>
-        /// <returns>A Vector of NodeStruct with incoming data.</returns>
-        private IEnumerable<NodeStruct<T>> GetNodeWithData(IEnumerable<string> nodeSetIdentifier)
-        {
-            CancellationTokenSource timeoutSource = new CancellationTokenSource(_timeout);
-            List<NodeStruct<T>> nodesSubsetWithData = new List<NodeStruct<T>>();
-
-            try
-            {
-                lock (_thisLock)
-                {
-                    foreach (var identifier in nodeSetIdentifier)
-                    {
-                        if (!_idToNodeMap.ContainsKey(identifier))
-                        {
-                            throw new Exception("Trying to get data from the node not present in the node map");
-                        }
-
-                        if (_idToNodeMap[identifier].HasMessage())
-                        {
-                            nodesSubsetWithData.Add(_idToNodeMap[identifier]);
-                        }
-                    }
-
-                    if (nodesSubsetWithData.Count > 0)
-                    {
-                        return nodesSubsetWithData;
-                    }
-
-                    while (_nodesWithData.Count != 0)
-                    {
-                        _nodesWithData.Take();
-                    }
-                }
-
-                var potentialNode = _nodesWithData.Take();
-
-                while (!nodeSetIdentifier.Contains(potentialNode.Identifier))
-                {
-                    potentialNode = _nodesWithData.Take();
-                }
-
-                return new NodeStruct<T>[] { potentialNode };
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
-            catch (ObjectDisposedException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
-            catch (InvalidOperationException)
-            {
-                Logger.Log(Level.Error, "No data to read from child");
-                throw;
-            }
-        }
-
-        /// <summary>
         /// Sends the message to the Task represented by the given NodeStruct.
         /// </summary>
         /// <param name="message">The message to send</param>
-        /// <param name="msgType">The message type</param>
         /// <param name="node">The NodeStruct representing the Task to send to</param>
         private void SendToNode(T message, NodeStruct<T> node)
         {
@@ -440,7 +364,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// Sends the list of messages to the Task represented by the given NodeStruct.
         /// </summary>
         /// <param name="messages">The list of messages to send</param>
-        /// <param name="msgType">The message type</param>
         /// <param name="node">The NodeStruct representing the Task to send to</param>
         private void SendToNode(IList<T> messages, NodeStruct<T> node)
         {
@@ -450,18 +373,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                 _selfId, node.Identifier, encodedMessages);
 
             _sender.Send(gcm);
-        }
-
-        /// <summary>
-        /// Receive a message from the Task represented by the given NodeStruct.
-        /// Removes the NodeStruct from the nodesWithData queue if requested.
-        /// </summary>
-        /// <param name="node">The node to receive from</param>
-        /// <returns>The byte array message from the node</returns>
-        private T[] ReceiveFromNode(NodeStruct<T> node)
-        {
-            var data = node.GetData();
-            return data;
         }
 
         /// <summary>
