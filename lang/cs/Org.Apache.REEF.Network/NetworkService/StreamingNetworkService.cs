@@ -81,11 +81,47 @@ namespace Org.Apache.REEF.Network.NetworkService
         }
 
         /// <summary>
+        /// Create a new Writable NetworkService.
+        /// </summary>
+        /// <param name="messageHandler">The observer to handle incoming messages</param>
+        /// <param name="idFactory">The factory used to create IIdentifiers</param>
+        /// <param name="nameClient">The name client used to register Ids</param>
+        /// <param name="remoteManagerFactory">Writable RemoteManagerFactory to create a 
+        /// Writable RemoteManager</param>
+        /// <param name="codec">Codec for Network Service message</param>
+        /// <param name="localAddressProvider">The local address provider</param>
+        /// <param name="injector">Fork of the injector that created the Network service</param>
+        [Inject]
+        private StreamingNetworkService(
+            IObserver<IRemoteMessage<NsMessage<T>>> messageHandler,
+            IIdentifierFactory idFactory,
+            INameClient nameClient,
+            StreamingRemoteManagerFactory remoteManagerFactory,
+            NsMessageStreamingCodec<T> codec,
+            ILocalAddressProvider localAddressProvider,
+            IInjector injector)
+        {
+            _remoteManager = remoteManagerFactory.GetInstance(localAddressProvider.LocalAddress, codec);
+
+            _messageHandlerDisposable = _remoteManager.RegisterObserver(messageHandler);
+
+            _nameClient = nameClient;
+            _connectionMap = new Dictionary<IIdentifier, IConnection<T>>();
+
+            Logger.Log(Level.Verbose, "Started network service");
+        }
+
+        /// <summary>
         /// Name client for registering ids
         /// </summary>
         public INameClient NamingClient
         {
             get { return _nameClient; }
+        }
+
+        public IRemoteManager<NsMessage<T>> RemoteManager
+        {
+            get { return _remoteManager; }
         }
 
         /// <summary>

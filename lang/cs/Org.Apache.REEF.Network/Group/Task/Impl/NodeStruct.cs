@@ -33,9 +33,13 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// Creates a new NodeStruct.
         /// </summary>
         /// <param name="id">The Task identifier</param>
-        internal NodeStruct(string id)
+        /// <param name="groupId"></param>
+        /// <param name="operatorName"></param>
+        internal NodeStruct(string id, string groupId, string operatorName)
         {
             Identifier = id;
+            GroupId = groupId;
+            OperatorName = operatorName;
             _messageQueue = new BlockingCollection<GroupCommunicationMessage<T>>();
         }
 
@@ -44,6 +48,10 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// messages in the message queue.
         /// </summary>
         internal string Identifier { get; private set; }
+
+        internal string GroupId { get; private set; }
+
+        internal string OperatorName { get; private set; }
 
         /// <summary>
         /// Gets the first message in the message queue.

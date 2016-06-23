@@ -29,8 +29,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
     internal sealed class ObserverContainer<T> : IObserver<TransportEvent<IRemoteEvent<T>>>
     {
         private readonly ConcurrentDictionary<IPEndPoint, IObserver<T>> _endpointMap;
-        private readonly ConcurrentDictionary<Type, IObserver<IRemoteMessage<T>>> _typeMap;
         private IObserver<T> _universalObserver;
+        private IObserver<IRemoteMessage<T>> _remoteMessageUniversalObserver;
 
         /// <summary>
         /// Constructs a new ObserverContainer used to manage remote IObservers.
@@ -38,7 +38,6 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         public ObserverContainer()
         {
             _endpointMap = new ConcurrentDictionary<IPEndPoint, IObserver<T>>(new IPEndPointComparer());
-            _typeMap = new ConcurrentDictionary<Type, IObserver<IRemoteMessage<T>>>();
         }
 
         /// <summary>
@@ -67,8 +66,8 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
         /// <returns>An IDisposable used to unregister the observer with</returns>
         public IDisposable RegisterObserver(IObserver<IRemoteMessage<T>> observer)
         {
-            _typeMap[typeof(T)] = observer;
-            return Disposable.Create(() => _typeMap.TryRemove(typeof(T), out observer));
+            _remoteMessageUniversalObserver = observer;
+            return Disposable.Create(() => _remoteMessageUniversalObserver = null);
         }
 
         /// <summary>
@@ -84,28 +83,29 @@ namespace Org.Apache.REEF.Wake.Remote.Impl
             T value = remoteEvent.Value;
             bool handled = false;
 
-            IObserver<T> observer1;
-            IObserver<IRemoteMessage<T>> observer2;
             if (_universalObserver != null)
             {
                 _universalObserver.OnNext(value);
                 handled = true;
             }
-            if (_endpointMap.TryGetValue(remoteEvent.RemoteEndPoint, out observer1))
-            {
-                // IObserver was registered by IPEndpoint
-                observer1.OnNext(value);
-                handled = true;
-            } 
-            else if (_typeMap.TryGetValue(value.GetType(), out observer2))
+
+            if (_remoteMessageUniversalObserver != null)
             {
                 // IObserver was registered by event type
                 IRemoteIdentifier id = new SocketRemoteIdentifier(remoteEvent.RemoteEndPoint);
                 IRemoteMessage<T> remoteMessage = new DefaultRemoteMessage<T>(id, value);
-                observer2.OnNext(remoteMessage);
+                _remoteMessageUniversalObserver.OnNext(remoteMessage);
                 handled = true;
             }
 
+            IObserver<T> endpointObserver;
+            if (_endpointMap.TryGetValue(remoteEvent.RemoteEndPoint, out endpointObserver))
+            {
+                // IObserver was registered by IPEndpoint
+                endpointObserver.OnNext(value);
+                handled = true;
+            }
+            
             if (!handled)
             {
                 throw new WakeRuntimeException("Unrecognized Wake RemoteEvent message");

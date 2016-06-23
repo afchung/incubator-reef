@@ -53,17 +53,13 @@ namespace Org.Apache.REEF.Network.Group.Operators.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.OperatorName))] string operatorName,
             [Parameter(typeof(GroupCommConfigurationOptions.CommunicationGroupName))] string groupName,
             [Parameter(typeof(GroupCommConfigurationOptions.Initialize))] bool initialize,
-            OperatorTopology<T> topology, 
-            ICommunicationGroupNetworkObserver networkHandler)
+            OperatorTopology<T> topology)
         {
             OperatorName = operatorName;
             GroupName = groupName;
             Version = DefaultVersion;
             _topology = topology;
             _initialize = initialize;
-
-            var msgHandler = Observer.Create<GeneralGroupCommunicationMessage>(message => topology.OnNext(message));
-            networkHandler.Register(operatorName, msgHandler);
         }
 
         /// <summary>

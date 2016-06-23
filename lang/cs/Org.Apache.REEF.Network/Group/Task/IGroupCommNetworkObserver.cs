@@ -20,6 +20,7 @@ using Org.Apache.REEF.Network.Group.Driver.Impl;
 using Org.Apache.REEF.Network.Group.Task.Impl;
 using Org.Apache.REEF.Network.NetworkService;
 using Org.Apache.REEF.Tang.Annotations;
+using Org.Apache.REEF.Wake.Remote;
 
 namespace Org.Apache.REEF.Network.Group.Task
 {
@@ -28,16 +29,8 @@ namespace Org.Apache.REEF.Network.Group.Task
     /// Writable Version
     /// </summary>
     [DefaultImplementation(typeof(GroupCommNetworkObserver))]
-    internal interface IGroupCommNetworkObserver : IObserver<NsMessage<GeneralGroupCommunicationMessage>>
+    internal interface IGroupCommNetworkObserver : IObserver<IRemoteMessage<NsMessage<GeneralGroupCommunicationMessage>>>
     {
-        /// <summary>
-        /// Registers the network handler for the given CommunicationGroup.
-        /// When messages are sent to the specified group name, the given handler
-        /// will be invoked with that message.
-        /// </summary>
-        /// <param name="groupName">The group name for the network handler</param>
-        /// <param name="commGroupHandler">The network handler to invoke when
-        /// messages are sent to the given group.</param>
-        void Register(string groupName, IObserver<GeneralGroupCommunicationMessage> commGroupHandler);
+        TaskMessageObserver<T> Register<T>(string taskSourceId);
     }
 }

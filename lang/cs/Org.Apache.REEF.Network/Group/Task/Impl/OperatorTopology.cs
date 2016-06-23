@@ -39,7 +39,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
     /// Communication Group.
     /// </summary>
     /// <typeparam name="T">The message type</typeparam>
-    public sealed class OperatorTopology<T> : IOperatorTopology<T>, IObserver<GeneralGroupCommunicationMessage>
+    public sealed class OperatorTopology<T> : IOperatorTopology<T>
     {
         private static readonly Logger Logger = Logger.GetLogger(typeof(OperatorTopology<>));
 
@@ -51,6 +51,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         private readonly int _sleepTime;
 
         private readonly ChildNodeContainer<T> _childNodeContainer = new ChildNodeContainer<T>();
+        private readonly IGroupCommNetworkObserver _networkObserver;
         private readonly NodeStruct<T> _parent;
         private readonly INameClient _nameClient;
         private readonly Sender _sender;
@@ -66,6 +67,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         /// <param name="sleepTime">Sleep time between retry wating for registration</param>
         /// <param name="rootId">The identifier for the root Task in the topology graph</param>
         /// <param name="childIds">The set of child Task identifiers in the topology graph</param>
+        /// <param name="networkObserver"></param>
         /// <param name="networkService">The network service</param>
         /// <param name="sender">The Sender used to do point to point communication</param>
         [Inject]
@@ -78,6 +80,7 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             [Parameter(typeof(GroupCommConfigurationOptions.SleepTimeWaitingForRegistration))] int sleepTime,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyRootTaskId))] string rootId,
             [Parameter(typeof(GroupCommConfigurationOptions.TopologyChildTaskIds))] ISet<string> childIds,
+            IGroupCommNetworkObserver networkObserver,
             StreamingNetworkService<GeneralGroupCommunicationMessage> networkService,
             Sender sender)
         {
@@ -89,12 +92,19 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _sleepTime = sleepTime;
             _nameClient = networkService.NamingClient;
             _sender = sender;
+            _networkObserver = networkObserver;
+            _parent = _selfId.Equals(rootId) ? null : new NodeStruct<T>(rootId, groupName, operatorName);
 
-            _parent = _selfId.Equals(rootId) ? null : new NodeStruct<T>(rootId);
+            if (_parent != null)
+            {
+                _networkObserver.Register<T>(_parent.Identifier).Register(new NodeMessageObserver<T>(_parent));
+            }
 
             foreach (var childId in childIds)
             {
-                _childNodeContainer.PutNode(new NodeStruct<T>(childId));
+                var childNode = new NodeStruct<T>(childId, groupName, operatorName);
+                _childNodeContainer.PutNode(childNode);
+                _networkObserver.Register<T>(childId).Register(new NodeMessageObserver<T>(childNode));
             }
         }
 
@@ -120,41 +130,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Handles the incoming GroupCommunicationMessage.
-        /// Updates the sending node's message queue.
-        /// </summary>
-        /// <param name="gcm">The incoming message</param>
-        public void OnNext(GeneralGroupCommunicationMessage gcm)
-        {
-            if (gcm == null)
-            {
-                throw new ArgumentNullException("gcm");
-            }
-            if (gcm.Source == null)
-            {
-                throw new ArgumentException("Message must have a source");
-            }
-
-            var sourceNode = (_parent != null && _parent.Identifier == gcm.Source) 
-                ? _parent 
-                : _childNodeContainer.GetChild(gcm.Source);
-
-            if (sourceNode == null)
-            {
-                throw new IllegalStateException("Received message from invalid task id: " + gcm.Source);
-            }
-
-            var message = gcm as GroupCommunicationMessage<T>;
-
-            if (message == null)
-            {
-                throw new NullReferenceException("message passed not of type GroupCommunicationMessage");
-            }
-
-            sourceNode.AddData(message);
         }
 
         /// <summary>
