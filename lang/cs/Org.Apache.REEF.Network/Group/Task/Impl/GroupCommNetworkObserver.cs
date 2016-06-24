@@ -57,11 +57,9 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _networkService = networkService;
         }
 
-        public TaskMessageObserver<T> Register<T>(string taskSourceId)
+        public TaskMessageObserver Register(string taskSourceId)
         {
-            return _taskMessageObservers
-                .GetOrAdd(taskSourceId, new TaskMessageObserver<T>())
-                as TaskMessageObserver<T>;
+            return _taskMessageObservers.GetOrAdd(taskSourceId, new TaskMessageObserver()) as TaskMessageObserver;
         }
 
         /// <summary>

@@ -25,14 +25,6 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
     internal sealed class GroupCommunicationMessage<T> : GeneralGroupCommunicationMessage
     {
         /// <summary>
-        /// Empty constructor to allow instantiation by reflection
-        /// </summary>
-        [Inject]
-        private GroupCommunicationMessage()
-        {
-        }
-
-        /// <summary>
         /// Create new CommunicationGroupMessage.
         /// </summary>
         /// <param name="groupName">The name of the communication group</param>
@@ -46,7 +38,7 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
             string source,
             string destination,
             T message)
-            : base(groupName, operatorName, source, destination)
+            : base(groupName, operatorName, source, destination, typeof(T))
         {
             Data = new[] { message };
         }
@@ -65,7 +57,7 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
             string source,
             string destination,
             T[] message)
-            : base(groupName, operatorName, source, destination)
+            : base(groupName, operatorName, source, destination, typeof(T))
         {
             Data = message;
         }

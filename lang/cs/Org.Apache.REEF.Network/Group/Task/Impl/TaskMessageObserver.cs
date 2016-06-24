@@ -23,21 +23,22 @@ using Org.Apache.REEF.Network.NetworkService;
 
 namespace Org.Apache.REEF.Network.Group.Task.Impl
 {
-    internal sealed class TaskMessageObserver<T> : IObserver<NsMessage<GeneralGroupCommunicationMessage>>
+    internal sealed class TaskMessageObserver : IObserver<NsMessage<GeneralGroupCommunicationMessage>>
     {
-        private readonly Dictionary<Tuple<string, string>, NodeMessageObserver<T>> _observers = 
-            new Dictionary<Tuple<string, string>, NodeMessageObserver<T>>();
+        private readonly Dictionary<Tuple<Type, string, string>, IObserver<NsMessage<GeneralGroupCommunicationMessage>>> _observers =
+            new Dictionary<Tuple<Type, string, string>, IObserver<NsMessage<GeneralGroupCommunicationMessage>>>();
         
-        public void Register(NodeMessageObserver<T> observer)
+        public void Register<T>(NodeMessageObserver<T> observer)
         {
-            _observers.Add(new Tuple<string, string>(observer.GroupId, observer.OperatorName), observer);
+            _observers.Add(new Tuple<Type, string, string>(typeof(T), observer.GroupId, observer.OperatorName), observer);
         }
 
         public void OnNext(NsMessage<GeneralGroupCommunicationMessage> value)
         {
-            NodeMessageObserver<T> observer;
             var gcMessage = value.Data.First();
-            if (!_observers.TryGetValue(new Tuple<string, string>(gcMessage.GroupName, gcMessage.OperatorName), out observer))
+            IObserver<NsMessage<GeneralGroupCommunicationMessage>> observer;
+            if (!_observers.TryGetValue(
+                new Tuple<Type, string, string>(gcMessage.Type, gcMessage.GroupName, gcMessage.OperatorName), out observer))
             {
                 throw new InvalidOperationException();
             }

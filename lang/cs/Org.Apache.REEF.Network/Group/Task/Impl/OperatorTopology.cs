@@ -51,7 +51,6 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
         private readonly int _sleepTime;
 
         private readonly ChildNodeContainer<T> _childNodeContainer = new ChildNodeContainer<T>();
-        private readonly IGroupCommNetworkObserver _networkObserver;
         private readonly NodeStruct<T> _parent;
         private readonly INameClient _nameClient;
         private readonly Sender _sender;
@@ -92,19 +91,18 @@ namespace Org.Apache.REEF.Network.Group.Task.Impl
             _sleepTime = sleepTime;
             _nameClient = networkService.NamingClient;
             _sender = sender;
-            _networkObserver = networkObserver;
             _parent = _selfId.Equals(rootId) ? null : new NodeStruct<T>(rootId, groupName, operatorName);
 
             if (_parent != null)
             {
-                _networkObserver.Register<T>(_parent.Identifier).Register(new NodeMessageObserver<T>(_parent));
+                networkObserver.Register(_parent.Identifier).Register(new NodeMessageObserver<T>(_parent));
             }
 
             foreach (var childId in childIds)
             {
                 var childNode = new NodeStruct<T>(childId, groupName, operatorName);
                 _childNodeContainer.PutNode(childNode);
-                _networkObserver.Register<T>(childId).Register(new NodeMessageObserver<T>(childNode));
+                networkObserver.Register(childId).Register(new NodeMessageObserver<T>(childNode));
             }
         }
 

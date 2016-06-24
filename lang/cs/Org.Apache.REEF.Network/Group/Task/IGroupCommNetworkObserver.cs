@@ -31,6 +31,6 @@ namespace Org.Apache.REEF.Network.Group.Task
     [DefaultImplementation(typeof(GroupCommNetworkObserver))]
     internal interface IGroupCommNetworkObserver : IObserver<IRemoteMessage<NsMessage<GeneralGroupCommunicationMessage>>>
     {
-        TaskMessageObserver<T> Register<T>(string taskSourceId);
+        TaskMessageObserver Register(string taskSourceId);
     }
 }
