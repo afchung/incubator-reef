@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+using System;
+
 namespace Org.Apache.REEF.Network.Group.Driver.Impl
 {
     /// <summary>
@@ -22,14 +24,7 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
     /// GroupCommunicationMessage but seen by Network Service
     /// </summary>
     public class GeneralGroupCommunicationMessage
-    {        
-        /// <summary>
-        /// Empty constructor to allow instantiation by reflection
-        /// </summary>
-        protected GeneralGroupCommunicationMessage()
-        {
-        }
-
+    {
         /// <summary>
         /// Create new CommunicationGroupMessage.
         /// </summary>
@@ -37,16 +32,19 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
         /// <param name="operatorName">The name of the MPI operator</param>
         /// <param name="source">The message source</param>
         /// <param name="destination">The message destination</param>
+        /// <param name="type">The type</param>
         protected GeneralGroupCommunicationMessage(
             string groupName,
             string operatorName,
             string source,
-            string destination)
+            string destination,
+            Type type)
         {
             GroupName = groupName;
             OperatorName = operatorName;
             Source = source;
             Destination = destination;
+            Type = type;
         }
 
         /// <summary>
@@ -68,5 +66,10 @@ namespace Org.Apache.REEF.Network.Group.Driver.Impl
         /// Returns the destination of the message.
         /// </summary>
         internal string Destination { get; set; }
+        
+        /// <summary>
+        /// The Type of the GroupCommunicationMessage.
+        /// </summary>
+        internal Type Type { get; set; }
     }
 }
